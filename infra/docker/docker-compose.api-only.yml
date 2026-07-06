@@ -1,0 +1,23 @@
+# Mode 3 — API seule : front hébergé ailleurs (Vercel, Nginx…), MySQL externe.
+# Usage : docker compose -f infra/docker/docker-compose.api-only.yml --env-file .env up -d
+name: openppm-api
+
+services:
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/Dockerfile.api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      DATABASE_URL: ${DATABASE_URL:?definir DATABASE_URL (MySQL externe)}
+      JWT_SECRET: ${JWT_SECRET:?definir JWT_SECRET}
+      JWT_ACCESS_TTL: ${JWT_ACCESS_TTL:-900s}
+      REFRESH_TTL_DAYS: ${REFRESH_TTL_DAYS:-30}
+      APP_URL: ${APP_URL:?URL publique du frontend}
+      CORS_ORIGIN: ${APP_URL}
+      SMTP_URL: ${SMTP_URL:-}
+      SMTP_FROM: ${SMTP_FROM:-OpenPPM <no-reply@openppm.local>}
+    ports:
+      - "${API_PORT:-4000}:4000"

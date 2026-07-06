@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Builds
+dist/
+.next/
+.turbo/
+out/
+coverage/
+
+# Env
+.env
+.env.local
+.env.*.local
+
+# Prisma generated client
+packages/db/generated/
+
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Docker volumes
+infra/docker/data/

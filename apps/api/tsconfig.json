@@ -1,0 +1,12 @@
+{
+  "extends": "../../packages/config/tsconfig.nest.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "types": ["node", "jest"],
+    "declaration": false,
+    "incremental": true
+  },
+  "include": ["src", "test"],
+  "exclude": ["node_modules", "dist"]
+}

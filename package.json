@@ -1,0 +1,38 @@
+{
+  "name": "openppm",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Open Source Strategic Portfolio Management platform",
+  "license": "AGPL-3.0-only",
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@11.10.0",
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:integration": "turbo run test:integration",
+    "db:generate": "pnpm --filter @openppm/db generate",
+    "db:migrate": "pnpm --filter @openppm/db migrate:dev",
+    "db:seed": "pnpm --filter @openppm/db seed"
+  },
+  "devDependencies": {
+    "turbo": "^2.5.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "@parcel/watcher",
+      "@prisma/client",
+      "@prisma/engines",
+      "@swc/core",
+      "argon2",
+      "esbuild",
+      "prisma",
+      "sharp",
+      "unrs-resolver"
+    ]
+  }
+}

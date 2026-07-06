@@ -1,0 +1,86 @@
+{
+  "common": {
+    "appName": "OpenPPM",
+    "tagline": "Open Source Strategic Portfolio Management",
+    "loading": "Loading…",
+    "logout": "Sign out",
+    "language": "Language",
+    "theme": "Theme",
+    "back": "Back"
+  },
+  "errors": {
+    "INVALID_CREDENTIALS": "Invalid credentials.",
+    "ACCOUNT_LOCKED": "Account temporarily locked after too many attempts. Try again in a few minutes.",
+    "ACCOUNT_DISABLED": "This account is disabled.",
+    "EMAIL_ALREADY_USED": "An account already exists with this email.",
+    "PASSWORD_POLICY": "Password must be at least 12 characters with a lowercase, an uppercase and a digit.",
+    "INVALID_RESET_TOKEN": "This reset link is invalid or expired.",
+    "INVALID_REFRESH_TOKEN": "Your session has expired, please sign in again.",
+    "UNKNOWN": "An unexpected error occurred. Please retry."
+  },
+  "auth": {
+    "login": {
+      "title": "Sign in",
+      "subtitle": "Access your portfolio workspace",
+      "email": "Email",
+      "password": "Password",
+      "submit": "Sign in",
+      "forgot": "Forgot password?",
+      "noAccount": "New organization?",
+      "registerLink": "Create a workspace"
+    },
+    "register": {
+      "title": "Create your workspace",
+      "subtitle": "Your organization and its admin account",
+      "organizationName": "Organization name",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "email": "Work email",
+      "password": "Password",
+      "passwordHint": "At least 12 characters, with lowercase, uppercase and digit",
+      "submit": "Create workspace",
+      "hasAccount": "Already have an account?",
+      "loginLink": "Sign in"
+    },
+    "forgot": {
+      "title": "Forgot password",
+      "subtitle": "Receive a reset link by email",
+      "email": "Email",
+      "submit": "Send reset link",
+      "sent": "If an account exists with this email, a reset link has just been sent."
+    },
+    "reset": {
+      "title": "New password",
+      "subtitle": "Choose a new password",
+      "password": "New password",
+      "submit": "Reset password",
+      "success": "Password updated. You can now sign in.",
+      "missingToken": "Invalid link: missing token."
+    }
+  },
+  "nav": {
+    "sectionSteering": "Steering",
+    "dashboard": "Dashboard"
+  },
+  "roles": {
+    "admin": "Administrator",
+    "manager": "Manager",
+    "project_manager": "Project manager",
+    "pmo": "PMO",
+    "finance": "Finance",
+    "employee": "Employee",
+    "observer": "Observer",
+    "guest": "Guest"
+  },
+  "dashboard": {
+    "welcome": "Hello {name}",
+    "subtitle": "Here is the state of your workspace.",
+    "organizationCard": "Organization",
+    "organizationId": "Identifier",
+    "profileCard": "Your profile",
+    "rolesLabel": "Roles",
+    "localeLabel": "Account language",
+    "nextSteps": "Next steps",
+    "nextStepsBody": "Projects, tasks, Kanban and Gantt are coming in Phase 1 of the roadmap. This space will host your indicators."
+  }
+}

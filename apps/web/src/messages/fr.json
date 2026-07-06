@@ -1,0 +1,86 @@
+{
+  "common": {
+    "appName": "OpenPPM",
+    "tagline": "Strategic Portfolio Management, en Open Source",
+    "loading": "Chargement…",
+    "logout": "Se déconnecter",
+    "language": "Langue",
+    "theme": "Thème",
+    "back": "Retour"
+  },
+  "errors": {
+    "INVALID_CREDENTIALS": "Identifiants invalides.",
+    "ACCOUNT_LOCKED": "Compte temporairement verrouillé après trop d'échecs. Réessayez dans quelques minutes.",
+    "ACCOUNT_DISABLED": "Ce compte est désactivé.",
+    "EMAIL_ALREADY_USED": "Un compte existe déjà avec cet email.",
+    "PASSWORD_POLICY": "Le mot de passe doit contenir au moins 12 caractères, une minuscule, une majuscule et un chiffre.",
+    "INVALID_RESET_TOKEN": "Ce lien de réinitialisation est invalide ou expiré.",
+    "INVALID_REFRESH_TOKEN": "Votre session a expiré, reconnectez-vous.",
+    "UNKNOWN": "Une erreur inattendue s'est produite. Réessayez."
+  },
+  "auth": {
+    "login": {
+      "title": "Connexion",
+      "subtitle": "Accédez à votre espace de pilotage",
+      "email": "Email",
+      "password": "Mot de passe",
+      "submit": "Se connecter",
+      "forgot": "Mot de passe oublié ?",
+      "noAccount": "Nouvelle organisation ?",
+      "registerLink": "Créer un espace"
+    },
+    "register": {
+      "title": "Créer votre espace",
+      "subtitle": "Votre organisation et votre compte administrateur",
+      "organizationName": "Nom de l'organisation",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "email": "Email professionnel",
+      "password": "Mot de passe",
+      "passwordHint": "12 caractères minimum, avec minuscule, majuscule et chiffre",
+      "submit": "Créer l'espace",
+      "hasAccount": "Déjà un compte ?",
+      "loginLink": "Se connecter"
+    },
+    "forgot": {
+      "title": "Mot de passe oublié",
+      "subtitle": "Recevez un lien de réinitialisation par email",
+      "email": "Email",
+      "submit": "Envoyer le lien",
+      "sent": "Si un compte existe avec cet email, un lien de réinitialisation vient d'être envoyé."
+    },
+    "reset": {
+      "title": "Nouveau mot de passe",
+      "subtitle": "Choisissez un nouveau mot de passe",
+      "password": "Nouveau mot de passe",
+      "submit": "Réinitialiser",
+      "success": "Mot de passe mis à jour. Vous pouvez vous connecter.",
+      "missingToken": "Lien invalide : jeton manquant."
+    }
+  },
+  "nav": {
+    "sectionSteering": "Pilotage",
+    "dashboard": "Tableau de bord"
+  },
+  "roles": {
+    "admin": "Administrateur",
+    "manager": "Manager",
+    "project_manager": "Chef de projet",
+    "pmo": "PMO",
+    "finance": "Finance",
+    "employee": "Employé",
+    "observer": "Observateur",
+    "guest": "Invité"
+  },
+  "dashboard": {
+    "welcome": "Bonjour {name}",
+    "subtitle": "Voici l'état de votre espace de travail.",
+    "organizationCard": "Organisation",
+    "organizationId": "Identifiant",
+    "profileCard": "Votre profil",
+    "rolesLabel": "Rôles",
+    "localeLabel": "Langue du compte",
+    "nextSteps": "Prochaines étapes",
+    "nextStepsBody": "La gestion des projets, tâches, Kanban et Gantt arrive dans la Phase 1 de la roadmap. Cet espace accueillera vos indicateurs."
+  }
+}
