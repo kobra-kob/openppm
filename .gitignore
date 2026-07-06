@@ -31,3 +31,6 @@ pnpm-debug.log*
 
 # Docker volumes
 infra/docker/data/
+
+# Artefacts TypeScript
+*.tsbuildinfo
