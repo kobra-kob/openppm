@@ -1,7 +1,8 @@
 import { Injectable } from "@nestjs/common";
-import { PasswordReset, RefreshToken, RoleKey } from "@openppm/db";
+import { Invitation, PasswordReset, Prisma, RefreshToken, RoleKey } from "@openppm/db";
 import { PrismaService } from "../../../core/prisma/prisma.service";
 import {
+  AcceptInvitationInput,
   AuthRepository,
   CreateOrganizationWithOwnerInput,
   CreatePasswordResetInput,
@@ -140,6 +141,61 @@ export class PrismaAuthRepository implements AuthRepository {
   findActivePasswordResetByHash(tokenHash: string): Promise<PasswordReset | null> {
     return this.prisma.passwordReset.findFirst({
       where: { tokenHash, usedAt: null, expiresAt: { gt: new Date() } },
+    });
+  }
+
+  findActiveInvitationByHash(tokenHash: string): Promise<Invitation | null> {
+    return this.prisma.invitation.findFirst({
+      where: { tokenHash, acceptedAt: null, expiresAt: { gt: new Date() } },
+    });
+  }
+
+  acceptInvitation(input: AcceptInvitationInput): Promise<UserWithAccess> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.invitation.update({
+        where: { id: input.invitationId },
+        data: { acceptedAt: new Date() },
+      });
+      return tx.user.create({
+        data: {
+          organizationId: input.organizationId,
+          email: input.email,
+          passwordHash: input.passwordHash,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          locale: input.locale ?? "fr",
+          userRoles: { create: { roleId: input.roleId } },
+        },
+        include: USER_INCLUDE,
+      });
+    });
+  }
+
+  async setMfaSecret(userId: string, secret: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { mfaSecret: secret, mfaEnabled: false, mfaRecoveryCodes: Prisma.JsonNull },
+    });
+  }
+
+  async enableMfa(userId: string, hashedRecoveryCodes: string[]): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { mfaEnabled: true, mfaRecoveryCodes: hashedRecoveryCodes },
+    });
+  }
+
+  async disableMfa(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { mfaEnabled: false, mfaSecret: null, mfaRecoveryCodes: Prisma.JsonNull },
+    });
+  }
+
+  async setRecoveryCodes(userId: string, hashedRecoveryCodes: string[]): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { mfaRecoveryCodes: hashedRecoveryCodes },
     });
   }
 

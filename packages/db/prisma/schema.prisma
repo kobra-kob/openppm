@@ -25,10 +25,11 @@ model Organization {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
-  users     User[]
-  roles     Role[]
-  groups    Group[]
-  auditLogs AuditLog[]
+  users       User[]
+  roles       Role[]
+  groups      Group[]
+  auditLogs   AuditLog[]
+  invitations Invitation[]
 
   @@map("organizations")
 }
@@ -47,6 +48,8 @@ model User {
   isActive         Boolean   @default(true) @map("is_active")
   mfaEnabled       Boolean   @default(false) @map("mfa_enabled")
   mfaSecret        String?   @map("mfa_secret") @db.VarChar(255)
+  /// Hashes SHA-256 des codes de récupération 2FA restants
+  mfaRecoveryCodes Json?     @map("mfa_recovery_codes")
   failedLoginCount Int       @default(0) @map("failed_login_count")
   lockedUntil      DateTime? @map("locked_until")
   lastLoginAt      DateTime? @map("last_login_at")
@@ -54,12 +57,13 @@ model User {
   updatedAt        DateTime  @updatedAt @map("updated_at")
   deletedAt        DateTime? @map("deleted_at")
 
-  organization   Organization    @relation(fields: [organizationId], references: [id])
-  userRoles      UserRole[]
-  groupMembers   GroupMember[]
-  refreshTokens  RefreshToken[]
-  passwordResets PasswordReset[]
-  auditLogs      AuditLog[]
+  organization    Organization    @relation(fields: [organizationId], references: [id])
+  userRoles       UserRole[]
+  groupMembers    GroupMember[]
+  refreshTokens   RefreshToken[]
+  passwordResets  PasswordReset[]
+  auditLogs       AuditLog[]
+  sentInvitations Invitation[]    @relation("InvitedBy")
 
   @@index([organizationId])
   @@map("users")
@@ -92,6 +96,7 @@ model Role {
   organization    Organization?    @relation(fields: [organizationId], references: [id])
   userRoles       UserRole[]
   rolePermissions RolePermission[]
+  invitations     Invitation[]
 
   @@unique([organizationId, name])
   @@map("roles")
@@ -154,6 +159,29 @@ model GroupMember {
 
   @@id([groupId, userId])
   @@map("group_members")
+}
+
+/// Invitation d'un collaborateur dans une organisation, avec rôle
+/// pré-assigné. Jeton envoyé par email, stocké haché, usage unique.
+model Invitation {
+  id             String    @id @default(uuid(7)) @db.Char(36)
+  organizationId String    @map("organization_id") @db.Char(36)
+  email          String    @db.VarChar(190)
+  roleId         String    @map("role_id") @db.Char(36)
+  tokenHash      String    @unique @map("token_hash") @db.Char(64)
+  expiresAt      DateTime  @map("expires_at")
+  acceptedAt     DateTime? @map("accepted_at")
+  invitedById    String    @map("invited_by_id") @db.Char(36)
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  role         Role         @relation(fields: [roleId], references: [id])
+  invitedBy    User         @relation("InvitedBy", fields: [invitedById], references: [id])
+
+  @@index([organizationId])
+  @@index([email])
+  @@map("invitations")
 }
 
 // ── Jetons ─────────────────────────────────────────────────────────────

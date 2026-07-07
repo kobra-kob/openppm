@@ -16,6 +16,13 @@
     "PASSWORD_POLICY": "Le mot de passe doit contenir au moins 12 caractères, une minuscule, une majuscule et un chiffre.",
     "INVALID_RESET_TOKEN": "Ce lien de réinitialisation est invalide ou expiré.",
     "INVALID_REFRESH_TOKEN": "Votre session a expiré, reconnectez-vous.",
+    "INVALID_INVITATION": "Cette invitation est invalide, expirée ou déjà utilisée.",
+    "INVITATION_ALREADY_PENDING": "Une invitation est déjà en attente pour cet email.",
+    "INVALID_MFA_CODE": "Code de vérification invalide.",
+    "MFA_CHALLENGE_EXPIRED": "Le délai est dépassé, reconnectez-vous.",
+    "MFA_ALREADY_ENABLED": "La double authentification est déjà active.",
+    "MFA_NOT_ENABLED": "La double authentification n'est pas active.",
+    "MFA_SETUP_REQUIRED": "Initialisez d'abord la double authentification.",
     "UNKNOWN": "Une erreur inattendue s'est produite. Réessayez."
   },
   "auth": {
@@ -27,7 +34,21 @@
       "submit": "Se connecter",
       "forgot": "Mot de passe oublié ?",
       "noAccount": "Nouvelle organisation ?",
-      "registerLink": "Créer un espace"
+      "registerLink": "Créer un espace",
+      "mfaTitle": "Vérification en deux étapes",
+      "mfaSubtitle": "Saisissez le code de votre application d'authentification, ou un code de récupération.",
+      "mfaCode": "Code de vérification",
+      "mfaSubmit": "Vérifier"
+    },
+    "acceptInvitation": {
+      "title": "Rejoindre l'espace",
+      "subtitle": "Créez votre compte pour accepter l'invitation",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "password": "Mot de passe",
+      "passwordHint": "12 caractères minimum, avec minuscule, majuscule et chiffre",
+      "submit": "Créer mon compte",
+      "missingToken": "Lien invalide : jeton d'invitation manquant."
     },
     "register": {
       "title": "Créer votre espace",
@@ -60,7 +81,51 @@
   },
   "nav": {
     "sectionSteering": "Pilotage",
-    "dashboard": "Tableau de bord"
+    "dashboard": "Tableau de bord",
+    "sectionOrganization": "Organisation",
+    "members": "Membres",
+    "sectionAccount": "Compte",
+    "security": "Sécurité"
+  },
+  "members": {
+    "title": "Membres",
+    "subtitle": "Les personnes de votre organisation et leurs rôles.",
+    "you": "vous",
+    "invite": {
+      "title": "Inviter un collaborateur",
+      "email": "Email",
+      "role": "Rôle",
+      "submit": "Envoyer l'invitation",
+      "success": "Invitation envoyée à {email}."
+    },
+    "pending": {
+      "title": "Invitations en attente",
+      "invitedBy": "Invité(e) par {name}",
+      "expires": "Expire le {date}",
+      "revoke": "Révoquer",
+      "empty": "Aucune invitation en attente."
+    }
+  },
+  "security": {
+    "title": "Sécurité",
+    "subtitle": "Protégez votre compte avec la double authentification.",
+    "mfa": {
+      "title": "Double authentification (TOTP)",
+      "enabled": "Activée",
+      "disabled": "Désactivée",
+      "start": "Activer la double authentification",
+      "scan": "Scannez ce QR code avec votre application (Google Authenticator, 1Password, Aegis…), puis saisissez le code affiché.",
+      "manual": "Ou saisissez ce secret manuellement :",
+      "codeLabel": "Code à 6 chiffres",
+      "confirm": "Confirmer l'activation",
+      "recoveryTitle": "Codes de récupération",
+      "recoveryWarning": "Conservez ces codes en lieu sûr : ils ne seront plus jamais affichés. Chaque code ne fonctionne qu'une fois.",
+      "recoveryDone": "J'ai enregistré mes codes",
+      "disableTitle": "Désactiver la double authentification",
+      "password": "Mot de passe actuel",
+      "disableSubmit": "Désactiver",
+      "disabledSuccess": "Double authentification désactivée."
+    }
   },
   "roles": {
     "admin": "Administrateur",

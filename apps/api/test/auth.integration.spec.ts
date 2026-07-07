@@ -39,6 +39,7 @@ describe("Auth (intégration)", () => {
     await prisma.refreshToken.deleteMany();
     await prisma.passwordReset.deleteMany();
     await prisma.auditLog.deleteMany();
+    await prisma.invitation.deleteMany();
     await prisma.userRole.deleteMany();
     await prisma.groupMember.deleteMany();
     await prisma.group.deleteMany();

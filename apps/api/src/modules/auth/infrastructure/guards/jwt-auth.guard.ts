@@ -37,14 +37,23 @@ export class JwtAuthGuard implements CanActivate {
         message: "Jeton d'accès requis",
       });
     }
+    let payload: JwtPayload & { scope?: string };
     try {
-      request.user = await this.jwt.verifyAsync<JwtPayload>(token);
+      payload = await this.jwt.verifyAsync<JwtPayload & { scope?: string }>(token);
     } catch {
       throw new UnauthorizedException({
         code: "TOKEN_EXPIRED",
         message: "Jeton d'accès invalide ou expiré",
       });
     }
+    // Un jeton de défi 2FA (scope "mfa") ne donne accès à aucune ressource.
+    if (payload.scope) {
+      throw new UnauthorizedException({
+        code: "TOKEN_EXPIRED",
+        message: "Jeton d'accès invalide ou expiré",
+      });
+    }
+    request.user = payload;
     return true;
   }
 }

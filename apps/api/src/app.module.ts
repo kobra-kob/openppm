@@ -10,6 +10,7 @@ import { HealthController } from "./core/health/health.controller";
 import { MailerModule } from "./core/mailer/mailer.module";
 import { PrismaModule } from "./core/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
+import { MembersModule } from "./modules/members/members.module";
 import { JwtAuthGuard } from "./modules/auth/infrastructure/guards/jwt-auth.guard";
 import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
 
@@ -56,6 +57,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     AuditModule,
     MailerModule,
     AuthModule,
+    MembersModule,
   ],
   controllers: [HealthController],
   providers: [

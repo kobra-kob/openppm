@@ -18,10 +18,12 @@ import type { AuthRepository, UserWithAccess } from "../domain/auth.repository";
 import { computeLockedUntil } from "../domain/lockout.policy";
 import { passwordPolicyErrors } from "../domain/password.policy";
 import { slugify } from "../domain/slug";
+import { AcceptInvitationDto } from "./dto/accept-invitation.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { ResetPasswordDto } from "./dto/reset-password.dto";
+import { MfaService } from "./mfa.service";
 import { IssuedTokens, RequestContext, TokenService } from "./token.service";
 
 const PASSWORD_RESET_TTL_MINUTES = 60;
@@ -31,12 +33,18 @@ export interface AuthResult {
   tokens: IssuedTokens;
 }
 
+/** Résultat de /auth/login : session directe, ou défi 2FA à résoudre. */
+export type LoginOutcome =
+  | { kind: "session"; result: AuthResult }
+  | { kind: "mfa_challenge"; mfaToken: string };
+
 export interface PublicUser {
   id: string;
   email: string;
   firstName: string;
   lastName: string;
   locale: string;
+  mfaEnabled: boolean;
   roles: string[];
   organization: { id: string; name: string; slug: string };
 }
@@ -55,6 +63,7 @@ export class AuthService {
     private readonly audit: AuditService,
     private readonly mailer: MailerService,
     private readonly config: ConfigService,
+    private readonly mfa: MfaService,
   ) {}
 
   toPublicUser(user: UserWithAccess): PublicUser {
@@ -64,6 +73,7 @@ export class AuthService {
       firstName: user.firstName,
       lastName: user.lastName,
       locale: user.locale,
+      mfaEnabled: user.mfaEnabled,
       roles: user.userRoles
         .map((userRole) => userRole.role.key)
         .filter((key): key is NonNullable<typeof key> => key !== null),
@@ -114,7 +124,7 @@ export class AuthService {
     return { user: this.toPublicUser(user), tokens: await this.tokens.issueTokens(user, context) };
   }
 
-  async login(dto: LoginDto, context: RequestContext): Promise<AuthResult> {
+  async login(dto: LoginDto, context: RequestContext): Promise<LoginOutcome> {
     const user = await this.repository.findUserByEmail(dto.email);
     if (!user || user.deletedAt) {
       await argon2.verify(await this.dummyHash, dto.password).catch(() => false);
@@ -161,6 +171,23 @@ export class AuthService {
       throw this.invalidCredentials();
     }
 
+    if (user.mfaEnabled) {
+      // Le mot de passe est bon : compteur d'échecs remis à zéro, mais la
+      // session n'est émise qu'après validation du second facteur.
+      await this.repository.registerFailedLogin(user.id, 0, null);
+      await this.audit.log({
+        action: "auth.login.mfa_challenge",
+        entityType: "user",
+        entityId: user.id,
+        organizationId: user.organizationId,
+        ...context,
+      });
+      return {
+        kind: "mfa_challenge",
+        mfaToken: await this.mfa.issueChallengeToken(user.id),
+      };
+    }
+
     await this.repository.registerSuccessfulLogin(user.id);
     await this.audit.log({
       action: "auth.login.success",
@@ -170,7 +197,90 @@ export class AuthService {
       userId: user.id,
       ...context,
     });
-    return { user: this.toPublicUser(user), tokens: await this.tokens.issueTokens(user, context) };
+    return {
+      kind: "session",
+      result: {
+        user: this.toPublicUser(user),
+        tokens: await this.tokens.issueTokens(user, context),
+      },
+    };
+  }
+
+  /** Second facteur du login : code TOTP ou code de récupération. */
+  async completeMfaLogin(
+    mfaToken: string,
+    code: string,
+    context: RequestContext,
+  ): Promise<AuthResult> {
+    const user = await this.mfa.validateChallenge(mfaToken, code, context);
+    await this.repository.registerSuccessfulLogin(user.id);
+    await this.audit.log({
+      action: "auth.login.success",
+      entityType: "user",
+      entityId: user.id,
+      organizationId: user.organizationId,
+      userId: user.id,
+      after: { mfa: true },
+      ...context,
+    });
+    return {
+      user: this.toPublicUser(user),
+      tokens: await this.tokens.issueTokens(user, context),
+    };
+  }
+
+  /** Création de compte via invitation : rejoint l'organisation avec le rôle pré-assigné. */
+  async acceptInvitation(
+    dto: AcceptInvitationDto,
+    context: RequestContext,
+  ): Promise<AuthResult> {
+    const policyErrors = passwordPolicyErrors(dto.password);
+    if (policyErrors.length > 0) {
+      throw new BadRequestException({
+        code: "PASSWORD_POLICY",
+        message: "Le mot de passe ne respecte pas la politique de sécurité",
+        errors: policyErrors,
+      });
+    }
+    const invitation = await this.repository.findActiveInvitationByHash(
+      this.tokens.hashToken(dto.token),
+    );
+    if (!invitation) {
+      throw new BadRequestException({
+        code: "INVALID_INVITATION",
+        message: "Invitation invalide, expirée ou déjà utilisée",
+      });
+    }
+    if (await this.repository.findUserByEmail(invitation.email)) {
+      throw new ConflictException({
+        code: "EMAIL_ALREADY_USED",
+        message: "Un compte existe déjà avec cet email",
+      });
+    }
+    const passwordHash = await argon2.hash(dto.password, { type: argon2.argon2id });
+    const user = await this.repository.acceptInvitation({
+      invitationId: invitation.id,
+      organizationId: invitation.organizationId,
+      roleId: invitation.roleId,
+      email: invitation.email,
+      passwordHash,
+      firstName: dto.firstName,
+      lastName: dto.lastName,
+      locale: dto.locale,
+    });
+    await this.audit.log({
+      action: "auth.invitation_accepted",
+      entityType: "user",
+      entityId: user.id,
+      organizationId: user.organizationId,
+      userId: user.id,
+      after: { email: user.email, invitationId: invitation.id },
+      ...context,
+    });
+    return {
+      user: this.toPublicUser(user),
+      tokens: await this.tokens.issueTokens(user, context),
+    };
   }
 
   async refresh(rawToken: string, context: RequestContext): Promise<AuthResult> {

@@ -16,6 +16,13 @@
     "PASSWORD_POLICY": "Password must be at least 12 characters with a lowercase, an uppercase and a digit.",
     "INVALID_RESET_TOKEN": "This reset link is invalid or expired.",
     "INVALID_REFRESH_TOKEN": "Your session has expired, please sign in again.",
+    "INVALID_INVITATION": "This invitation is invalid, expired or already used.",
+    "INVITATION_ALREADY_PENDING": "An invitation is already pending for this email.",
+    "INVALID_MFA_CODE": "Invalid verification code.",
+    "MFA_CHALLENGE_EXPIRED": "The challenge expired, please sign in again.",
+    "MFA_ALREADY_ENABLED": "Two-factor authentication is already enabled.",
+    "MFA_NOT_ENABLED": "Two-factor authentication is not enabled.",
+    "MFA_SETUP_REQUIRED": "Set up two-factor authentication first.",
     "UNKNOWN": "An unexpected error occurred. Please retry."
   },
   "auth": {
@@ -27,7 +34,21 @@
       "submit": "Sign in",
       "forgot": "Forgot password?",
       "noAccount": "New organization?",
-      "registerLink": "Create a workspace"
+      "registerLink": "Create a workspace",
+      "mfaTitle": "Two-step verification",
+      "mfaSubtitle": "Enter the code from your authenticator app, or a recovery code.",
+      "mfaCode": "Verification code",
+      "mfaSubmit": "Verify"
+    },
+    "acceptInvitation": {
+      "title": "Join the workspace",
+      "subtitle": "Create your account to accept the invitation",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "password": "Password",
+      "passwordHint": "At least 12 characters, with lowercase, uppercase and digit",
+      "submit": "Create my account",
+      "missingToken": "Invalid link: missing invitation token."
     },
     "register": {
       "title": "Create your workspace",
@@ -60,7 +81,51 @@
   },
   "nav": {
     "sectionSteering": "Steering",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "sectionOrganization": "Organization",
+    "members": "Members",
+    "sectionAccount": "Account",
+    "security": "Security"
+  },
+  "members": {
+    "title": "Members",
+    "subtitle": "People in your organization and their roles.",
+    "you": "you",
+    "invite": {
+      "title": "Invite a teammate",
+      "email": "Email",
+      "role": "Role",
+      "submit": "Send invitation",
+      "success": "Invitation sent to {email}."
+    },
+    "pending": {
+      "title": "Pending invitations",
+      "invitedBy": "Invited by {name}",
+      "expires": "Expires on {date}",
+      "revoke": "Revoke",
+      "empty": "No pending invitations."
+    }
+  },
+  "security": {
+    "title": "Security",
+    "subtitle": "Protect your account with two-factor authentication.",
+    "mfa": {
+      "title": "Two-factor authentication (TOTP)",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "start": "Enable two-factor authentication",
+      "scan": "Scan this QR code with your app (Google Authenticator, 1Password, Aegis…), then enter the displayed code.",
+      "manual": "Or enter this secret manually:",
+      "codeLabel": "6-digit code",
+      "confirm": "Confirm activation",
+      "recoveryTitle": "Recovery codes",
+      "recoveryWarning": "Store these codes somewhere safe: they will never be shown again. Each code works only once.",
+      "recoveryDone": "I saved my codes",
+      "disableTitle": "Disable two-factor authentication",
+      "password": "Current password",
+      "disableSubmit": "Disable",
+      "disabledSuccess": "Two-factor authentication disabled."
+    }
   },
   "roles": {
     "admin": "Administrator",

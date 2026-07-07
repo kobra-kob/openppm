@@ -1,6 +1,12 @@
 "use client";
 
-import { Command, LayoutDashboard, LogOut } from "lucide-react";
+import {
+  Command,
+  LayoutDashboard,
+  LogOut,
+  ShieldCheck,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -12,7 +18,20 @@ import { api } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
 import { useHydrated } from "@/lib/use-hydrated";
 
-const NAV_ITEMS = [{ href: "/", key: "dashboard", icon: LayoutDashboard }] as const;
+const NAV_SECTIONS = [
+  {
+    key: "sectionSteering",
+    items: [{ href: "/", key: "dashboard", icon: LayoutDashboard }],
+  },
+  {
+    key: "sectionOrganization",
+    items: [{ href: "/members", key: "members", icon: UsersRound }],
+  },
+  {
+    key: "sectionAccount",
+    items: [{ href: "/settings/security", key: "security", icon: ShieldCheck }],
+  },
+] as const;
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations();
@@ -62,26 +81,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <span className="font-semibold tracking-tight">{t("common.appName")}</span>
         </div>
         <nav className="flex-1 space-y-4">
-          <div>
-            <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-              {t("nav.sectionSteering")}
-            </p>
-            {NAV_ITEMS.map(({ href, key, icon: Icon }) => (
-              <Link
-                key={href}
-                href={href}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-(--radius-control) px-2 py-1.5 text-sm transition-colors",
-                  pathname === href
-                    ? "bg-accent/15 font-medium text-accent"
-                    : "text-foreground hover:bg-border-subtle",
-                )}
-              >
-                <Icon size={16} />
-                {t(`nav.${key}`)}
-              </Link>
-            ))}
-          </div>
+          {NAV_SECTIONS.map((section) => (
+            <div key={section.key}>
+              <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                {t(`nav.${section.key}`)}
+              </p>
+              {section.items.map(({ href, key, icon: Icon }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-(--radius-control) px-2 py-1.5 text-sm transition-colors",
+                    pathname === href
+                      ? "bg-accent/15 font-medium text-accent"
+                      : "text-foreground hover:bg-border-subtle",
+                  )}
+                >
+                  <Icon size={16} />
+                  {t(`nav.${key}`)}
+                </Link>
+              ))}
+            </div>
+          ))}
         </nav>
         <div className="border-t border-border-subtle pt-3">
           <div className="flex items-center gap-2 px-2">

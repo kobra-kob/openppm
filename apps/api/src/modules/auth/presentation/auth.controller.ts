@@ -13,11 +13,18 @@ import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import { Throttle } from "@nestjs/throttler";
 import type { Request, Response } from "express";
 import { AuthResult, AuthService, PublicUser } from "../application/auth.service";
+import { AcceptInvitationDto } from "../application/dto/accept-invitation.dto";
 import { ForgotPasswordDto } from "../application/dto/forgot-password.dto";
 import { LoginDto } from "../application/dto/login.dto";
+import {
+  DisableMfaDto,
+  EnableMfaDto,
+  VerifyMfaDto,
+} from "../application/dto/mfa.dto";
 import { RefreshDto } from "../application/dto/refresh.dto";
 import { RegisterDto } from "../application/dto/register.dto";
 import { ResetPasswordDto } from "../application/dto/reset-password.dto";
+import { MfaService, MfaSetup } from "../application/mfa.service";
 import type { JwtPayload } from "../application/jwt-payload";
 import type { RequestContext } from "../application/token.service";
 import { CurrentUser } from "../infrastructure/decorators/current-user.decorator";
@@ -32,11 +39,18 @@ interface AuthResponse {
   refreshToken: string;
 }
 
+/** Réponse de /auth/login quand le 2FA est actif : à résoudre via /auth/2fa/verify. */
+interface MfaChallengeResponse {
+  mfaRequired: true;
+  mfaToken: string;
+}
+
 @ApiTags("auth")
 @Controller("auth")
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
+    private readonly mfa: MfaService,
     private readonly config: ConfigService,
   ) {}
 
@@ -57,13 +71,83 @@ export class AuthController {
   @Throttle({ default: { ttl: 60_000, limit: 10 } })
   @Post("login")
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: "Connexion email / mot de passe" })
+  @ApiOperation({
+    summary:
+      "Connexion email / mot de passe (renvoie un défi 2FA si la double authentification est active)",
+  })
   async login(
     @Body() dto: LoginDto,
     @Req() request: Request,
     @Res({ passthrough: true }) response: Response,
+  ): Promise<AuthResponse | MfaChallengeResponse> {
+    const outcome = await this.auth.login(dto, this.context(request));
+    if (outcome.kind === "mfa_challenge") {
+      return { mfaRequired: true, mfaToken: outcome.mfaToken };
+    }
+    return this.respond(outcome.result, response);
+  }
+
+  @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 10 } })
+  @Post("2fa/verify")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Second facteur du login : code TOTP ou code de récupération" })
+  async verifyMfa(
+    @Body() dto: VerifyMfaDto,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
   ): Promise<AuthResponse> {
-    const result = await this.auth.login(dto, this.context(request));
+    const result = await this.auth.completeMfaLogin(
+      dto.mfaToken,
+      dto.code,
+      this.context(request),
+    );
+    return this.respond(result, response);
+  }
+
+  @Post("2fa/setup")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Initialiser le 2FA : secret TOTP + URI otpauth (QR code)" })
+  setupMfa(@CurrentUser() payload: JwtPayload): Promise<MfaSetup> {
+    return this.mfa.setup(payload.sub);
+  }
+
+  @Post("2fa/enable")
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary:
+      "Activer le 2FA avec un premier code valide ; renvoie les codes de récupération (une seule fois)",
+  })
+  enableMfa(
+    @CurrentUser() payload: JwtPayload,
+    @Body() dto: EnableMfaDto,
+    @Req() request: Request,
+  ): Promise<{ recoveryCodes: string[] }> {
+    return this.mfa.enable(payload.sub, dto.code, this.context(request));
+  }
+
+  @Post("2fa/disable")
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "Désactiver le 2FA (mot de passe + code requis)" })
+  async disableMfa(
+    @CurrentUser() payload: JwtPayload,
+    @Body() dto: DisableMfaDto,
+    @Req() request: Request,
+  ): Promise<void> {
+    await this.mfa.disable(payload.sub, dto.password, dto.code, this.context(request));
+  }
+
+  @Public()
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @Post("accept-invitation")
+  @ApiOperation({ summary: "Créer son compte à partir d'une invitation reçue par email" })
+  async acceptInvitation(
+    @Body() dto: AcceptInvitationDto,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<AuthResponse> {
+    const result = await this.auth.acceptInvitation(dto, this.context(request));
     return this.respond(result, response);
   }
 

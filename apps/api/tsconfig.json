@@ -4,8 +4,7 @@
     "outDir": "./dist",
     "rootDir": ".",
     "types": ["node", "jest"],
-    "declaration": false,
-    "incremental": true
+    "declaration": false
   },
   "include": ["src", "test"],
   "exclude": ["node_modules", "dist"]
