@@ -17,6 +17,13 @@
     "INVALID_RESET_TOKEN": "Ce lien de réinitialisation est invalide ou expiré.",
     "INVALID_REFRESH_TOKEN": "Votre session a expiré, reconnectez-vous.",
     "INVALID_INVITATION": "Cette invitation est invalide, expirée ou déjà utilisée.",
+    "CODE_ALREADY_USED": "Ce code projet est déjà utilisé.",
+    "INVALID_DATE_RANGE": "La date de fin doit être postérieure à la date de début.",
+    "INVALID_STATUS_TRANSITION": "Cette transition d'état n'est pas autorisée.",
+    "MANAGER_NOT_IN_ORG": "Le chef de projet doit appartenir à l'organisation.",
+    "USER_NOT_IN_ORG": "L'utilisateur doit appartenir à l'organisation.",
+    "MEMBER_ALREADY_EXISTS": "Cette personne est déjà membre du projet.",
+    "PROJECT_NOT_FOUND": "Projet introuvable.",
     "INVITATION_ALREADY_PENDING": "Une invitation est déjà en attente pour cet email.",
     "INVALID_MFA_CODE": "Code de vérification invalide.",
     "MFA_CHALLENGE_EXPIRED": "Le délai est dépassé, reconnectez-vous.",
@@ -82,10 +89,79 @@
   "nav": {
     "sectionSteering": "Pilotage",
     "dashboard": "Tableau de bord",
+    "projects": "Projets",
     "sectionOrganization": "Organisation",
     "members": "Membres",
     "sectionAccount": "Compte",
     "security": "Sécurité"
+  },
+  "projects": {
+    "title": "Projets",
+    "subtitle": "Le portefeuille de projets de votre organisation.",
+    "new": "Nouveau projet",
+    "searchPlaceholder": "Rechercher (nom, code)…",
+    "allStatuses": "Tous les états",
+    "empty": "Aucun projet. Créez le premier !",
+    "membersCount": "{count} membre(s)",
+    "trash": "Corbeille",
+    "backToList": "Retour aux projets",
+    "trashEmpty": "La corbeille est vide.",
+    "restore": "Restaurer",
+    "deletedOn": "Supprimé le {date}",
+    "priorityShort": "P{value}",
+    "status": {
+      "draft": "Brouillon",
+      "active": "Actif",
+      "on_hold": "En pause",
+      "completed": "Terminé",
+      "archived": "Archivé"
+    },
+    "health": {
+      "green": "Bonne santé",
+      "amber": "À surveiller",
+      "red": "En difficulté"
+    },
+    "role": {
+      "manager": "Manager",
+      "member": "Membre",
+      "observer": "Observateur"
+    },
+    "form": {
+      "name": "Nom du projet",
+      "code": "Code (optionnel, ex. CRM-2026)",
+      "description": "Description",
+      "priority": "Priorité",
+      "startDate": "Début",
+      "endDate": "Fin",
+      "budget": "Budget (€)",
+      "create": "Créer le projet",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "edit": "Modifier"
+    },
+    "detail": {
+      "infoTitle": "Informations",
+      "manager": "Chef de projet",
+      "none": "—",
+      "descriptionTitle": "Description",
+      "noDescription": "Aucune description.",
+      "membersTitle": "Équipe",
+      "addMember": "Ajouter",
+      "removeMember": "Retirer",
+      "activityTitle": "Activité",
+      "delete": "Mettre à la corbeille",
+      "changeStatus": "Changer d'état"
+    },
+    "activityLabels": {
+      "project_created": "a créé le projet",
+      "project_updated": "a modifié le projet",
+      "project_status_changed": "a changé l'état",
+      "project_deleted": "a mis le projet à la corbeille",
+      "project_restored": "a restauré le projet",
+      "project_member_added": "a ajouté un membre",
+      "project_member_removed": "a retiré un membre",
+      "project_member_role_changed": "a changé le rôle d'un membre"
+    }
   },
   "members": {
     "title": "Membres",

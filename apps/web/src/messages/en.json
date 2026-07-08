@@ -17,6 +17,13 @@
     "INVALID_RESET_TOKEN": "This reset link is invalid or expired.",
     "INVALID_REFRESH_TOKEN": "Your session has expired, please sign in again.",
     "INVALID_INVITATION": "This invitation is invalid, expired or already used.",
+    "CODE_ALREADY_USED": "This project code is already in use.",
+    "INVALID_DATE_RANGE": "End date must be after start date.",
+    "INVALID_STATUS_TRANSITION": "This status transition is not allowed.",
+    "MANAGER_NOT_IN_ORG": "The project manager must belong to the organization.",
+    "USER_NOT_IN_ORG": "The user must belong to the organization.",
+    "MEMBER_ALREADY_EXISTS": "This person is already a project member.",
+    "PROJECT_NOT_FOUND": "Project not found.",
     "INVITATION_ALREADY_PENDING": "An invitation is already pending for this email.",
     "INVALID_MFA_CODE": "Invalid verification code.",
     "MFA_CHALLENGE_EXPIRED": "The challenge expired, please sign in again.",
@@ -82,10 +89,79 @@
   "nav": {
     "sectionSteering": "Steering",
     "dashboard": "Dashboard",
+    "projects": "Projects",
     "sectionOrganization": "Organization",
     "members": "Members",
     "sectionAccount": "Account",
     "security": "Security"
+  },
+  "projects": {
+    "title": "Projects",
+    "subtitle": "Your organization's project portfolio.",
+    "new": "New project",
+    "searchPlaceholder": "Search (name, code)…",
+    "allStatuses": "All statuses",
+    "empty": "No projects yet. Create the first one!",
+    "membersCount": "{count} member(s)",
+    "trash": "Trash",
+    "backToList": "Back to projects",
+    "trashEmpty": "Trash is empty.",
+    "restore": "Restore",
+    "deletedOn": "Deleted on {date}",
+    "priorityShort": "P{value}",
+    "status": {
+      "draft": "Draft",
+      "active": "Active",
+      "on_hold": "On hold",
+      "completed": "Completed",
+      "archived": "Archived"
+    },
+    "health": {
+      "green": "Healthy",
+      "amber": "At risk",
+      "red": "In trouble"
+    },
+    "role": {
+      "manager": "Manager",
+      "member": "Member",
+      "observer": "Observer"
+    },
+    "form": {
+      "name": "Project name",
+      "code": "Code (optional, e.g. CRM-2026)",
+      "description": "Description",
+      "priority": "Priority",
+      "startDate": "Start",
+      "endDate": "End",
+      "budget": "Budget (€)",
+      "create": "Create project",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit"
+    },
+    "detail": {
+      "infoTitle": "Details",
+      "manager": "Project manager",
+      "none": "—",
+      "descriptionTitle": "Description",
+      "noDescription": "No description.",
+      "membersTitle": "Team",
+      "addMember": "Add",
+      "removeMember": "Remove",
+      "activityTitle": "Activity",
+      "delete": "Move to trash",
+      "changeStatus": "Change status"
+    },
+    "activityLabels": {
+      "project_created": "created the project",
+      "project_updated": "updated the project",
+      "project_status_changed": "changed the status",
+      "project_deleted": "moved the project to trash",
+      "project_restored": "restored the project",
+      "project_member_added": "added a member",
+      "project_member_removed": "removed a member",
+      "project_member_role_changed": "changed a member's role"
+    }
   },
   "members": {
     "title": "Members",

@@ -31,6 +31,8 @@ describe("Members / invitations (intégration)", () => {
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.projectMember.deleteMany();
+    await prisma.project.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.passwordReset.deleteMany();
     await prisma.auditLog.deleteMany();

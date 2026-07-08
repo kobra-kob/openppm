@@ -2,6 +2,7 @@
 
 import {
   Command,
+  FolderKanban,
   LayoutDashboard,
   LogOut,
   ShieldCheck,
@@ -21,7 +22,10 @@ import { useHydrated } from "@/lib/use-hydrated";
 const NAV_SECTIONS = [
   {
     key: "sectionSteering",
-    items: [{ href: "/", key: "dashboard", icon: LayoutDashboard }],
+    items: [
+      { href: "/", key: "dashboard", icon: LayoutDashboard },
+      { href: "/projects", key: "projects", icon: FolderKanban },
+    ],
   },
   {
     key: "sectionOrganization",
@@ -92,7 +96,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
                   href={href}
                   className={cn(
                     "flex items-center gap-2.5 rounded-(--radius-control) px-2 py-1.5 text-sm transition-colors",
-                    pathname === href
+                    pathname === href || (href !== "/" && pathname.startsWith(href))
                       ? "bg-accent/15 font-medium text-accent"
                       : "text-foreground hover:bg-border-subtle",
                   )}

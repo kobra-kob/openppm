@@ -30,6 +30,7 @@ model Organization {
   groups      Group[]
   auditLogs   AuditLog[]
   invitations Invitation[]
+  projects    Project[]
 
   @@map("organizations")
 }
@@ -64,6 +65,9 @@ model User {
   passwordResets  PasswordReset[]
   auditLogs       AuditLog[]
   sentInvitations Invitation[]    @relation("InvitedBy")
+  managedProjects Project[]       @relation("ProjectManager")
+  createdProjects Project[]       @relation("ProjectCreator")
+  projectMembers  ProjectMember[]
 
   @@index([organizationId])
   @@map("users")
@@ -219,6 +223,74 @@ model PasswordReset {
 
   @@index([userId])
   @@map("password_resets")
+}
+
+// ── Projets ────────────────────────────────────────────────────────────
+
+/// Cycle de vie Phase 1 (workflow figé) : draft → active ⇄ on_hold,
+/// active → completed (réouvrable), tout état ⇄ archived.
+enum ProjectStatus {
+  draft
+  active
+  on_hold
+  completed
+  archived
+}
+
+enum ProjectHealth {
+  green
+  amber
+  red
+}
+
+enum ProjectRole {
+  manager
+  member
+  observer
+}
+
+model Project {
+  id             String        @id @default(uuid(7)) @db.Char(36)
+  organizationId String        @map("organization_id") @db.Char(36)
+  code           String        @db.VarChar(20)
+  name           String        @db.VarChar(140)
+  description    String?       @db.Text
+  status         ProjectStatus @default(draft)
+  health         ProjectHealth @default(green)
+  /// Priorité 1 (haute) à 5 (basse)
+  priority       Int           @default(3)
+  startDate      DateTime?     @map("start_date") @db.Date
+  endDate        DateTime?     @map("end_date") @db.Date
+  budget         Decimal?      @db.Decimal(14, 2)
+  managerId      String?       @map("manager_id") @db.Char(36)
+  createdById    String        @map("created_by_id") @db.Char(36)
+  archivedAt     DateTime?     @map("archived_at")
+  createdAt      DateTime      @default(now()) @map("created_at")
+  updatedAt      DateTime      @updatedAt @map("updated_at")
+  deletedAt      DateTime?     @map("deleted_at")
+
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  manager      User?           @relation("ProjectManager", fields: [managerId], references: [id])
+  createdBy    User            @relation("ProjectCreator", fields: [createdById], references: [id])
+  members      ProjectMember[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, status])
+  @@index([organizationId, deletedAt])
+  @@map("projects")
+}
+
+model ProjectMember {
+  projectId String      @map("project_id") @db.Char(36)
+  userId    String      @map("user_id") @db.Char(36)
+  role      ProjectRole @default(member)
+  createdAt DateTime    @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([projectId, userId])
+  @@map("project_members")
 }
 
 // ── Audit ──────────────────────────────────────────────────────────────
