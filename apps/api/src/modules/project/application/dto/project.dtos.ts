@@ -66,6 +66,18 @@ export class CreateProjectDto {
   @IsOptional()
   @IsUUID()
   managerId?: string;
+
+  @ApiPropertyOptional({ description: "Catégorie du projet" })
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
+
+  @ApiPropertyOptional({
+    description: "Template appliqué : ses valeurs par défaut complètent les champs absents",
+  })
+  @IsOptional()
+  @IsUUID()
+  templateId?: string;
 }
 
 export class UpdateProjectDto extends PartialType(
@@ -77,6 +89,7 @@ export class UpdateProjectDto extends PartialType(
     "endDate",
     "budget",
     "managerId",
+    "categoryId",
   ] as const),
 ) {
   @ApiPropertyOptional({ enum: Object.values(ProjectHealth) })
@@ -119,6 +132,11 @@ export class ListProjectsQuery {
   @IsString()
   @MaxLength(100)
   search?: string;
+
+  @ApiPropertyOptional({ description: "Filtre par catégorie" })
+  @IsOptional()
+  @IsUUID()
+  categoryId?: string;
 
   @ApiPropertyOptional({ default: 1 })
   @IsOptional()

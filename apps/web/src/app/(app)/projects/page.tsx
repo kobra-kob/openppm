@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArchiveRestore, FolderKanban, Plus, Trash2 } from "lucide-react";
+import { ArchiveRestore, FolderKanban, Plus, Tags, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -10,6 +10,8 @@ import { Alert, Button, Card, Input, Label, cn } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
 import {
+  CategoryBadge,
+  FavoriteStar,
   HealthDot,
   ORG_WIDE_ROLES,
   PROJECT_CREATOR_ROLES,
@@ -18,6 +20,17 @@ import {
   ProjectView,
   StatusBadge,
 } from "@/features/projects/shared";
+
+interface Category {
+  id: string;
+  name: string;
+  color: string;
+}
+
+interface Template {
+  id: string;
+  name: string;
+}
 
 const STATUSES: ProjectStatus[] = ["draft", "active", "on_hold", "completed", "archived"];
 
@@ -33,8 +46,10 @@ export default function ProjectsPage() {
 
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<string>("");
+  const [categoryFilter, setCategoryFilter] = useState<string>("");
   const [showTrash, setShowTrash] = useState(false);
   const [showForm, setShowForm] = useState(false);
+  const [showCategories, setShowCategories] = useState(false);
   const [form, setForm] = useState({
     name: "",
     code: "",
@@ -43,19 +58,34 @@ export default function ProjectsPage() {
     endDate: "",
     budget: "",
     description: "",
+    templateId: "",
+    categoryId: "",
   });
+  const [newCategory, setNewCategory] = useState({ name: "", color: "#0071e3" });
   const [error, setError] = useState<string | null>(null);
 
   const { data: list } = useQuery({
-    queryKey: ["projects", { search, status }],
+    queryKey: ["projects", { search, status, categoryFilter }],
     queryFn: () => {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (status) params.set("status", status);
+      if (categoryFilter) params.set("categoryId", categoryFilter);
       params.set("pageSize", "50");
       return api<ProjectListView>(`/projects?${params.toString()}`);
     },
     enabled: !showTrash,
+  });
+
+  const { data: categories } = useQuery({
+    queryKey: ["project-categories"],
+    queryFn: () => api<Category[]>("/project-categories"),
+  });
+
+  const { data: templates } = useQuery({
+    queryKey: ["project-templates"],
+    queryFn: () => api<Template[]>("/project-templates"),
+    enabled: canCreate,
   });
 
   const { data: trash } = useQuery({
@@ -76,6 +106,8 @@ export default function ProjectsPage() {
           ...(form.endDate ? { endDate: form.endDate } : {}),
           ...(form.budget ? { budget: Number(form.budget) } : {}),
           ...(form.description ? { description: form.description } : {}),
+          ...(form.templateId ? { templateId: form.templateId } : {}),
+          ...(form.categoryId ? { categoryId: form.categoryId } : {}),
         }),
       }),
     onSuccess: (project) => {
@@ -85,6 +117,26 @@ export default function ProjectsPage() {
     onError: (caught) => {
       const code = caught instanceof ApiError ? caught.code : "UNKNOWN";
       setError(tErrors.has(code) ? tErrors(code) : tErrors("UNKNOWN"));
+    },
+  });
+
+  const addCategoryMutation = useMutation({
+    mutationFn: () =>
+      api<Category>("/project-categories", {
+        method: "POST",
+        body: JSON.stringify(newCategory),
+      }),
+    onSuccess: () => {
+      setNewCategory({ name: "", color: "#0071e3" });
+      void queryClient.invalidateQueries({ queryKey: ["project-categories"] });
+    },
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (id: string) => api<void>(`/project-categories/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["project-categories"] });
+      void queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 
@@ -116,6 +168,11 @@ export default function ProjectsPage() {
           <p className="text-sm text-muted">{t("subtitle")}</p>
         </div>
         <div className="flex items-center gap-2">
+          {canSeeTrash && !showTrash && (
+            <Button variant="ghost" onClick={() => setShowCategories((v) => !v)}>
+              <Tags size={16} /> {t("categories.manage")}
+            </Button>
+          )}
           {canSeeTrash && (
             <Button variant="ghost" onClick={() => setShowTrash((v) => !v)}>
               {showTrash ? t("backToList") : (
@@ -133,6 +190,72 @@ export default function ProjectsPage() {
         </div>
       </div>
 
+      {showCategories && !showTrash && (
+        <Card>
+          <div className="mb-3 flex items-center gap-2 text-muted">
+            <Tags size={16} />
+            <h2 className="text-sm font-semibold uppercase tracking-wider">
+              {t("categories.manage")}
+            </h2>
+          </div>
+          {(categories ?? []).length === 0 ? (
+            <p className="mb-3 text-sm text-muted">{t("categories.empty")}</p>
+          ) : (
+            <ul className="mb-3 space-y-1.5">
+              {(categories ?? []).map((category) => (
+                <li key={category.id} className="flex items-center gap-2 text-sm">
+                  <span
+                    className="size-3 rounded-full"
+                    style={{ backgroundColor: category.color }}
+                  />
+                  <span className="flex-1">{category.name}</span>
+                  <button
+                    type="button"
+                    onClick={() => deleteCategoryMutation.mutate(category.id)}
+                    aria-label={t("form.cancel")}
+                    className="rounded-full p-1 text-muted transition-colors hover:bg-border-subtle hover:text-danger"
+                  >
+                    <Trash2 size={14} />
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+          <form
+            onSubmit={(event) => {
+              event.preventDefault();
+              if (newCategory.name) addCategoryMutation.mutate();
+            }}
+            className="flex items-end gap-2"
+          >
+            <div className="flex-1">
+              <Label htmlFor="catName">{t("categories.name")}</Label>
+              <Input
+                id="catName"
+                maxLength={60}
+                required
+                value={newCategory.name}
+                onChange={(event) =>
+                  setNewCategory((c) => ({ ...c, name: event.target.value }))
+                }
+              />
+            </div>
+            <input
+              type="color"
+              aria-label="couleur"
+              value={newCategory.color}
+              onChange={(event) =>
+                setNewCategory((c) => ({ ...c, color: event.target.value }))
+              }
+              className="h-9 w-12 cursor-pointer rounded-(--radius-control) border border-border-subtle bg-surface-solid"
+            />
+            <Button type="submit" disabled={addCategoryMutation.isPending}>
+              {t("categories.add")}
+            </Button>
+          </form>
+        </Card>
+      )}
+
       {showForm && !showTrash && (
         <Card>
           <form onSubmit={submitCreate} className="space-y-4">
@@ -145,6 +268,40 @@ export default function ProjectsPage() {
               <div>
                 <Label htmlFor="pCode">{t("form.code")}</Label>
                 <Input id="pCode" maxLength={20} value={form.code} onChange={update("code")} />
+              </div>
+              {(templates ?? []).length > 0 && (
+                <div>
+                  <Label htmlFor="pTemplate">{t("form.template")}</Label>
+                  <select
+                    id="pTemplate"
+                    value={form.templateId}
+                    onChange={(event) => setForm((c) => ({ ...c, templateId: event.target.value }))}
+                    className="w-full rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                  >
+                    <option value="">{t("form.noTemplate")}</option>
+                    {(templates ?? []).map((template) => (
+                      <option key={template.id} value={template.id}>
+                        {template.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
+              <div>
+                <Label htmlFor="pCategory">{t("form.category")}</Label>
+                <select
+                  id="pCategory"
+                  value={form.categoryId}
+                  onChange={(event) => setForm((c) => ({ ...c, categoryId: event.target.value }))}
+                  className="w-full rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                >
+                  <option value="">{t("form.noCategory")}</option>
+                  {(categories ?? []).map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <Label htmlFor="pPriority">{t("form.priority")}</Label>
@@ -217,6 +374,20 @@ export default function ProjectsPage() {
               </option>
             ))}
           </select>
+          {(categories ?? []).length > 0 && (
+            <select
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+              className="rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm focus:border-accent focus:outline-none"
+            >
+              <option value="">{t("allCategories")}</option>
+              {(categories ?? []).map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       )}
 
@@ -270,11 +441,13 @@ export default function ProjectsPage() {
                     {t("priorityShort", { value: project.priority })}
                   </span>
                   <span className="min-w-0 flex-1 truncate text-sm font-medium">{project.name}</span>
+                  <CategoryBadge category={project.category} />
                   <span className="hidden text-xs text-muted sm:block">
                     {t("membersCount", { count: project.members.length })}
                   </span>
                   <HealthDot health={project.health} />
                   <StatusBadge status={project.status} />
+                  <FavoriteStar projectId={project.id} isFavorite={project.isFavorite} />
                 </Link>
               </li>
             ))}

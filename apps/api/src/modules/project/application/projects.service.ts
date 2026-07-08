@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { ProjectRole, ProjectStatus, RoleKey } from "@openppm/db";
 import { AuditService } from "../../../core/audit/audit.service";
+import { FavoritesService } from "../../../core/favorites/favorites.service";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
 import { allowedTransitions, canTransition } from "../domain/project-status.policy";
@@ -41,6 +42,8 @@ export interface ProjectView {
   startDate: Date | null;
   endDate: Date | null;
   budget: string | null;
+  category: { id: string; name: string; color: string } | null;
+  isFavorite: boolean;
   manager: { id: string; name: string } | null;
   members: Array<{
     userId: string;
@@ -67,9 +70,10 @@ export class ProjectsService {
   constructor(
     @Inject(PROJECT_REPOSITORY) private readonly repository: ProjectRepository,
     private readonly audit: AuditService,
+    private readonly favorites: FavoritesService,
   ) {}
 
-  private toView(project: ProjectWithRelations): ProjectView {
+  private toView(project: ProjectWithRelations, isFavorite = false): ProjectView {
     return {
       id: project.id,
       code: project.code,
@@ -81,6 +85,14 @@ export class ProjectsService {
       startDate: project.startDate,
       endDate: project.endDate,
       budget: project.budget?.toString() ?? null,
+      category: project.category
+        ? {
+            id: project.category.id,
+            name: project.category.name,
+            color: project.category.color,
+          }
+        : null,
+      isFavorite,
       manager: project.manager
         ? {
             id: project.manager.id,
@@ -102,14 +114,18 @@ export class ProjectsService {
   }
 
   async list(payload: JwtPayload, query: ListProjectsQuery): Promise<ProjectListView> {
-    const { items, total } = await this.repository.list(payload.org, {
-      search: query.search,
-      status: query.status,
-      page: query.page,
-      pageSize: query.pageSize,
-    });
+    const [{ items, total }, favoriteIds] = await Promise.all([
+      this.repository.list(payload.org, {
+        search: query.search,
+        status: query.status,
+        categoryId: query.categoryId,
+        page: query.page,
+        pageSize: query.pageSize,
+      }),
+      this.favorites.idsFor(payload.sub, "project"),
+    ]);
     return {
-      items: items.map((project) => this.toView(project)),
+      items: items.map((project) => this.toView(project, favoriteIds.has(project.id))),
       total,
       page: query.page,
       pageSize: query.pageSize,
@@ -123,7 +139,11 @@ export class ProjectsService {
   }
 
   async get(payload: JwtPayload, id: string): Promise<ProjectView> {
-    return this.toView(await this.requireProject(payload.org, id));
+    const [project, favoriteIds] = await Promise.all([
+      this.requireProject(payload.org, id),
+      this.favorites.idsFor(payload.sub, "project"),
+    ]);
+    return this.toView(project, favoriteIds.has(project.id));
   }
 
   async create(
@@ -131,11 +151,50 @@ export class ProjectsService {
     dto: CreateProjectDto,
     context: RequestContext,
   ): Promise<ProjectView> {
-    const { startDate, endDate } = this.parseDates(dto.startDate, dto.endDate);
+    // Le template complète les champs absents du DTO (le DTO a priorité)
+    let defaults: {
+      description?: string;
+      priority?: number;
+      budget?: number;
+      categoryId?: string;
+      durationDays?: number;
+    } = {};
+    if (dto.templateId) {
+      const template = await this.repository.findTemplate(payload.org, dto.templateId);
+      if (!template) {
+        throw new BadRequestException({
+          code: "TEMPLATE_NOT_FOUND",
+          message: "Template introuvable",
+        });
+      }
+      defaults = {
+        description: template.description ?? undefined,
+        priority: template.priority,
+        budget: template.budget ? Number(template.budget) : undefined,
+        categoryId: template.categoryId ?? undefined,
+        durationDays: template.durationDays ?? undefined,
+      };
+    }
+
+    let computedEndDate = dto.endDate;
+    if (!computedEndDate && dto.startDate && defaults.durationDays) {
+      const end = new Date(dto.startDate);
+      end.setDate(end.getDate() + defaults.durationDays);
+      computedEndDate = end.toISOString().slice(0, 10);
+    }
+    const { startDate, endDate } = this.parseDates(dto.startDate, computedEndDate);
+
     if (dto.managerId && !(await this.repository.userInOrganization(payload.org, dto.managerId))) {
       throw new BadRequestException({
         code: "MANAGER_NOT_IN_ORG",
         message: "Le chef de projet doit appartenir à l'organisation",
+      });
+    }
+    const categoryId = dto.categoryId ?? defaults.categoryId;
+    if (categoryId && !(await this.repository.findCategory(payload.org, categoryId))) {
+      throw new BadRequestException({
+        code: "CATEGORY_NOT_FOUND",
+        message: "Catégorie introuvable",
       });
     }
     const code = await this.resolveCode(payload.org, dto.code);
@@ -151,11 +210,12 @@ export class ProjectsService {
       organizationId: payload.org,
       code,
       name: dto.name,
-      description: dto.description,
-      priority: dto.priority,
+      description: dto.description ?? defaults.description,
+      priority: dto.priority ?? defaults.priority,
       startDate,
       endDate,
-      budget: dto.budget,
+      budget: dto.budget ?? defaults.budget,
+      categoryId,
       managerId: dto.managerId,
       createdById: payload.sub,
       initialMembers: [...initialMembers.entries()].map(([userId, role]) => ({
@@ -206,6 +266,15 @@ export class ProjectsService {
         });
       }
       input.managerId = dto.managerId || null;
+    }
+    if (dto.categoryId !== undefined) {
+      if (dto.categoryId && !(await this.repository.findCategory(payload.org, dto.categoryId))) {
+        throw new BadRequestException({
+          code: "CATEGORY_NOT_FOUND",
+          message: "Catégorie introuvable",
+        });
+      }
+      input.categoryId = dto.categoryId || null;
     }
 
     const updated = await this.repository.update(project.id, input);

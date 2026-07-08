@@ -1,7 +1,10 @@
 "use client";
 
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { cn } from "@/components/ui";
+import { api } from "@/lib/api-client";
 
 export type ProjectStatus = "draft" | "active" | "on_hold" | "completed" | "archived";
 export type ProjectHealth = "green" | "amber" | "red";
@@ -25,6 +28,8 @@ export interface ProjectView {
   startDate: string | null;
   endDate: string | null;
   budget: string | null;
+  category: { id: string; name: string; color: string } | null;
+  isFavorite: boolean;
   manager: { id: string; name: string } | null;
   members: ProjectMemberView[];
   allowedTransitions: ProjectStatus[];
@@ -78,5 +83,64 @@ export function HealthDot({ health }: { health: ProjectHealth }) {
       <span className={cn("size-2 rounded-full", HEALTH_COLORS[health])} />
       {t(health)}
     </span>
+  );
+}
+
+export function CategoryBadge({
+  category,
+}: {
+  category: { name: string; color: string } | null;
+}) {
+  if (!category) {
+    return null;
+  }
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full border border-border-subtle px-2 py-0.5 text-xs text-muted">
+      <span className="size-2 rounded-full" style={{ backgroundColor: category.color }} />
+      {category.name}
+    </span>
+  );
+}
+
+/** Étoile favori : bascule et invalide projets + favoris (sidebar). */
+export function FavoriteStar({
+  projectId,
+  isFavorite,
+  className,
+}: {
+  projectId: string;
+  isFavorite: boolean;
+  className?: string;
+}) {
+  const t = useTranslations("projects.detail");
+  const queryClient = useQueryClient();
+  const toggle = useMutation({
+    mutationFn: () =>
+      api<void>(`/favorites/project/${projectId}`, {
+        method: isFavorite ? "DELETE" : "PUT",
+      }),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["projects"] });
+      void queryClient.invalidateQueries({ queryKey: ["project", projectId] });
+      void queryClient.invalidateQueries({ queryKey: ["favorites"] });
+    },
+  });
+  return (
+    <button
+      type="button"
+      aria-label={isFavorite ? t("favoriteRemove") : t("favoriteAdd")}
+      onClick={(event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        toggle.mutate();
+      }}
+      className={cn(
+        "rounded-full p-1.5 transition-colors hover:bg-border-subtle",
+        isFavorite ? "text-[#ff9f0a]" : "text-muted hover:text-foreground",
+        className,
+      )}
+    >
+      <Star size={16} fill={isFavorite ? "currentColor" : "none"} />
+    </button>
   );
 }

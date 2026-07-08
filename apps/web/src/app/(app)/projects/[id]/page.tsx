@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, History, Info, Trash2, UsersRound } from "lucide-react";
+import { ArrowLeft, BookmarkPlus, History, Info, Trash2, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -10,6 +10,8 @@ import { Alert, Button, Card, Input, Label } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
 import {
+  CategoryBadge,
+  FavoriteStar,
   HealthDot,
   ProjectRole,
   ProjectView,
@@ -50,9 +52,11 @@ export default function ProjectDetailPage() {
     startDate: "",
     endDate: "",
     budget: "",
+    categoryId: "",
   });
   const [newMember, setNewMember] = useState({ userId: "", role: "member" });
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const { data: project } = useQuery({
     queryKey: ["project", id],
@@ -65,6 +69,10 @@ export default function ProjectDetailPage() {
   const { data: orgMembers } = useQuery({
     queryKey: ["members"],
     queryFn: () => api<OrgMember[]>("/members"),
+  });
+  const { data: categories } = useQuery({
+    queryKey: ["project-categories"],
+    queryFn: () => api<Array<{ id: string; name: string }>>("/project-categories"),
   });
 
   const refresh = () => {
@@ -99,6 +107,7 @@ export default function ProjectDetailPage() {
           ...(editForm.startDate ? { startDate: editForm.startDate } : {}),
           ...(editForm.endDate ? { endDate: editForm.endDate } : {}),
           ...(editForm.budget ? { budget: Number(editForm.budget) } : {}),
+          categoryId: editForm.categoryId || null,
         }),
       }),
     onSuccess: () => {
@@ -134,6 +143,19 @@ export default function ProjectDetailPage() {
     onError,
   });
 
+  const saveTemplateMutation = useMutation({
+    mutationFn: () =>
+      api<{ id: string }>("/project-templates", {
+        method: "POST",
+        body: JSON.stringify({ name: project!.name, fromProjectId: id }),
+      }),
+    onSuccess: () => {
+      setNotice(t("detail.templateSaved"));
+      void queryClient.invalidateQueries({ queryKey: ["project-templates"] });
+    },
+    onError,
+  });
+
   const memberRoleMutation = useMutation({
     mutationFn: (input: { userId: string; role: string }) =>
       api<ProjectView>(`/projects/${id}/members/${input.userId}`, {
@@ -156,6 +178,7 @@ export default function ProjectDetailPage() {
       startDate: project.startDate?.slice(0, 10) ?? "",
       endDate: project.endDate?.slice(0, 10) ?? "",
       budget: project.budget ?? "",
+      categoryId: project.category?.id ?? "",
     });
     setEditing(true);
     setError(null);
@@ -182,11 +205,13 @@ export default function ProjectDetailPage() {
       </Link>
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
           <span className="font-mono text-sm text-muted">{project.code}</span>
           <StatusBadge status={project.status} />
           <HealthDot health={project.health} />
+          <CategoryBadge category={project.category} />
+          <FavoriteStar projectId={project.id} isFavorite={project.isFavorite} />
         </div>
         <div className="flex items-center gap-2">
           {project.allowedTransitions.length > 0 && (
@@ -205,6 +230,16 @@ export default function ProjectDetailPage() {
               ))}
             </select>
           )}
+          <Button
+            variant="ghost"
+            onClick={() => {
+              setNotice(null);
+              saveTemplateMutation.mutate();
+            }}
+            disabled={saveTemplateMutation.isPending}
+          >
+            <BookmarkPlus size={16} /> {t("detail.saveAsTemplate")}
+          </Button>
           <Button variant="ghost" onClick={startEditing}>
             {t("form.edit")}
           </Button>
@@ -219,6 +254,7 @@ export default function ProjectDetailPage() {
       </div>
 
       {error && <Alert tone="error">{error}</Alert>}
+      {notice && <Alert tone="success">{notice}</Alert>}
 
       {editing && (
         <Card>
@@ -267,6 +303,22 @@ export default function ProjectDetailPage() {
                   value={editForm.endDate}
                   onChange={(event) => setEditForm((c) => ({ ...c, endDate: event.target.value }))}
                 />
+              </div>
+              <div>
+                <Label htmlFor="eCategory">{t("form.category")}</Label>
+                <select
+                  id="eCategory"
+                  value={editForm.categoryId}
+                  onChange={(event) => setEditForm((c) => ({ ...c, categoryId: event.target.value }))}
+                  className="w-full rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                >
+                  <option value="">{t("form.noCategory")}</option>
+                  {(categories ?? []).map((category) => (
+                    <option key={category.id} value={category.id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </select>
               </div>
               <div>
                 <Label htmlFor="eBudget">{t("form.budget")}</Label>

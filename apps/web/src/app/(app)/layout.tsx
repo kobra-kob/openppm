@@ -1,11 +1,13 @@
 "use client";
 
+import { useQuery } from "@tanstack/react-query";
 import {
   Command,
   FolderKanban,
   LayoutDashboard,
   LogOut,
   ShieldCheck,
+  Star,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -18,6 +20,13 @@ import { cn } from "@/components/ui";
 import { api } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
 import { useHydrated } from "@/lib/use-hydrated";
+
+interface FavoriteItem {
+  entityType: string;
+  entityId: string;
+  code: string;
+  name: string;
+}
 
 const NAV_SECTIONS = [
   {
@@ -43,6 +52,12 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const { user, accessToken, refreshToken, clear } = useAuthStore();
   const hydrated = useHydrated();
+
+  const { data: favorites } = useQuery({
+    queryKey: ["favorites"],
+    queryFn: () => api<FavoriteItem[]>("/favorites"),
+    enabled: hydrated && !!accessToken,
+  });
 
   useEffect(() => {
     if (hydrated && !accessToken) {
@@ -85,6 +100,28 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <span className="font-semibold tracking-tight">{t("common.appName")}</span>
         </div>
         <nav className="flex-1 space-y-4">
+          {(favorites ?? []).length > 0 && (
+            <div>
+              <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                {t("nav.sectionFavorites")}
+              </p>
+              {(favorites ?? []).map((favorite) => (
+                <Link
+                  key={favorite.entityId}
+                  href={`/projects/${favorite.entityId}`}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-(--radius-control) px-2 py-1.5 text-sm transition-colors",
+                    pathname === `/projects/${favorite.entityId}`
+                      ? "bg-accent/15 font-medium text-accent"
+                      : "text-foreground hover:bg-border-subtle",
+                  )}
+                >
+                  <Star size={14} className="shrink-0 text-[#ff9f0a]" fill="currentColor" />
+                  <span className="truncate">{favorite.name}</span>
+                </Link>
+              ))}
+            </div>
+          )}
           {NAV_SECTIONS.map((section) => (
             <div key={section.key}>
               <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted">

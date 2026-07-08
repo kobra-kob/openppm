@@ -36,8 +36,11 @@ describe("Auth (intégration)", () => {
     prisma = app.get(PrismaService);
 
     // Base propre (les rôles système seedés sont conservés).
+    await prisma.favorite.deleteMany();
     await prisma.projectMember.deleteMany();
     await prisma.project.deleteMany();
+    await prisma.projectTemplate.deleteMany();
+    await prisma.projectCategory.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.passwordReset.deleteMany();
     await prisma.auditLog.deleteMany();

@@ -1,13 +1,19 @@
 import { Module } from "@nestjs/common";
+import { CategoriesService } from "./application/categories.service";
 import { ProjectsService } from "./application/projects.service";
+import { TemplatesService } from "./application/templates.service";
 import { PROJECT_REPOSITORY } from "./domain/project.repository";
 import { PrismaProjectRepository } from "./infrastructure/prisma-project.repository";
+import { CategoriesController } from "./presentation/categories.controller";
 import { ProjectsController } from "./presentation/projects.controller";
+import { TemplatesController } from "./presentation/templates.controller";
 
 @Module({
-  controllers: [ProjectsController],
+  controllers: [ProjectsController, CategoriesController, TemplatesController],
   providers: [
     ProjectsService,
+    CategoriesService,
+    TemplatesService,
     { provide: PROJECT_REPOSITORY, useClass: PrismaProjectRepository },
   ],
   exports: [ProjectsService],

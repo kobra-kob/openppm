@@ -29,8 +29,10 @@ model Organization {
   roles       Role[]
   groups      Group[]
   auditLogs   AuditLog[]
-  invitations Invitation[]
-  projects    Project[]
+  invitations       Invitation[]
+  projects          Project[]
+  projectCategories ProjectCategory[]
+  projectTemplates  ProjectTemplate[]
 
   @@map("organizations")
 }
@@ -65,9 +67,11 @@ model User {
   passwordResets  PasswordReset[]
   auditLogs       AuditLog[]
   sentInvitations Invitation[]    @relation("InvitedBy")
-  managedProjects Project[]       @relation("ProjectManager")
-  createdProjects Project[]       @relation("ProjectCreator")
-  projectMembers  ProjectMember[]
+  managedProjects  Project[]         @relation("ProjectManager")
+  createdProjects  Project[]         @relation("ProjectCreator")
+  projectMembers   ProjectMember[]
+  favorites        Favorite[]
+  createdTemplates ProjectTemplate[]
 
   @@index([organizationId])
   @@map("users")
@@ -262,6 +266,7 @@ model Project {
   startDate      DateTime?     @map("start_date") @db.Date
   endDate        DateTime?     @map("end_date") @db.Date
   budget         Decimal?      @db.Decimal(14, 2)
+  categoryId     String?       @map("category_id") @db.Char(36)
   managerId      String?       @map("manager_id") @db.Char(36)
   createdById    String        @map("created_by_id") @db.Char(36)
   archivedAt     DateTime?     @map("archived_at")
@@ -269,9 +274,10 @@ model Project {
   updatedAt      DateTime      @updatedAt @map("updated_at")
   deletedAt      DateTime?     @map("deleted_at")
 
-  organization Organization    @relation(fields: [organizationId], references: [id])
-  manager      User?           @relation("ProjectManager", fields: [managerId], references: [id])
-  createdBy    User            @relation("ProjectCreator", fields: [createdById], references: [id])
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  category     ProjectCategory? @relation(fields: [categoryId], references: [id])
+  manager      User?            @relation("ProjectManager", fields: [managerId], references: [id])
+  createdBy    User             @relation("ProjectCreator", fields: [createdById], references: [id])
   members      ProjectMember[]
 
   @@unique([organizationId, code])
@@ -291,6 +297,59 @@ model ProjectMember {
 
   @@id([projectId, userId])
   @@map("project_members")
+}
+
+model ProjectCategory {
+  id             String   @id @default(uuid(7)) @db.Char(36)
+  organizationId String   @map("organization_id") @db.Char(36)
+  name           String   @db.VarChar(60)
+  /// Couleur hexadécimale (#rrggbb)
+  color          String   @default("#0071e3") @db.VarChar(7)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization      @relation(fields: [organizationId], references: [id])
+  projects     Project[]
+  templates    ProjectTemplate[]
+
+  @@unique([organizationId, name])
+  @@map("project_categories")
+}
+
+/// Modèle de projet : valeurs par défaut appliquées à la création.
+/// duration_days calcule la date de fin à partir de la date de début.
+model ProjectTemplate {
+  id             String   @id @default(uuid(7)) @db.Char(36)
+  organizationId String   @map("organization_id") @db.Char(36)
+  name           String   @db.VarChar(140)
+  description    String?  @db.Text
+  priority       Int      @default(3)
+  budget         Decimal? @db.Decimal(14, 2)
+  durationDays   Int?     @map("duration_days")
+  categoryId     String?  @map("category_id") @db.Char(36)
+  createdById    String   @map("created_by_id") @db.Char(36)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  category     ProjectCategory? @relation(fields: [categoryId], references: [id])
+  createdBy    User             @relation(fields: [createdById], references: [id])
+
+  @@unique([organizationId, name])
+  @@map("project_templates")
+}
+
+/// Favoris par utilisateur, polymorphe (entity_type + entity_id).
+model Favorite {
+  userId     String   @map("user_id") @db.Char(36)
+  entityType String   @map("entity_type") @db.VarChar(60)
+  entityId   String   @map("entity_id") @db.Char(36)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([userId, entityType, entityId])
+  @@map("favorites")
 }
 
 // ── Audit ──────────────────────────────────────────────────────────────

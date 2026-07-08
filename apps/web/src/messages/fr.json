@@ -87,6 +87,7 @@
     }
   },
   "nav": {
+    "sectionFavorites": "Favoris",
     "sectionSteering": "Pilotage",
     "dashboard": "Tableau de bord",
     "projects": "Projets",
@@ -101,6 +102,13 @@
     "new": "Nouveau projet",
     "searchPlaceholder": "Rechercher (nom, code)…",
     "allStatuses": "Tous les états",
+    "allCategories": "Toutes les catégories",
+    "categories": {
+      "manage": "Catégories",
+      "name": "Nom de la catégorie",
+      "add": "Ajouter",
+      "empty": "Aucune catégorie."
+    },
     "empty": "Aucun projet. Créez le premier !",
     "membersCount": "{count} membre(s)",
     "trash": "Corbeille",
@@ -129,6 +137,10 @@
     "form": {
       "name": "Nom du projet",
       "code": "Code (optionnel, ex. CRM-2026)",
+      "template": "Template",
+      "noTemplate": "Sans template",
+      "category": "Catégorie",
+      "noCategory": "Sans catégorie",
       "description": "Description",
       "priority": "Priorité",
       "startDate": "Début",
@@ -150,7 +162,11 @@
       "removeMember": "Retirer",
       "activityTitle": "Activité",
       "delete": "Mettre à la corbeille",
-      "changeStatus": "Changer d'état"
+      "changeStatus": "Changer d'état",
+      "saveAsTemplate": "Enregistrer comme template",
+      "templateSaved": "Template créé à partir de ce projet.",
+      "favoriteAdd": "Ajouter aux favoris",
+      "favoriteRemove": "Retirer des favoris"
     },
     "activityLabels": {
       "project_created": "a créé le projet",

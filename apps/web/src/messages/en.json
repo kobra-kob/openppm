@@ -87,6 +87,7 @@
     }
   },
   "nav": {
+    "sectionFavorites": "Favorites",
     "sectionSteering": "Steering",
     "dashboard": "Dashboard",
     "projects": "Projects",
@@ -101,6 +102,13 @@
     "new": "New project",
     "searchPlaceholder": "Search (name, code)…",
     "allStatuses": "All statuses",
+    "allCategories": "All categories",
+    "categories": {
+      "manage": "Categories",
+      "name": "Category name",
+      "add": "Add",
+      "empty": "No categories."
+    },
     "empty": "No projects yet. Create the first one!",
     "membersCount": "{count} member(s)",
     "trash": "Trash",
@@ -129,6 +137,10 @@
     "form": {
       "name": "Project name",
       "code": "Code (optional, e.g. CRM-2026)",
+      "template": "Template",
+      "noTemplate": "No template",
+      "category": "Category",
+      "noCategory": "No category",
       "description": "Description",
       "priority": "Priority",
       "startDate": "Start",
@@ -150,7 +162,11 @@
       "removeMember": "Remove",
       "activityTitle": "Activity",
       "delete": "Move to trash",
-      "changeStatus": "Change status"
+      "changeStatus": "Change status",
+      "saveAsTemplate": "Save as template",
+      "templateSaved": "Template created from this project.",
+      "favoriteAdd": "Add to favorites",
+      "favoriteRemove": "Remove from favorites"
     },
     "activityLabels": {
       "project_created": "created the project",

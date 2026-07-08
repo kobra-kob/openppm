@@ -1,12 +1,15 @@
 import { Injectable } from "@nestjs/common";
-import { Prisma, ProjectRole, ProjectStatus } from "@openppm/db";
+import { Prisma, ProjectCategory, ProjectRole, ProjectStatus } from "@openppm/db";
 import { PrismaService } from "../../../core/prisma/prisma.service";
 import {
+  CreateCategoryInput,
   CreateProjectInput,
+  CreateTemplateInput,
   ProjectActivityEntry,
   ProjectListFilters,
   ProjectRepository,
   ProjectWithRelations,
+  TemplateWithCategory,
   UpdateProjectInput,
 } from "../domain/project.repository";
 
@@ -19,6 +22,7 @@ const USER_SELECT = {
 
 const PROJECT_INCLUDE = {
   manager: { select: USER_SELECT },
+  category: true,
   members: { include: { user: { select: USER_SELECT } }, orderBy: { createdAt: "asc" } },
 } satisfies Prisma.ProjectInclude;
 
@@ -34,6 +38,7 @@ export class PrismaProjectRepository implements ProjectRepository {
       organizationId,
       deletedAt: null,
       ...(filters.status ? { status: filters.status } : { status: { not: ProjectStatus.archived } }),
+      ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
       ...(filters.search
         ? {
             OR: [
@@ -102,6 +107,7 @@ export class PrismaProjectRepository implements ProjectRepository {
         startDate: input.startDate ?? null,
         endDate: input.endDate ?? null,
         budget: input.budget ?? null,
+        categoryId: input.categoryId ?? null,
         managerId: input.managerId ?? null,
         createdById: input.createdById,
         members: {
@@ -177,6 +183,103 @@ export class PrismaProjectRepository implements ProjectRepository {
       select: { id: true },
     });
     return found !== null;
+  }
+
+  // ── Catégories ───────────────────────────────────────────────────────
+
+  listCategories(organizationId: string): Promise<ProjectCategory[]> {
+    return this.prisma.projectCategory.findMany({
+      where: { organizationId },
+      orderBy: { name: "asc" },
+    });
+  }
+
+  findCategory(organizationId: string, id: string): Promise<ProjectCategory | null> {
+    return this.prisma.projectCategory.findFirst({ where: { id, organizationId } });
+  }
+
+  async categoryNameTaken(organizationId: string, name: string): Promise<boolean> {
+    const found = await this.prisma.projectCategory.findUnique({
+      where: { organizationId_name: { organizationId, name } },
+      select: { id: true },
+    });
+    return found !== null;
+  }
+
+  createCategory(input: CreateCategoryInput): Promise<ProjectCategory> {
+    return this.prisma.projectCategory.create({
+      data: {
+        organizationId: input.organizationId,
+        name: input.name,
+        ...(input.color ? { color: input.color } : {}),
+      },
+    });
+  }
+
+  updateCategory(
+    id: string,
+    input: { name?: string; color?: string },
+  ): Promise<ProjectCategory> {
+    return this.prisma.projectCategory.update({ where: { id }, data: input });
+  }
+
+  async deleteCategory(id: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.project.updateMany({
+        where: { categoryId: id },
+        data: { categoryId: null },
+      }),
+      this.prisma.projectTemplate.updateMany({
+        where: { categoryId: id },
+        data: { categoryId: null },
+      }),
+      this.prisma.projectCategory.delete({ where: { id } }),
+    ]);
+  }
+
+  // ── Templates ────────────────────────────────────────────────────────
+
+  listTemplates(organizationId: string): Promise<TemplateWithCategory[]> {
+    return this.prisma.projectTemplate.findMany({
+      where: { organizationId },
+      include: { category: true },
+      orderBy: { name: "asc" },
+    });
+  }
+
+  findTemplate(organizationId: string, id: string): Promise<TemplateWithCategory | null> {
+    return this.prisma.projectTemplate.findFirst({
+      where: { id, organizationId },
+      include: { category: true },
+    });
+  }
+
+  async templateNameTaken(organizationId: string, name: string): Promise<boolean> {
+    const found = await this.prisma.projectTemplate.findUnique({
+      where: { organizationId_name: { organizationId, name } },
+      select: { id: true },
+    });
+    return found !== null;
+  }
+
+  createTemplate(input: CreateTemplateInput): Promise<TemplateWithCategory> {
+    return this.prisma.projectTemplate.create({
+      data: {
+        organizationId: input.organizationId,
+        name: input.name,
+        description: input.description ?? null,
+        priority: input.priority ?? 3,
+        budget: input.budget ?? null,
+        durationDays: input.durationDays ?? null,
+        categoryId: input.categoryId ?? null,
+        createdById: input.createdById,
+      },
+      include: { category: true },
+    });
+  }
+
+  async deleteTemplate(id: string): Promise<void> {
+    await this.prisma.projectTemplate.delete({ where: { id } });
   }
 
   async listActivity(

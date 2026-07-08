@@ -6,6 +6,7 @@ import { ThrottlerGuard, ThrottlerModule } from "@nestjs/throttler";
 import { LoggerModule } from "nestjs-pino";
 import { validateEnv } from "./config/env.validation";
 import { AuditModule } from "./core/audit/audit.module";
+import { FavoritesModule } from "./core/favorites/favorites.module";
 import { HealthController } from "./core/health/health.controller";
 import { MailerModule } from "./core/mailer/mailer.module";
 import { PrismaModule } from "./core/prisma/prisma.module";
@@ -56,6 +57,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     }),
     PrismaModule,
     AuditModule,
+    FavoritesModule,
     MailerModule,
     AuthModule,
     MembersModule,

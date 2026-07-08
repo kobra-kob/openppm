@@ -1,10 +1,12 @@
 import type {
   Prisma,
   Project,
+  ProjectCategory,
   ProjectHealth,
   ProjectMember,
   ProjectRole,
   ProjectStatus,
+  ProjectTemplate,
 } from "@openppm/db";
 
 export interface MemberUser {
@@ -16,12 +18,14 @@ export interface MemberUser {
 
 export type ProjectWithRelations = Project & {
   manager: MemberUser | null;
+  category: ProjectCategory | null;
   members: Array<ProjectMember & { user: MemberUser }>;
 };
 
 export interface ProjectListFilters {
   search?: string;
   status?: ProjectStatus;
+  categoryId?: string;
   page: number;
   pageSize: number;
 }
@@ -35,6 +39,7 @@ export interface CreateProjectInput {
   startDate?: Date;
   endDate?: Date;
   budget?: number;
+  categoryId?: string;
   managerId?: string;
   createdById: string;
   /** Membres initiaux (créateur + manager), rôle par utilisateur. */
@@ -49,8 +54,30 @@ export interface UpdateProjectInput {
   startDate?: Date | null;
   endDate?: Date | null;
   budget?: number | null;
+  categoryId?: string | null;
   managerId?: string | null;
 }
+
+export interface CreateCategoryInput {
+  organizationId: string;
+  name: string;
+  color?: string;
+}
+
+export interface CreateTemplateInput {
+  organizationId: string;
+  name: string;
+  description?: string;
+  priority?: number;
+  budget?: number;
+  durationDays?: number;
+  categoryId?: string;
+  createdById: string;
+}
+
+export type TemplateWithCategory = ProjectTemplate & {
+  category: ProjectCategory | null;
+};
 
 export interface ProjectActivityEntry {
   id: string;
@@ -92,6 +119,25 @@ export interface ProjectRepository {
     projectId: string,
     limit: number,
   ): Promise<ProjectActivityEntry[]>;
+
+  // Catégories
+  listCategories(organizationId: string): Promise<ProjectCategory[]>;
+  findCategory(organizationId: string, id: string): Promise<ProjectCategory | null>;
+  categoryNameTaken(organizationId: string, name: string): Promise<boolean>;
+  createCategory(input: CreateCategoryInput): Promise<ProjectCategory>;
+  updateCategory(
+    id: string,
+    input: { name?: string; color?: string },
+  ): Promise<ProjectCategory>;
+  /** Supprime la catégorie et détache les projets/templates associés. */
+  deleteCategory(id: string): Promise<void>;
+
+  // Templates
+  listTemplates(organizationId: string): Promise<TemplateWithCategory[]>;
+  findTemplate(organizationId: string, id: string): Promise<TemplateWithCategory | null>;
+  templateNameTaken(organizationId: string, name: string): Promise<boolean>;
+  createTemplate(input: CreateTemplateInput): Promise<TemplateWithCategory>;
+  deleteTemplate(id: string): Promise<void>;
 }
 
 export const PROJECT_REPOSITORY = Symbol("PROJECT_REPOSITORY");
