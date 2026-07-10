@@ -72,6 +72,9 @@ model User {
   projectMembers   ProjectMember[]
   favorites        Favorite[]
   createdTemplates ProjectTemplate[]
+  createdTasks     Task[]            @relation("TaskCreator")
+  taskAssignments  TaskAssignee[]
+  timeEntries      TimeEntry[]
 
   @@index([organizationId])
   @@map("users")
@@ -279,6 +282,7 @@ model Project {
   manager      User?            @relation("ProjectManager", fields: [managerId], references: [id])
   createdBy    User             @relation("ProjectCreator", fields: [createdById], references: [id])
   members      ProjectMember[]
+  tasks        Task[]
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -337,6 +341,115 @@ model ProjectTemplate {
 
   @@unique([organizationId, name])
   @@map("project_templates")
+}
+
+// ── Tâches ─────────────────────────────────────────────────────────────
+
+enum TaskStatus {
+  todo
+  in_progress
+  done
+  cancelled
+}
+
+model Task {
+  id             String     @id @default(uuid(7)) @db.Char(36)
+  organizationId String     @map("organization_id") @db.Char(36)
+  projectId      String     @map("project_id") @db.Char(36)
+  parentId       String?    @map("parent_id") @db.Char(36)
+  title          String     @db.VarChar(200)
+  description    String?    @db.Text
+  status         TaskStatus @default(todo)
+  /// Priorité 1 (haute) à 5 (basse)
+  priority       Int        @default(3)
+  startDate      DateTime?  @map("start_date") @db.Date
+  dueDate        DateTime?  @map("due_date") @db.Date
+  estimateHours  Decimal?   @map("estimate_hours") @db.Decimal(7, 2)
+  position       Int        @default(0)
+  createdById    String     @map("created_by_id") @db.Char(36)
+  completedAt    DateTime?  @map("completed_at")
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+  deletedAt      DateTime?  @map("deleted_at")
+
+  project      Project          @relation(fields: [projectId], references: [id])
+  parent       Task?            @relation("Subtasks", fields: [parentId], references: [id])
+  subtasks     Task[]           @relation("Subtasks")
+  createdBy    User             @relation("TaskCreator", fields: [createdById], references: [id])
+  assignees    TaskAssignee[]
+  checklist    ChecklistItem[]
+  /// Dépendances où cette tâche est le successeur (ses prérequis)
+  predecessors TaskDependency[] @relation("Successor")
+  /// Dépendances où cette tâche est le prédécesseur
+  successors   TaskDependency[] @relation("Predecessor")
+  timeEntries  TimeEntry[]
+
+  @@index([projectId, status])
+  @@index([projectId, parentId])
+  @@index([organizationId])
+  @@map("tasks")
+}
+
+model TaskAssignee {
+  taskId    String   @map("task_id") @db.Char(36)
+  userId    String   @map("user_id") @db.Char(36)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, userId])
+  @@map("task_assignees")
+}
+
+model ChecklistItem {
+  id        String   @id @default(uuid(7)) @db.Char(36)
+  taskId    String   @map("task_id") @db.Char(36)
+  label     String   @db.VarChar(300)
+  isDone    Boolean  @default(false) @map("is_done")
+  position  Int      @default(0)
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@index([taskId])
+  @@map("checklist_items")
+}
+
+/// Dépendance fin → début (FS) : le successeur ne démarre qu'après le
+/// prédécesseur. Types SS/FF/SF au lot Gantt (M4).
+model TaskDependency {
+  id            String   @id @default(uuid(7)) @db.Char(36)
+  predecessorId String   @map("predecessor_id") @db.Char(36)
+  successorId   String   @map("successor_id") @db.Char(36)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  predecessor Task @relation("Predecessor", fields: [predecessorId], references: [id], onDelete: Cascade)
+  successor   Task @relation("Successor", fields: [successorId], references: [id], onDelete: Cascade)
+
+  @@unique([predecessorId, successorId])
+  @@index([successorId])
+  @@map("task_dependencies")
+}
+
+model TimeEntry {
+  id             String   @id @default(uuid(7)) @db.Char(36)
+  organizationId String   @map("organization_id") @db.Char(36)
+  taskId         String   @map("task_id") @db.Char(36)
+  userId         String   @map("user_id") @db.Char(36)
+  spentOn        DateTime @map("spent_on") @db.Date
+  hours          Decimal  @db.Decimal(6, 2)
+  note           String?  @db.VarChar(500)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  task Task @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([taskId])
+  @@index([organizationId, userId, spentOn])
+  @@map("time_entries")
 }
 
 /// Favoris par utilisateur, polymorphe (entity_type + entity_id).

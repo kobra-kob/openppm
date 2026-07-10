@@ -24,6 +24,12 @@
     "USER_NOT_IN_ORG": "L'utilisateur doit appartenir à l'organisation.",
     "MEMBER_ALREADY_EXISTS": "Cette personne est déjà membre du projet.",
     "PROJECT_NOT_FOUND": "Projet introuvable.",
+    "TASK_NOT_FOUND": "Tâche introuvable.",
+    "PARENT_TASK_NOT_FOUND": "Tâche parente introuvable.",
+    "ASSIGNEE_NOT_PROJECT_MEMBER": "Les assignés doivent être membres du projet.",
+    "ASSIGNEE_ALREADY_EXISTS": "Déjà assigné(e) à cette tâche.",
+    "DEPENDENCY_ALREADY_EXISTS": "Cette dépendance existe déjà.",
+    "DEPENDENCY_CYCLE": "Impossible : cette dépendance créerait un cycle.",
     "INVITATION_ALREADY_PENDING": "Une invitation est déjà en attente pour cet email.",
     "INVALID_MFA_CODE": "Code de vérification invalide.",
     "MFA_CHALLENGE_EXPIRED": "Le délai est dépassé, reconnectez-vous.",
@@ -178,6 +184,32 @@
       "project_member_removed": "a retiré un membre",
       "project_member_role_changed": "a changé le rôle d'un membre"
     }
+  },
+  "tasks": {
+    "title": "Tâches",
+    "addPlaceholder": "Nouvelle tâche…",
+    "add": "Ajouter",
+    "subtaskPlaceholder": "Nouvelle sous-tâche…",
+    "empty": "Aucune tâche pour l'instant.",
+    "status": {
+      "todo": "À faire",
+      "in_progress": "En cours",
+      "done": "Terminée",
+      "cancelled": "Annulée"
+    },
+    "checklist": "Checklist",
+    "checklistPlaceholder": "Nouvel élément…",
+    "assignees": "Assignés",
+    "assign": "Assigner",
+    "dependencies": "Prérequis (fin → début)",
+    "addDependency": "Ajouter un prérequis…",
+    "time": "Temps passé",
+    "hours": "Heures",
+    "log": "Saisir",
+    "notePlaceholder": "Note (optionnel)",
+    "totalSpent": "{hours} h",
+    "delete": "Supprimer la tâche",
+    "deleteEntry": "Supprimer la saisie"
   },
   "members": {
     "title": "Membres",

@@ -28,6 +28,11 @@ describe("2FA TOTP (intégration)", () => {
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.timeEntry.deleteMany();
+    await prisma.taskDependency.deleteMany();
+    await prisma.checklistItem.deleteMany();
+    await prisma.taskAssignee.deleteMany();
+    await prisma.task.deleteMany();
     await prisma.favorite.deleteMany();
     await prisma.projectMember.deleteMany();
     await prisma.project.deleteMany();

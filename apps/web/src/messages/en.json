@@ -24,6 +24,12 @@
     "USER_NOT_IN_ORG": "The user must belong to the organization.",
     "MEMBER_ALREADY_EXISTS": "This person is already a project member.",
     "PROJECT_NOT_FOUND": "Project not found.",
+    "TASK_NOT_FOUND": "Task not found.",
+    "PARENT_TASK_NOT_FOUND": "Parent task not found.",
+    "ASSIGNEE_NOT_PROJECT_MEMBER": "Assignees must be project members.",
+    "ASSIGNEE_ALREADY_EXISTS": "Already assigned to this task.",
+    "DEPENDENCY_ALREADY_EXISTS": "This dependency already exists.",
+    "DEPENDENCY_CYCLE": "Impossible: this dependency would create a cycle.",
     "INVITATION_ALREADY_PENDING": "An invitation is already pending for this email.",
     "INVALID_MFA_CODE": "Invalid verification code.",
     "MFA_CHALLENGE_EXPIRED": "The challenge expired, please sign in again.",
@@ -178,6 +184,32 @@
       "project_member_removed": "removed a member",
       "project_member_role_changed": "changed a member's role"
     }
+  },
+  "tasks": {
+    "title": "Tasks",
+    "addPlaceholder": "New task…",
+    "add": "Add",
+    "subtaskPlaceholder": "New subtask…",
+    "empty": "No tasks yet.",
+    "status": {
+      "todo": "To do",
+      "in_progress": "In progress",
+      "done": "Done",
+      "cancelled": "Cancelled"
+    },
+    "checklist": "Checklist",
+    "checklistPlaceholder": "New item…",
+    "assignees": "Assignees",
+    "assign": "Assign",
+    "dependencies": "Prerequisites (finish → start)",
+    "addDependency": "Add a prerequisite…",
+    "time": "Time spent",
+    "hours": "Hours",
+    "log": "Log",
+    "notePlaceholder": "Note (optional)",
+    "totalSpent": "{hours} h",
+    "delete": "Delete task",
+    "deleteEntry": "Delete entry"
   },
   "members": {
     "title": "Members",

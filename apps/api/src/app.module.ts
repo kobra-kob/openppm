@@ -13,6 +13,7 @@ import { PrismaModule } from "./core/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { MembersModule } from "./modules/members/members.module";
 import { ProjectModule } from "./modules/project/project.module";
+import { TaskModule } from "./modules/task/task.module";
 import { JwtAuthGuard } from "./modules/auth/infrastructure/guards/jwt-auth.guard";
 import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
 
@@ -62,6 +63,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     AuthModule,
     MembersModule,
     ProjectModule,
+    TaskModule,
   ],
   controllers: [HealthController],
   providers: [

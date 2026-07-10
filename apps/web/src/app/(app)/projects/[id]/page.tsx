@@ -13,10 +13,12 @@ import {
   CategoryBadge,
   FavoriteStar,
   HealthDot,
+  ORG_WIDE_ROLES,
   ProjectRole,
   ProjectView,
   StatusBadge,
 } from "@/features/projects/shared";
+import { TasksSection } from "@/features/projects/tasks-section";
 
 interface ActivityEntry {
   id: string;
@@ -470,6 +472,17 @@ export default function ProjectDetailPage() {
           )}
         </Card>
       </div>
+
+      <TasksSection
+        projectId={project.id}
+        members={project.members}
+        canWork={
+          (currentUser?.roles.some((role) => ORG_WIDE_ROLES.includes(role)) ?? false) ||
+          project.members.some(
+            (member) => member.userId === currentUser?.id && member.role !== "observer",
+          )
+        }
+      />
 
       <Card>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">
