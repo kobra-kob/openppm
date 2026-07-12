@@ -185,6 +185,29 @@
       "project_member_role_changed": "changed a member's role"
     }
   },
+  "board": {
+    "title": "Board",
+    "open": "Board",
+    "searchPlaceholder": "Filter cards…",
+    "allAssignees": "All assignees",
+    "swimlanes": {
+      "none": "No swimlanes",
+      "assignee": "Swimlanes by assignee",
+      "priority": "Swimlanes by priority"
+    },
+    "unassigned": "Unassigned",
+    "priorityLane": "Priority P{value}",
+    "empty": "No cards",
+    "columns": {
+      "manage": "Columns",
+      "name": "Name",
+      "wip": "WIP limit",
+      "status": "Applied status",
+      "noStatus": "None",
+      "add": "Add",
+      "delete": "Delete column"
+    }
+  },
   "tasks": {
     "title": "Tasks",
     "addPlaceholder": "New task…",

@@ -28,6 +28,8 @@ describe("Catégories / templates / favoris (intégration)", () => {
     await prisma.checklistItem.deleteMany();
     await prisma.taskAssignee.deleteMany();
     await prisma.task.deleteMany();
+    await prisma.boardColumn.deleteMany();
+    await prisma.board.deleteMany();
     await prisma.favorite.deleteMany();
     await prisma.projectMember.deleteMany();
     await prisma.project.deleteMany();

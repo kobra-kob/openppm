@@ -1,7 +1,15 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, BookmarkPlus, History, Info, Trash2, UsersRound } from "lucide-react";
+import {
+  ArrowLeft,
+  BookmarkPlus,
+  History,
+  Info,
+  SquareKanban,
+  Trash2,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -40,6 +48,7 @@ export default function ProjectDetailPage() {
   const id = params.id;
   const t = useTranslations("projects");
   const tMembers = useTranslations("members");
+  const tBoard = useTranslations("board");
   const tErrors = useTranslations("errors");
   const locale = useLocale();
   const router = useRouter();
@@ -216,6 +225,12 @@ export default function ProjectDetailPage() {
           <FavoriteStar projectId={project.id} isFavorite={project.isFavorite} />
         </div>
         <div className="flex items-center gap-2">
+          <Link
+            href={`/projects/${project.id}/board`}
+            className="inline-flex items-center gap-2 rounded-(--radius-control) px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-border-subtle"
+          >
+            <SquareKanban size={16} /> {tBoard("open")}
+          </Link>
           {project.allowedTransitions.length > 0 && (
             <select
               value=""

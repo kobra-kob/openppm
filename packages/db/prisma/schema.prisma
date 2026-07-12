@@ -283,6 +283,7 @@ model Project {
   createdBy    User             @relation("ProjectCreator", fields: [createdById], references: [id])
   members      ProjectMember[]
   tasks        Task[]
+  board        Board?
 
   @@unique([organizationId, code])
   @@index([organizationId, status])
@@ -366,6 +367,9 @@ model Task {
   dueDate        DateTime?  @map("due_date") @db.Date
   estimateHours  Decimal?   @map("estimate_hours") @db.Decimal(7, 2)
   position       Int        @default(0)
+  boardColumnId  String?    @map("board_column_id") @db.Char(36)
+  /// Ordre de la carte dans sa colonne Kanban
+  boardRank      Int        @default(0) @map("board_rank")
   createdById    String     @map("created_by_id") @db.Char(36)
   completedAt    DateTime?  @map("completed_at")
   createdAt      DateTime   @default(now()) @map("created_at")
@@ -383,6 +387,7 @@ model Task {
   /// Dépendances où cette tâche est le prédécesseur
   successors   TaskDependency[] @relation("Predecessor")
   timeEntries  TimeEntry[]
+  boardColumn  BoardColumn?     @relation(fields: [boardColumnId], references: [id])
 
   @@index([projectId, status])
   @@index([projectId, parentId])
@@ -450,6 +455,43 @@ model TimeEntry {
   @@index([taskId])
   @@index([organizationId, userId, spentOn])
   @@map("time_entries")
+}
+
+// ── Kanban ─────────────────────────────────────────────────────────────
+
+/// Board Kanban — un par projet en Phase 1, créé paresseusement avec des
+/// colonnes par défaut mappées aux statuts des tâches.
+model Board {
+  id             String   @id @default(uuid(7)) @db.Char(36)
+  organizationId String   @map("organization_id") @db.Char(36)
+  projectId      String   @unique @map("project_id") @db.Char(36)
+  name           String   @default("Board") @db.VarChar(80)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  project Project       @relation(fields: [projectId], references: [id])
+  columns BoardColumn[]
+
+  @@map("boards")
+}
+
+model BoardColumn {
+  id       String      @id @default(uuid(7)) @db.Char(36)
+  boardId  String      @map("board_id") @db.Char(36)
+  name     String      @db.VarChar(60)
+  position Int         @default(0)
+  /// Limite WIP indicative (surbrillance si dépassée, non bloquante)
+  wipLimit Int?        @map("wip_limit")
+  /// Statut appliqué aux tâches déposées dans cette colonne
+  mapsToStatus TaskStatus? @map("maps_to_status")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  board Board  @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks Task[]
+
+  @@index([boardId, position])
+  @@map("board_columns")
 }
 
 /// Favoris par utilisateur, polymorphe (entity_type + entity_id).
