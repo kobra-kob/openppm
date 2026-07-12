@@ -138,6 +138,20 @@ export class ListProjectsQuery {
   @IsUUID()
   categoryId?: string;
 
+  @ApiPropertyOptional({
+    enum: ["mine", "all"],
+    default: "all",
+    description: "mine = projets dont je suis membre, chef de projet ou créateur",
+  })
+  @IsOptional()
+  @IsIn(["mine", "all"])
+  scope?: "mine" | "all";
+
+  @ApiPropertyOptional({ enum: ["recent", "priority"], default: "priority" })
+  @IsOptional()
+  @IsIn(["recent", "priority"])
+  sort?: "recent" | "priority";
+
   @ApiPropertyOptional({ default: 1 })
   @IsOptional()
   @Transform(({ value }) => Number(value))

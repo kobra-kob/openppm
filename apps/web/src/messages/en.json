@@ -185,6 +185,24 @@
       "project_member_role_changed": "changed a member's role"
     }
   },
+  "workspace": {
+    "title": "Project Workspace",
+    "myProjects": "My projects",
+    "allProjects": "All projects",
+    "searchPlaceholder": "Search by name or code…",
+    "sortRecent": "Recent",
+    "sortPriority": "Priority",
+    "manager": "Project manager",
+    "noManager": "No project manager",
+    "startDate": "Start Date",
+    "endDate": "End Date",
+    "empty": "No projects in this view."
+  },
+  "projectNav": {
+    "details": "Details",
+    "tasks": "Tasks",
+    "board": "Board"
+  },
   "board": {
     "title": "Board",
     "open": "Board",

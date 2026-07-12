@@ -1,32 +1,14 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  ArrowLeft,
-  BookmarkPlus,
-  History,
-  Info,
-  SquareKanban,
-  Trash2,
-  UsersRound,
-} from "lucide-react";
-import Link from "next/link";
+import { BookmarkPlus, History, Info, Trash2, UsersRound } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { Alert, Button, Card, Input, Label } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
-import {
-  CategoryBadge,
-  FavoriteStar,
-  HealthDot,
-  ORG_WIDE_ROLES,
-  ProjectRole,
-  ProjectView,
-  StatusBadge,
-} from "@/features/projects/shared";
-import { TasksSection } from "@/features/projects/tasks-section";
+import { ProjectRole, ProjectView } from "@/features/projects/shared";
 
 interface ActivityEntry {
   id: string;
@@ -43,12 +25,11 @@ interface OrgMember {
 
 const PROJECT_ROLES: ProjectRole[] = ["manager", "member", "observer"];
 
-export default function ProjectDetailPage() {
+export default function ProjectDetailsPage() {
   const params = useParams<{ id: string }>();
   const id = params.id;
   const t = useTranslations("projects");
   const tMembers = useTranslations("members");
-  const tBoard = useTranslations("board");
   const tErrors = useTranslations("errors");
   const locale = useLocale();
   const router = useRouter();
@@ -130,7 +111,20 @@ export default function ProjectDetailPage() {
 
   const deleteMutation = useMutation({
     mutationFn: () => api<void>(`/projects/${id}`, { method: "DELETE" }),
-    onSuccess: () => router.push("/projects"),
+    onSuccess: () => router.push("/"),
+    onError,
+  });
+
+  const saveTemplateMutation = useMutation({
+    mutationFn: () =>
+      api<{ id: string }>("/project-templates", {
+        method: "POST",
+        body: JSON.stringify({ name: project!.name, fromProjectId: id }),
+      }),
+    onSuccess: () => {
+      setNotice(t("detail.templateSaved"));
+      void queryClient.invalidateQueries({ queryKey: ["project-templates"] });
+    },
     onError,
   });
 
@@ -151,19 +145,6 @@ export default function ProjectDetailPage() {
     mutationFn: (userId: string) =>
       api<ProjectView>(`/projects/${id}/members/${userId}`, { method: "DELETE" }),
     onSuccess: refresh,
-    onError,
-  });
-
-  const saveTemplateMutation = useMutation({
-    mutationFn: () =>
-      api<{ id: string }>("/project-templates", {
-        method: "POST",
-        body: JSON.stringify({ name: project!.name, fromProjectId: id }),
-      }),
-    onSuccess: () => {
-      setNotice(t("detail.templateSaved"));
-      void queryClient.invalidateQueries({ queryKey: ["project-templates"] });
-    },
     onError,
   });
 
@@ -207,67 +188,44 @@ export default function ProjectDetailPage() {
     value ? new Date(value).toLocaleDateString(locale) : t("detail.none");
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <Link
-        href="/projects"
-        className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
-      >
-        <ArrowLeft size={14} /> {t("backToList")}
-      </Link>
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
-          <span className="font-mono text-sm text-muted">{project.code}</span>
-          <StatusBadge status={project.status} />
-          <HealthDot health={project.health} />
-          <CategoryBadge category={project.category} />
-          <FavoriteStar projectId={project.id} isFavorite={project.isFavorite} />
-        </div>
-        <div className="flex items-center gap-2">
-          <Link
-            href={`/projects/${project.id}/board`}
-            className="inline-flex items-center gap-2 rounded-(--radius-control) px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-border-subtle"
-          >
-            <SquareKanban size={16} /> {tBoard("open")}
-          </Link>
-          {project.allowedTransitions.length > 0 && (
-            <select
-              value=""
-              onChange={(event) => {
-                if (event.target.value) statusMutation.mutate(event.target.value);
-              }}
-              className="rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm focus:border-accent focus:outline-none"
-            >
-              <option value="">{t("detail.changeStatus")}</option>
-              {project.allowedTransitions.map((status) => (
-                <option key={status} value={status}>
-                  {t(`status.${status}`)}
-                </option>
-              ))}
-            </select>
-          )}
-          <Button
-            variant="ghost"
-            onClick={() => {
-              setNotice(null);
-              saveTemplateMutation.mutate();
+    <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-2">
+        {project.allowedTransitions.length > 0 && (
+          <select
+            value=""
+            onChange={(event) => {
+              if (event.target.value) statusMutation.mutate(event.target.value);
             }}
-            disabled={saveTemplateMutation.isPending}
+            className="rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm focus:border-accent focus:outline-none"
           >
-            <BookmarkPlus size={16} /> {t("detail.saveAsTemplate")}
-          </Button>
-          <Button variant="ghost" onClick={startEditing}>
-            {t("form.edit")}
-          </Button>
-          <Button
-            variant="danger"
-            onClick={() => deleteMutation.mutate()}
-            disabled={deleteMutation.isPending}
-          >
-            <Trash2 size={16} /> {t("detail.delete")}
-          </Button>
-        </div>
+            <option value="">{t("detail.changeStatus")}</option>
+            {project.allowedTransitions.map((status) => (
+              <option key={status} value={status}>
+                {t(`status.${status}`)}
+              </option>
+            ))}
+          </select>
+        )}
+        <Button
+          variant="ghost"
+          onClick={() => {
+            setNotice(null);
+            saveTemplateMutation.mutate();
+          }}
+          disabled={saveTemplateMutation.isPending}
+        >
+          <BookmarkPlus size={16} /> {t("detail.saveAsTemplate")}
+        </Button>
+        <Button variant="ghost" onClick={startEditing}>
+          {t("form.edit")}
+        </Button>
+        <Button
+          variant="danger"
+          onClick={() => deleteMutation.mutate()}
+          disabled={deleteMutation.isPending}
+        >
+          <Trash2 size={16} /> {t("detail.delete")}
+        </Button>
       </div>
 
       {error && <Alert tone="error">{error}</Alert>}
@@ -296,9 +254,9 @@ export default function ProjectDetailPage() {
                   onChange={(event) => setEditForm((c) => ({ ...c, priority: event.target.value }))}
                   className="w-full rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm focus:border-accent focus:outline-none"
                 >
-                  {[1, 2, 3, 4, 5].map((p) => (
-                    <option key={p} value={p}>
-                      {t("priorityShort", { value: p })}
+                  {[1, 2, 3, 4, 5].map((priority) => (
+                    <option key={priority} value={priority}>
+                      {t("priorityShort", { value: priority })}
                     </option>
                   ))}
                 </select>
@@ -487,17 +445,6 @@ export default function ProjectDetailPage() {
           )}
         </Card>
       </div>
-
-      <TasksSection
-        projectId={project.id}
-        members={project.members}
-        canWork={
-          (currentUser?.roles.some((role) => ORG_WIDE_ROLES.includes(role)) ?? false) ||
-          project.members.some(
-            (member) => member.userId === currentUser?.id && member.role !== "observer",
-          )
-        }
-      />
 
       <Card>
         <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">

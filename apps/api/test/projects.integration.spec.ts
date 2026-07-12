@@ -162,6 +162,34 @@ describe("Projects (intégration)", () => {
       expect(response.body.items.map((p: { code: string }) => p.code)).toContain("P-0001");
     });
 
+    it("scope=mine ne montre que les projets où l'on est impliqué", async () => {
+      // Emma (employée) n'est membre d'aucun projet pour l'instant
+      const mine = await request(server())
+        .get("/api/v1/projects?scope=mine")
+        .set("Authorization", `Bearer ${employeeToken}`)
+        .expect(200);
+      expect(mine.body.total).toBe(0);
+      // Alice a tout créé : elle voit tout en scope=mine
+      const alice = await request(server())
+        .get("/api/v1/projects?scope=mine")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .expect(200);
+      expect(alice.body.total).toBeGreaterThan(0);
+    });
+
+    it("sort=recent trie par dernière modification", async () => {
+      await request(server())
+        .patch(`/api/v1/projects/${projectId}`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ description: "touché pour remonter" })
+        .expect(200);
+      const response = await request(server())
+        .get("/api/v1/projects?sort=recent")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .expect(200);
+      expect(response.body.items[0].id).toBe(projectId);
+    });
+
     it("une autre organisation ne voit rien (isolation)", async () => {
       const list = await request(server())
         .get("/api/v1/projects")

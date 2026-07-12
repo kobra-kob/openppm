@@ -1,8 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, CalendarDays, CheckSquare, Columns3, Plus, Trash2 } from "lucide-react";
-import Link from "next/link";
+import { CalendarDays, CheckSquare, Columns3, Plus, Trash2 } from "lucide-react";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { DragEvent, useState } from "react";
@@ -160,15 +159,7 @@ export default function BoardPage() {
 
   return (
     <div className="space-y-4">
-      <Link
-        href={`/projects/${projectId}`}
-        className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
-      >
-        <ArrowLeft size={14} /> {project?.name ?? ""}
-      </Link>
-
       <div className="flex flex-wrap items-center gap-2">
-        <h1 className="mr-2 text-2xl font-semibold tracking-tight">{t("title")}</h1>
         <Input
           placeholder={t("searchPlaceholder")}
           value={search}

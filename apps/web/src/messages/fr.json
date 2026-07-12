@@ -185,6 +185,24 @@
       "project_member_role_changed": "a changé le rôle d'un membre"
     }
   },
+  "workspace": {
+    "title": "Project Workspace",
+    "myProjects": "Mes projets",
+    "allProjects": "Tous les projets",
+    "searchPlaceholder": "Rechercher par nom ou code…",
+    "sortRecent": "Récents",
+    "sortPriority": "Priorité",
+    "manager": "Chef de projet",
+    "noManager": "Sans chef de projet",
+    "startDate": "Début",
+    "endDate": "Fin",
+    "empty": "Aucun projet dans cette vue."
+  },
+  "projectNav": {
+    "details": "Détails",
+    "tasks": "Tâches",
+    "board": "Board"
+  },
   "board": {
     "title": "Board",
     "open": "Board",

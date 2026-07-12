@@ -39,20 +39,40 @@ export class PrismaProjectRepository implements ProjectRepository {
       deletedAt: null,
       ...(filters.status ? { status: filters.status } : { status: { not: ProjectStatus.archived } }),
       ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
-      ...(filters.search
-        ? {
-            OR: [
-              { name: { contains: filters.search } },
-              { code: { contains: filters.search } },
-            ],
-          }
-        : {}),
+      // AND explicite : plusieurs blocs OR (portée + recherche) doivent se cumuler
+      AND: [
+        ...(filters.memberUserId
+          ? [
+              {
+                OR: [
+                  { managerId: filters.memberUserId },
+                  { createdById: filters.memberUserId },
+                  { members: { some: { userId: filters.memberUserId } } },
+                ],
+              },
+            ]
+          : []),
+        ...(filters.search
+          ? [
+              {
+                OR: [
+                  { name: { contains: filters.search } },
+                  { code: { contains: filters.search } },
+                ],
+              },
+            ]
+          : []),
+      ],
     };
+    const orderBy: Prisma.ProjectOrderByWithRelationInput[] =
+      filters.sort === "recent"
+        ? [{ updatedAt: "desc" }]
+        : [{ priority: "asc" }, { updatedAt: "desc" }];
     const [items, total] = await this.prisma.$transaction([
       this.prisma.project.findMany({
         where,
         include: PROJECT_INCLUDE,
-        orderBy: [{ priority: "asc" }, { updatedAt: "desc" }],
+        orderBy,
         skip: (filters.page - 1) * filters.pageSize,
         take: filters.pageSize,
       }),

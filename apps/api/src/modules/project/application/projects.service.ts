@@ -119,6 +119,8 @@ export class ProjectsService {
         search: query.search,
         status: query.status,
         categoryId: query.categoryId,
+        memberUserId: query.scope === "mine" ? payload.sub : undefined,
+        sort: query.sort,
         page: query.page,
         pageSize: query.pageSize,
       }),

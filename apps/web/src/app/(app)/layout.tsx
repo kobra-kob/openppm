@@ -4,7 +4,6 @@ import { useQuery } from "@tanstack/react-query";
 import {
   Command,
   FolderKanban,
-  LayoutDashboard,
   LogOut,
   ShieldCheck,
   Star,
@@ -31,10 +30,7 @@ interface FavoriteItem {
 const NAV_SECTIONS = [
   {
     key: "sectionSteering",
-    items: [
-      { href: "/", key: "dashboard", icon: LayoutDashboard },
-      { href: "/projects", key: "projects", icon: FolderKanban },
-    ],
+    items: [{ href: "/", key: "projects", icon: FolderKanban }],
   },
   {
     key: "sectionOrganization",

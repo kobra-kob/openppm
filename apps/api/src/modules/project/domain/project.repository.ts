@@ -26,6 +26,9 @@ export interface ProjectListFilters {
   search?: string;
   status?: ProjectStatus;
   categoryId?: string;
+  /** Restreint aux projets dont cet utilisateur est membre, chef ou créateur. */
+  memberUserId?: string;
+  sort?: "recent" | "priority";
   page: number;
   pageSize: number;
 }
