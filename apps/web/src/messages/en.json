@@ -202,7 +202,18 @@
     "modules": "Modules",
     "details": "Details",
     "tasks": "Tasks",
-    "board": "Board"
+    "board": "Board",
+    "gantt": "Gantt",
+    "dashboard": "Dashboard"
+  },
+  "gantt": {
+    "zoomDay": "Day",
+    "zoomWeek": "Week",
+    "zoomMonth": "Month",
+    "empty": "No dated tasks: set start and due dates to draw the Gantt.",
+    "undated": "{count} undated task(s) not displayed",
+    "criticalLegend": "Critical path",
+    "today": "Today"
   },
   "board": {
     "title": "Board",

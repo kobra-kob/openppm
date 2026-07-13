@@ -327,6 +327,51 @@ describe("Tasks (intégration)", () => {
     });
   });
 
+  describe("gantt", () => {
+    it("expose tâches, dépendances et chemin critique (branche longue du diamant)", async () => {
+      const make = (title: string, startDate: string, dueDate: string) =>
+        request(server())
+          .post(base())
+          .set("Authorization", `Bearer ${adminToken}`)
+          .send({ title, startDate, dueDate })
+          .expect(201)
+          .then((response) => response.body.id as string);
+
+      // Chaîne totale 29 j : plus longue que toute tâche datée créée plus haut
+      const a = await make("G-A", "2026-12-01", "2026-12-02"); // 2 j
+      const b = await make("G-B", "2026-12-03", "2026-12-27"); // 25 j
+      const c = await make("G-C", "2026-12-03", "2026-12-04"); // 2 j
+      const d = await make("G-D", "2026-12-28", "2026-12-29"); // 2 j
+      for (const [pred, succ] of [
+        [a, b],
+        [a, c],
+        [b, d],
+        [c, d],
+      ] as const) {
+        await request(server())
+          .post(`${base()}/${succ}/dependencies`)
+          .set("Authorization", `Bearer ${adminToken}`)
+          .send({ predecessorId: pred })
+          .expect(201);
+      }
+
+      const gantt = await request(server())
+        .get(`${base()}/gantt`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .expect(200);
+      expect(gantt.body.dependencies.length).toBeGreaterThanOrEqual(4);
+      const critical: string[] = gantt.body.criticalPath;
+      expect(critical).toEqual(expect.arrayContaining([a, b, d]));
+      expect(critical).not.toContain(c);
+
+      // Une autre organisation n'y accède pas
+      await request(server())
+        .get(`${base()}/gantt`)
+        .set("Authorization", `Bearer ${otherOrgToken}`)
+        .expect(404);
+    });
+  });
+
   describe("suppression en cascade", () => {
     it("supprime la tâche et ses sous-tâches (soft delete)", async () => {
       await request(server())

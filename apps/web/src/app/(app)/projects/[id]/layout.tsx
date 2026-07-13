@@ -1,7 +1,14 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, House, Info, ListChecks, SquareKanban } from "lucide-react";
+import {
+  ArrowLeft,
+  CalendarRange,
+  House,
+  Info,
+  ListChecks,
+  SquareKanban,
+} from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -39,6 +46,7 @@ export default function ProjectWorkspaceLayout({
     { href: `/projects/${id}`, key: "details", icon: Info, exact: true },
     { href: `/projects/${id}/tasks`, key: "tasks", icon: ListChecks, exact: false },
     { href: `/projects/${id}/board`, key: "board", icon: SquareKanban, exact: false },
+    { href: `/projects/${id}/gantt`, key: "gantt", icon: CalendarRange, exact: false },
   ] as const;
 
   return (

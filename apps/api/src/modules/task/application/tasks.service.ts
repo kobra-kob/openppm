@@ -10,6 +10,8 @@ import { ChecklistItem, ProjectRole, RoleKey, TaskStatus } from "@openppm/db";
 import { AuditService } from "../../../core/audit/audit.service";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
+import { computeCriticalPath } from "../domain/critical-path.policy";
+import type { DependencyEdge } from "../domain/task-graph.policy";
 import {
   collectDescendantIds,
   wouldCreateDependencyCycle,
@@ -52,6 +54,21 @@ export interface TaskView {
   checklistTotal: number;
   timeSpentHours: number;
   subtaskCount: number;
+}
+
+export interface GanttView {
+  tasks: Array<{
+    id: string;
+    title: string;
+    status: TaskStatus;
+    priority: number;
+    parentId: string | null;
+    startDate: Date | null;
+    dueDate: Date | null;
+  }>;
+  dependencies: DependencyEdge[];
+  /** Ids des tâches sur le chemin critique (marge nulle). */
+  criticalPath: string[];
 }
 
 export interface TaskDetailView extends TaskView {
@@ -127,6 +144,28 @@ export class TasksService {
         hours: Number(entry.hours),
         note: entry.note,
       })),
+    };
+  }
+
+  /** Données du diagramme de Gantt : tâches, dépendances, chemin critique. */
+  async gantt(payload: JwtPayload, projectId: string): Promise<GanttView> {
+    await this.requireProject(payload, projectId);
+    const [tasks, dependencies] = await Promise.all([
+      this.repository.listByProject(projectId),
+      this.repository.listDependencyEdges(projectId),
+    ]);
+    return {
+      tasks: tasks.map((task) => ({
+        id: task.id,
+        title: task.title,
+        status: task.status,
+        priority: task.priority,
+        parentId: task.parentId,
+        startDate: task.startDate,
+        dueDate: task.dueDate,
+      })),
+      dependencies,
+      criticalPath: computeCriticalPath(tasks, dependencies),
     };
   }
 

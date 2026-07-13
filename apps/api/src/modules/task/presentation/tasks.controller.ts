@@ -28,6 +28,7 @@ import {
   UpdateTaskDto,
 } from "../application/dto/task.dtos";
 import {
+  GanttView,
   TaskDetailView,
   TasksService,
   TaskView,
@@ -57,6 +58,15 @@ export class TasksController {
     @Req() request: Request,
   ): Promise<TaskView> {
     return this.tasks.create(user, projectId, dto, this.context(request));
+  }
+
+  @Get("gantt")
+  @ApiOperation({ summary: "Diagramme de Gantt : tâches, dépendances, chemin critique" })
+  gantt(
+    @CurrentUser() user: JwtPayload,
+    @Param("projectId", ParseUUIDPipe) projectId: string,
+  ): Promise<GanttView> {
+    return this.tasks.gantt(user, projectId);
   }
 
   @Get(":taskId")

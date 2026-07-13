@@ -202,7 +202,18 @@
     "modules": "Modules",
     "details": "Détails",
     "tasks": "Tâches",
-    "board": "Board"
+    "board": "Board",
+    "gantt": "Gantt",
+    "dashboard": "Dashboard"
+  },
+  "gantt": {
+    "zoomDay": "Jour",
+    "zoomWeek": "Semaine",
+    "zoomMonth": "Mois",
+    "empty": "Aucune tâche datée : renseignez des dates de début et d'échéance pour dessiner le Gantt.",
+    "undated": "{count} tâche(s) sans dates non affichée(s)",
+    "criticalLegend": "Chemin critique",
+    "today": "Aujourd'hui"
   },
   "board": {
     "title": "Board",
