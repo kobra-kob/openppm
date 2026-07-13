@@ -144,6 +144,19 @@ export class PrismaAuthRepository implements AuthRepository {
     });
   }
 
+  async changePassword(userId: string, passwordHash: string): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.user.update({
+        where: { id: userId },
+        data: { passwordHash, failedLoginCount: 0, lockedUntil: null },
+      }),
+      this.prisma.refreshToken.updateMany({
+        where: { userId, revokedAt: null },
+        data: { revokedAt: new Date() },
+      }),
+    ]);
+  }
+
   findActiveInvitationByHash(tokenHash: string): Promise<Invitation | null> {
     return this.prisma.invitation.findFirst({
       where: { tokenHash, acceptedAt: null, expiresAt: { gt: new Date() } },

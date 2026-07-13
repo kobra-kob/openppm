@@ -199,6 +199,7 @@
     "empty": "No projects in this view."
   },
   "projectNav": {
+    "modules": "Modules",
     "details": "Details",
     "tasks": "Tasks",
     "board": "Board"
@@ -269,6 +270,19 @@
       "expires": "Expires on {date}",
       "revoke": "Revoke",
       "empty": "No pending invitations."
+    }
+  },
+  "settings": {
+    "account": "Account",
+    "admin": "Administration",
+    "adminSubtitle": "Application management: members and project categories.",
+    "adminForbidden": "This page is restricted to administrators.",
+    "password": {
+      "title": "Change password",
+      "current": "Current password",
+      "new": "New password",
+      "submit": "Update",
+      "success": "Password updated. Your other sessions have been signed out."
     }
   },
   "security": {

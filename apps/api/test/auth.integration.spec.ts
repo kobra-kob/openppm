@@ -208,6 +208,65 @@ describe("Auth (intégration)", () => {
     });
   });
 
+  describe("changement de mot de passe (connecté)", () => {
+    it("refuse un mot de passe actuel incorrect (401) et une politique violée (400)", async () => {
+      await register({
+        email: "change@acme.test",
+        organizationName: "ChangeCorp",
+      }).expect(201);
+      const login = await request(app.getHttpServer())
+        .post("/api/v1/auth/login")
+        .send({ email: "change@acme.test", password: "SuperSecret123" })
+        .expect(200);
+      const token = login.body.accessToken;
+
+      await request(app.getHttpServer())
+        .post("/api/v1/auth/change-password")
+        .set("Authorization", `Bearer ${token}`)
+        .send({ currentPassword: "Mauvais12345", newPassword: "NouveauSecret456" })
+        .expect(401);
+      await request(app.getHttpServer())
+        .post("/api/v1/auth/change-password")
+        .set("Authorization", `Bearer ${token}`)
+        .send({ currentPassword: "SuperSecret123", newPassword: "faible-sans-maj-1" })
+        .expect(400);
+    });
+
+    it("change le mot de passe, révoque les anciennes sessions et en ouvre une neuve", async () => {
+      const login = await request(app.getHttpServer())
+        .post("/api/v1/auth/login")
+        .send({ email: "change@acme.test", password: "SuperSecret123" })
+        .expect(200);
+
+      const changed = await request(app.getHttpServer())
+        .post("/api/v1/auth/change-password")
+        .set("Authorization", `Bearer ${login.body.accessToken}`)
+        .send({ currentPassword: "SuperSecret123", newPassword: "NouveauSecret456" })
+        .expect(200);
+      expect(changed.body.accessToken).toBeDefined();
+
+      // Ancien refresh token révoqué, nouveau valide
+      await request(app.getHttpServer())
+        .post("/api/v1/auth/refresh")
+        .send({ refreshToken: login.body.refreshToken })
+        .expect(401);
+      await request(app.getHttpServer())
+        .post("/api/v1/auth/refresh")
+        .send({ refreshToken: changed.body.refreshToken })
+        .expect(200);
+
+      // Ancien mot de passe refusé, nouveau accepté
+      await request(app.getHttpServer())
+        .post("/api/v1/auth/login")
+        .send({ email: "change@acme.test", password: "SuperSecret123" })
+        .expect(401);
+      await request(app.getHttpServer())
+        .post("/api/v1/auth/login")
+        .send({ email: "change@acme.test", password: "NouveauSecret456" })
+        .expect(200);
+    });
+  });
+
   describe("réinitialisation de mot de passe", () => {
     it("répond 202 que l'email existe ou non (anti-énumération)", async () => {
       await request(app.getHttpServer())

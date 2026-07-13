@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Info, ListChecks, SquareKanban } from "lucide-react";
+import { ArrowLeft, House, Info, ListChecks, SquareKanban } from "lucide-react";
 import Link from "next/link";
 import { useParams, usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -15,7 +15,10 @@ import {
   StatusBadge,
 } from "@/features/projects/shared";
 
-/** Espace projet : en-tête + navigation de modules, une page par module. */
+/**
+ * Espace projet façon SPM : barre latérale pleine hauteur listant les
+ * modules, fil d'ariane + en-tête projet dans le contenu.
+ */
 export default function ProjectWorkspaceLayout({
   children,
 }: {
@@ -39,28 +42,23 @@ export default function ProjectWorkspaceLayout({
   ] as const;
 
   return (
-    <div className="space-y-4">
-      <Link
-        href="/"
-        className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"
-      >
-        <ArrowLeft size={14} /> {tWorkspace("title")}
-      </Link>
-
-      {project && (
-        <div className="flex flex-wrap items-center gap-3">
-          <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
-          <span className="font-mono text-sm text-muted">{project.code}</span>
-          <StatusBadge status={project.status} />
-          <HealthDot health={project.health} />
-          <CategoryBadge category={project.category} />
-          <FavoriteStar projectId={project.id} isFavorite={project.isFavorite} />
+    <div className="flex min-h-0 flex-1">
+      {/* Sidebar des modules — visible uniquement dans un projet */}
+      <aside className="glass sticky top-14 flex h-[calc(100vh-3.5rem)] w-56 shrink-0 flex-col border-r border-border-subtle px-3 py-4">
+        <Link
+          href="/"
+          className="mb-4 inline-flex items-center gap-1.5 px-2 text-sm text-muted transition-colors hover:text-foreground"
+        >
+          <ArrowLeft size={14} /> {tWorkspace("title")}
+        </Link>
+        <div className="mb-4 border-b border-border-subtle px-2 pb-3">
+          <p className="truncate text-sm font-semibold">{project?.name ?? "…"}</p>
+          <p className="font-mono text-xs text-muted">{project?.code ?? ""}</p>
         </div>
-      )}
-
-      <div className="flex flex-col gap-4 lg:flex-row">
-        {/* Navigation des modules du projet */}
-        <nav className="glass flex shrink-0 gap-1 overflow-x-auto rounded-(--radius-card) p-2 lg:h-fit lg:w-44 lg:flex-col lg:sticky lg:top-20">
+        <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+          {t("modules")}
+        </p>
+        <nav className="flex-1 space-y-0.5">
           {modules.map(({ href, key, icon: Icon, exact }) => {
             const active = exact ? pathname === href : pathname.startsWith(href);
             return (
@@ -68,7 +66,7 @@ export default function ProjectWorkspaceLayout({
                 key={key}
                 href={href}
                 className={cn(
-                  "flex items-center gap-2.5 whitespace-nowrap rounded-(--radius-control) px-3 py-2 text-sm transition-colors",
+                  "flex items-center gap-2.5 rounded-(--radius-control) px-2 py-1.5 text-sm transition-colors",
                   active
                     ? "bg-accent/15 font-medium text-accent"
                     : "text-foreground hover:bg-border-subtle",
@@ -80,8 +78,28 @@ export default function ProjectWorkspaceLayout({
             );
           })}
         </nav>
+      </aside>
 
-        <div className="min-w-0 flex-1">{children}</div>
+      <div className="min-w-0 flex-1 p-6">
+        {/* Fil d'ariane + en-tête projet */}
+        <div className="mb-1 flex items-center gap-1.5 text-xs text-muted">
+          <House size={12} />
+          <Link href="/" className="hover:text-foreground">
+            {tWorkspace("title")}
+          </Link>
+          <span>›</span>
+          <span className="truncate text-foreground">{project?.name ?? ""}</span>
+        </div>
+        {project && (
+          <div className="mb-4 flex flex-wrap items-center gap-3">
+            <h1 className="text-2xl font-semibold tracking-tight">{project.name}</h1>
+            <StatusBadge status={project.status} />
+            <HealthDot health={project.health} />
+            <CategoryBadge category={project.category} />
+            <FavoriteStar projectId={project.id} isFavorite={project.isFavorite} />
+          </div>
+        )}
+        {children}
       </div>
     </div>
   );

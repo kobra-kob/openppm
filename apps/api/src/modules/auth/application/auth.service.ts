@@ -19,6 +19,7 @@ import { computeLockedUntil } from "../domain/lockout.policy";
 import { passwordPolicyErrors } from "../domain/password.policy";
 import { slugify } from "../domain/slug";
 import { AcceptInvitationDto } from "./dto/accept-invitation.dto";
+import { ChangePasswordDto } from "./dto/change-password.dto";
 import { ForgotPasswordDto } from "./dto/forgot-password.dto";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
@@ -347,6 +348,55 @@ export class AuthService {
       throw new UnauthorizedException({ code: "UNAUTHENTICATED", message: "Session invalide" });
     }
     return this.toPublicUser(user);
+  }
+
+  /**
+   * Changement de mot de passe depuis le compte : vérifie l'actuel, applique
+   * la politique, révoque toutes les sessions et rouvre une session fraîche.
+   */
+  async changePassword(
+    userId: string,
+    dto: ChangePasswordDto,
+    context: RequestContext,
+  ): Promise<AuthResult> {
+    const user = await this.repository.findUserById(userId);
+    if (!user || !user.isActive || user.deletedAt) {
+      throw new UnauthorizedException({
+        code: "UNAUTHENTICATED",
+        message: "Session invalide",
+      });
+    }
+    const currentOk = await argon2
+      .verify(user.passwordHash, dto.currentPassword)
+      .catch(() => false);
+    if (!currentOk) {
+      throw new UnauthorizedException({
+        code: "INVALID_CREDENTIALS",
+        message: "Mot de passe actuel incorrect",
+      });
+    }
+    const policyErrors = passwordPolicyErrors(dto.newPassword);
+    if (policyErrors.length > 0) {
+      throw new BadRequestException({
+        code: "PASSWORD_POLICY",
+        message: "Le mot de passe ne respecte pas la politique de sécurité",
+        errors: policyErrors,
+      });
+    }
+    const passwordHash = await argon2.hash(dto.newPassword, { type: argon2.argon2id });
+    await this.repository.changePassword(user.id, passwordHash);
+    await this.audit.log({
+      action: "auth.password.changed",
+      entityType: "user",
+      entityId: user.id,
+      organizationId: user.organizationId,
+      userId: user.id,
+      ...context,
+    });
+    return {
+      user: this.toPublicUser(user),
+      tokens: await this.tokens.issueTokens(user, context),
+    };
   }
 
   /** Répond toujours pareil, que l'email existe ou non (anti-énumération). */

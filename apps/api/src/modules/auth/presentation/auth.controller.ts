@@ -14,6 +14,7 @@ import { Throttle } from "@nestjs/throttler";
 import type { Request, Response } from "express";
 import { AuthResult, AuthService, PublicUser } from "../application/auth.service";
 import { AcceptInvitationDto } from "../application/dto/accept-invitation.dto";
+import { ChangePasswordDto } from "../application/dto/change-password.dto";
 import { ForgotPasswordDto } from "../application/dto/forgot-password.dto";
 import { LoginDto } from "../application/dto/login.dto";
 import {
@@ -185,6 +186,28 @@ export class AuthController {
   @ApiOperation({ summary: "Profil de l'utilisateur connecté" })
   me(@CurrentUser() payload: JwtPayload): Promise<PublicUser> {
     return this.auth.me(payload.sub);
+  }
+
+  @Post("change-password")
+  @ApiBearerAuth()
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary:
+      "Changer son mot de passe (toutes les sessions sont révoquées, une nouvelle est ouverte)",
+  })
+  async changePassword(
+    @CurrentUser() payload: JwtPayload,
+    @Body() dto: ChangePasswordDto,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<AuthResponse> {
+    const result = await this.auth.changePassword(
+      payload.sub,
+      dto,
+      this.context(request),
+    );
+    return this.respond(result, response);
   }
 
   @Public()

@@ -84,6 +84,9 @@ export interface AuthRepository {
     passwordHash: string,
   ): Promise<void>;
 
+  /** Change le mot de passe et révoque toutes les sessions, en transaction. */
+  changePassword(userId: string, passwordHash: string): Promise<void>;
+
   findActiveInvitationByHash(tokenHash: string): Promise<Invitation | null>;
   /** Crée le compte dans l'organisation avec le rôle de l'invitation et la
    *  marque acceptée, en transaction. */

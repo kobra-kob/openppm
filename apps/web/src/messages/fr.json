@@ -199,6 +199,7 @@
     "empty": "Aucun projet dans cette vue."
   },
   "projectNav": {
+    "modules": "Modules",
     "details": "Détails",
     "tasks": "Tâches",
     "board": "Board"
@@ -269,6 +270,19 @@
       "expires": "Expire le {date}",
       "revoke": "Révoquer",
       "empty": "Aucune invitation en attente."
+    }
+  },
+  "settings": {
+    "account": "Compte",
+    "admin": "Administration",
+    "adminSubtitle": "Gestion de l'application : membres et catégories de projets.",
+    "adminForbidden": "Cette page est réservée aux administrateurs.",
+    "password": {
+      "title": "Changer le mot de passe",
+      "current": "Mot de passe actuel",
+      "new": "Nouveau mot de passe",
+      "submit": "Mettre à jour",
+      "success": "Mot de passe mis à jour. Vos autres sessions ont été déconnectées."
     }
   },
   "security": {
