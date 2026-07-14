@@ -372,6 +372,68 @@ describe("Tasks (intégration)", () => {
     });
   });
 
+  describe("dashboard projet et mes tâches", () => {
+    it("agrège statuts, retards, heures et échéances à venir", async () => {
+      // Tâche en retard assignée à l'admin, avec estimation et temps saisi
+      const alice = await prisma.user.findUniqueOrThrow({
+        where: { email: "alice@tasks.test" },
+      });
+      const overdue = await request(server())
+        .post(base())
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({
+          title: "En retard",
+          startDate: "2026-01-01",
+          dueDate: "2026-01-05",
+          estimateHours: 10,
+          assigneeIds: [alice.id],
+        })
+        .expect(201);
+      await request(server())
+        .post(`${base()}/${overdue.body.id}/time`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ spentOn: "2026-01-03", hours: 4 })
+        .expect(201);
+
+      const dashboard = await request(server())
+        .get(`/api/v1/projects/${projectId}/dashboard`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .expect(200);
+      expect(dashboard.body.totalTasks).toBeGreaterThan(0);
+      expect(dashboard.body.overdueCount).toBeGreaterThanOrEqual(1);
+      expect(dashboard.body.estimateHours).toBeGreaterThanOrEqual(10);
+      expect(dashboard.body.spentHours).toBeGreaterThanOrEqual(4);
+      expect(dashboard.body.statusCounts.todo).toBeGreaterThanOrEqual(1);
+      expect(
+        dashboard.body.upcoming.map((task: { title: string }) => task.title),
+      ).toContain("En retard");
+
+      // Isolation : introuvable depuis une autre organisation
+      await request(server())
+        .get(`/api/v1/projects/${projectId}/dashboard`)
+        .set("Authorization", `Bearer ${otherOrgToken}`)
+        .expect(404);
+    });
+
+    it("liste mes tâches ouvertes avec leur projet, isolées par utilisateur", async () => {
+      const mine = await request(server())
+        .get("/api/v1/me/tasks")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .expect(200);
+      expect(mine.body.length).toBeGreaterThanOrEqual(1);
+      expect(mine.body[0].project.name).toBe("Projet tâches");
+      expect(mine.body.map((task: { title: string }) => task.title)).toContain(
+        "En retard",
+      );
+
+      const observerTasks = await request(server())
+        .get("/api/v1/me/tasks")
+        .set("Authorization", `Bearer ${observerToken}`)
+        .expect(200);
+      expect(observerTasks.body).toHaveLength(0);
+    });
+  });
+
   describe("suppression en cascade", () => {
     it("supprime la tâche et ses sous-tâches (soft delete)", async () => {
       await request(server())

@@ -206,6 +206,25 @@
     "gantt": "Gantt",
     "dashboard": "Dashboard"
   },
+  "myTasks": {
+    "title": "Mes tâches",
+    "due": "Échéance {date}"
+  },
+  "projectDashboard": {
+    "progress": "Avancement",
+    "progressHint": "{done}/{total} tâches terminées",
+    "overdue": "En retard",
+    "overdueHint": "tâches ouvertes après échéance",
+    "hours": "Heures",
+    "hoursHint": "{spent} h passées / {estimate} h estimées",
+    "deadline": "Échéance projet",
+    "daysRemaining": "{count} j restants",
+    "daysOver": "{count} j de dépassement",
+    "noDeadline": "Sans échéance",
+    "byStatus": "Tâches par statut",
+    "upcoming": "Échéances à venir",
+    "upcomingEmpty": "Aucune échéance à venir."
+  },
   "gantt": {
     "zoomDay": "Jour",
     "zoomWeek": "Semaine",

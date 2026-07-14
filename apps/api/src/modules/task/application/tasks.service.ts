@@ -56,6 +56,15 @@ export interface TaskView {
   subtaskCount: number;
 }
 
+export interface MyTaskView {
+  id: string;
+  title: string;
+  status: TaskStatus;
+  priority: number;
+  dueDate: Date | null;
+  project: { id: string; name: string; code: string };
+}
+
 export interface GanttView {
   tasks: Array<{
     id: string;
@@ -145,6 +154,19 @@ export class TasksService {
         note: entry.note,
       })),
     };
+  }
+
+  /** Tâches ouvertes assignées à l'utilisateur courant, tous projets confondus. */
+  async myTasks(payload: JwtPayload): Promise<MyTaskView[]> {
+    const tasks = await this.repository.listAssignedToUser(payload.org, payload.sub);
+    return tasks.map((task) => ({
+      id: task.id,
+      title: task.title,
+      status: task.status,
+      priority: task.priority,
+      dueDate: task.dueDate,
+      project: task.project,
+    }));
   }
 
   /** Données du diagramme de Gantt : tâches, dépendances, chemin critique. */

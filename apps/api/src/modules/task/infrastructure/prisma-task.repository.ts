@@ -3,6 +3,7 @@ import { ChecklistItem, Prisma, TaskStatus, TimeEntry } from "@openppm/db";
 import { PrismaService } from "../../../core/prisma/prisma.service";
 import type { DependencyEdge } from "../domain/task-graph.policy";
 import {
+  AssignedTask,
   CreateTaskInput,
   ProjectAccess,
   TaskDetail,
@@ -35,6 +36,21 @@ export class PrismaTaskRepository implements TaskRepository {
         managerId: true,
         members: { select: { userId: true, role: true } },
       },
+    });
+  }
+
+  listAssignedToUser(organizationId: string, userId: string): Promise<AssignedTask[]> {
+    return this.prisma.task.findMany({
+      where: {
+        organizationId,
+        deletedAt: null,
+        status: { in: [TaskStatus.todo, TaskStatus.in_progress] },
+        assignees: { some: { userId } },
+        project: { deletedAt: null },
+      },
+      include: { project: { select: { id: true, name: true, code: true } } },
+      orderBy: [{ dueDate: { sort: "asc", nulls: "last" } }, { priority: "asc" }],
+      take: 20,
     });
   }
 

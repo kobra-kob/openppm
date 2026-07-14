@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { CategoriesService } from "./application/categories.service";
+import { ProjectDashboardService } from "./application/project-dashboard.service";
 import { ProjectsService } from "./application/projects.service";
 import { TemplatesService } from "./application/templates.service";
 import { PROJECT_REPOSITORY } from "./domain/project.repository";
@@ -12,6 +13,7 @@ import { TemplatesController } from "./presentation/templates.controller";
   controllers: [ProjectsController, CategoriesController, TemplatesController],
   providers: [
     ProjectsService,
+    ProjectDashboardService,
     CategoriesService,
     TemplatesService,
     { provide: PROJECT_REPOSITORY, useClass: PrismaProjectRepository },

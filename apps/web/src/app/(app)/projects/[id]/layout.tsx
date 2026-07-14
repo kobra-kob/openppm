@@ -6,6 +6,7 @@ import {
   CalendarRange,
   House,
   Info,
+  LayoutDashboard,
   ListChecks,
   SquareKanban,
 } from "lucide-react";
@@ -43,6 +44,7 @@ export default function ProjectWorkspaceLayout({
   });
 
   const modules = [
+    { href: `/projects/${id}/dashboard`, key: "dashboard", icon: LayoutDashboard, exact: false },
     { href: `/projects/${id}`, key: "details", icon: Info, exact: true },
     { href: `/projects/${id}/tasks`, key: "tasks", icon: ListChecks, exact: false },
     { href: `/projects/${id}/board`, key: "board", icon: SquareKanban, exact: false },

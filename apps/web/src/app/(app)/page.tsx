@@ -26,6 +26,15 @@ interface Category {
   color: string;
 }
 
+interface MyTask {
+  id: string;
+  title: string;
+  status: string;
+  priority: number;
+  dueDate: string | null;
+  project: { id: string; name: string; code: string };
+}
+
 interface Template {
   id: string;
   name: string;
@@ -40,7 +49,9 @@ const HEALTH_PILL: Record<ProjectHealth, string> = {
 export default function WorkspacePage() {
   const t = useTranslations("workspace");
   const tProjects = useTranslations("projects");
+  const tMyTasks = useTranslations("myTasks");
   const tErrors = useTranslations("errors");
+  const [nowRef] = useState(() => Date.now());
   const locale = useLocale();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -94,6 +105,11 @@ export default function WorkspacePage() {
     queryKey: ["project-templates"],
     queryFn: () => api<Template[]>("/project-templates"),
     enabled: canCreate,
+  });
+
+  const { data: myTasks } = useQuery({
+    queryKey: ["my-tasks"],
+    queryFn: () => api<MyTask[]>("/me/tasks"),
   });
 
   const createMutation = useMutation({
@@ -188,6 +204,54 @@ export default function WorkspacePage() {
             </button>
           ))}
         </div>
+      )}
+
+      {/* Mes tâches ouvertes, tous projets confondus */}
+      {!showTrash && (myTasks ?? []).length > 0 && (
+        <Card className="p-4">
+          <h2 className="mb-2 text-sm font-semibold uppercase tracking-wider text-muted">
+            {tMyTasks("title")}
+          </h2>
+          <ul className="divide-y divide-border-subtle">
+            {(myTasks ?? []).slice(0, 8).map((task) => {
+              const overdue =
+                task.dueDate !== null && new Date(task.dueDate).getTime() < nowRef;
+              return (
+                <li key={task.id}>
+                  <Link
+                    href={`/projects/${task.project.id}/tasks`}
+                    className="flex items-center gap-3 py-2 transition-colors hover:bg-border-subtle/40"
+                  >
+                    <span
+                      className={cn(
+                        "text-xs font-semibold",
+                        task.priority <= 2 ? "text-danger" : "text-muted",
+                      )}
+                    >
+                      P{task.priority}
+                    </span>
+                    <span className="min-w-0 flex-1 truncate text-sm">{task.title}</span>
+                    <span className="truncate font-mono text-xs text-muted">
+                      {task.project.code}
+                    </span>
+                    {task.dueDate && (
+                      <span
+                        className={cn(
+                          "text-xs",
+                          overdue ? "font-medium text-danger" : "text-muted",
+                        )}
+                      >
+                        {tMyTasks("due", {
+                          date: new Date(task.dueDate).toLocaleDateString(locale),
+                        })}
+                      </span>
+                    )}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </Card>
       )}
 
       {showForm && !showTrash && (

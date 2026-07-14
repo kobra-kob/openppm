@@ -63,11 +63,18 @@ export interface UpdateTaskInput {
   estimateHours?: number | null;
 }
 
+export type AssignedTask = Task & {
+  project: { id: string; name: string; code: string };
+};
+
 export interface TaskRepository {
   findProjectAccess(
     organizationId: string,
     projectId: string,
   ): Promise<ProjectAccess | null>;
+
+  /** Tâches ouvertes assignées à un utilisateur, tous projets confondus. */
+  listAssignedToUser(organizationId: string, userId: string): Promise<AssignedTask[]>;
 
   listByProject(projectId: string): Promise<TaskWithAggregates[]>;
   findById(projectId: string, taskId: string): Promise<TaskWithAggregates | null>;

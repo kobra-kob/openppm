@@ -29,6 +29,10 @@ import {
   UpdateProjectMemberDto,
 } from "../application/dto/project.dtos";
 import {
+  ProjectDashboardService,
+  ProjectDashboardView,
+} from "../application/project-dashboard.service";
+import {
   ProjectListView,
   ProjectsService,
   ProjectView,
@@ -38,7 +42,10 @@ import {
 @ApiBearerAuth()
 @Controller("projects")
 export class ProjectsController {
-  constructor(private readonly projects: ProjectsService) {}
+  constructor(
+    private readonly projects: ProjectsService,
+    private readonly dashboard: ProjectDashboardService,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: "Projets de l'organisation (paginé, recherche, filtre statut)" })
@@ -73,6 +80,15 @@ export class ProjectsController {
     @Param("id", ParseUUIDPipe) id: string,
   ): Promise<ProjectView> {
     return this.projects.get(user, id);
+  }
+
+  @Get(":id/dashboard")
+  @ApiOperation({ summary: "Indicateurs du projet : statuts, retards, heures, échéances" })
+  getDashboard(
+    @CurrentUser() user: JwtPayload,
+    @Param("id", ParseUUIDPipe) id: string,
+  ): Promise<ProjectDashboardView> {
+    return this.dashboard.forProject(user, id);
   }
 
   @Patch(":id")

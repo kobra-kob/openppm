@@ -206,6 +206,25 @@
     "gantt": "Gantt",
     "dashboard": "Dashboard"
   },
+  "myTasks": {
+    "title": "My tasks",
+    "due": "Due {date}"
+  },
+  "projectDashboard": {
+    "progress": "Progress",
+    "progressHint": "{done}/{total} tasks done",
+    "overdue": "Overdue",
+    "overdueHint": "open tasks past due date",
+    "hours": "Hours",
+    "hoursHint": "{spent} h spent / {estimate} h estimated",
+    "deadline": "Project deadline",
+    "daysRemaining": "{count} days left",
+    "daysOver": "{count} days over",
+    "noDeadline": "No deadline",
+    "byStatus": "Tasks by status",
+    "upcoming": "Upcoming deadlines",
+    "upcomingEmpty": "No upcoming deadlines."
+  },
   "gantt": {
     "zoomDay": "Day",
     "zoomWeek": "Week",
