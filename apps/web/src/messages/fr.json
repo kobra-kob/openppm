@@ -206,6 +206,12 @@
     "gantt": "Gantt",
     "dashboard": "Dashboard"
   },
+  "search": {
+    "placeholder": "Rechercher projets et tâches…",
+    "projects": "Projets",
+    "tasks": "Tâches",
+    "empty": "Aucun résultat."
+  },
   "myTasks": {
     "title": "Mes tâches",
     "due": "Échéance {date}"

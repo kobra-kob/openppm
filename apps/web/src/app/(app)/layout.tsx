@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect } from "react";
+import { GlobalSearch } from "@/components/global-search";
 import { LocaleSwitch } from "@/components/locale-switch";
 import { ProfileMenu } from "@/components/profile-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -38,13 +39,18 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
     <div className="flex min-h-screen flex-col">
       <header className="glass sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b border-border-subtle px-4">
-        <Link href="/" className="flex items-center gap-2">
+        <Link href="/" className="flex shrink-0 items-center gap-2">
           <div className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
             <Command size={18} />
           </div>
-          <span className="font-semibold tracking-tight">{t("appName")}</span>
+          <span className="hidden font-semibold tracking-tight sm:block">
+            {t("appName")}
+          </span>
         </Link>
-        <div className="flex items-center gap-2">
+        <div className="mx-4 flex min-w-0 flex-1 justify-center">
+          <GlobalSearch />
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
           <LocaleSwitch />
           <ThemeToggle />
           <ProfileMenu />

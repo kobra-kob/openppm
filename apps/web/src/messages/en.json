@@ -206,6 +206,12 @@
     "gantt": "Gantt",
     "dashboard": "Dashboard"
   },
+  "search": {
+    "placeholder": "Search projects and tasks…",
+    "projects": "Projects",
+    "tasks": "Tasks",
+    "empty": "No results."
+  },
   "myTasks": {
     "title": "My tasks",
     "due": "Due {date}"
