@@ -16,7 +16,8 @@ WORKDIR /app
 # démarrage) et le client généré vivent dans packages/db.
 COPY --from=build /app ./
 COPY infra/docker/api-entrypoint.sh /usr/local/bin/api-entrypoint.sh
-RUN chmod +x /usr/local/bin/api-entrypoint.sh && chown -R node:node /app
+RUN chmod +x /usr/local/bin/api-entrypoint.sh && chown -R node:node /app \
+  && mkdir -p /data/storage && chown -R node:node /data
 USER node
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s \

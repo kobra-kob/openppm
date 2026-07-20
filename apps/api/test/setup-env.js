@@ -8,3 +8,6 @@ process.env.JWT_SECRET =
 process.env.JWT_ACCESS_TTL = "900s";
 process.env.REFRESH_TTL_DAYS = "30";
 delete process.env.SMTP_URL;
+process.env.FILES_DIR =
+  process.env.FILES_DIR ??
+  require("node:path").join(require("node:os").tmpdir(), "openppm-test-storage");

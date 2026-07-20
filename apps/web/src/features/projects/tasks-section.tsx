@@ -8,6 +8,7 @@ import {
   ChevronRight,
   Clock3,
   CornerDownRight,
+  Download,
   ListChecks,
   Plus,
   Trash2,
@@ -17,7 +18,10 @@ import { useLocale, useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { Alert, Button, Card, Input, cn } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
+import { useAuthStore } from "@/lib/auth-store";
 import type { ProjectMemberView } from "./shared";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
 
 type TaskStatus = "todo" | "in_progress" | "done" | "cancelled";
 
@@ -122,6 +126,30 @@ export function TasksSection({
       <div className="mb-3 flex items-center gap-2 text-muted">
         <ListChecks size={16} />
         <h2 className="text-sm font-semibold uppercase tracking-wider">{t("title")}</h2>
+        <button
+          type="button"
+          onClick={async () => {
+            const { accessToken } = useAuthStore.getState();
+            const response = await fetch(
+              `${API_URL}/api/v1/projects/${projectId}/tasks/export`,
+              {
+                credentials: "include",
+                headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+              },
+            );
+            if (!response.ok) return;
+            const blob = await response.blob();
+            const url = URL.createObjectURL(blob);
+            const anchor = document.createElement("a");
+            anchor.href = url;
+            anchor.download = "taches.csv";
+            anchor.click();
+            URL.revokeObjectURL(url);
+          }}
+          className="ml-auto inline-flex items-center gap-1.5 rounded-(--radius-control) px-2 py-1 text-xs text-muted transition-colors hover:bg-border-subtle hover:text-foreground"
+        >
+          <Download size={13} /> {t("exportCsv")}
+        </button>
       </div>
       {error && (
         <div className="mb-3">

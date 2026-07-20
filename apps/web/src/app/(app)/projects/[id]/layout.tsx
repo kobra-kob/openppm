@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   ArrowLeft,
   CalendarRange,
+  FolderOpen,
   House,
   Info,
   LayoutDashboard,
@@ -49,6 +50,7 @@ export default function ProjectWorkspaceLayout({
     { href: `/projects/${id}/tasks`, key: "tasks", icon: ListChecks, exact: false },
     { href: `/projects/${id}/board`, key: "board", icon: SquareKanban, exact: false },
     { href: `/projects/${id}/gantt`, key: "gantt", icon: CalendarRange, exact: false },
+    { href: `/projects/${id}/documents`, key: "documents", icon: FolderOpen, exact: false },
   ] as const;
 
   return (

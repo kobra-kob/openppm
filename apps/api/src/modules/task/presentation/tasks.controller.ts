@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  Header,
   HttpCode,
   HttpStatus,
   Param,
@@ -58,6 +59,17 @@ export class TasksController {
     @Req() request: Request,
   ): Promise<TaskView> {
     return this.tasks.create(user, projectId, dto, this.context(request));
+  }
+
+  @Get("export")
+  @Header("Content-Type", "text/csv; charset=utf-8")
+  @Header("Content-Disposition", 'attachment; filename="taches.csv"')
+  @ApiOperation({ summary: "Export CSV des tâches (Excel, séparateur ;)" })
+  exportCsv(
+    @CurrentUser() user: JwtPayload,
+    @Param("projectId", ParseUUIDPipe) projectId: string,
+  ): Promise<string> {
+    return this.tasks.exportCsv(user, projectId);
   }
 
   @Get("gantt")

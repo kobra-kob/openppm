@@ -169,6 +169,37 @@ export class TasksService {
     }));
   }
 
+  /** Export CSV des tâches (séparateur ; + BOM pour Excel). */
+  async exportCsv(payload: JwtPayload, projectId: string): Promise<string> {
+    await this.requireProject(payload, projectId);
+    const tasks = await this.repository.listByProject(projectId);
+    const escape = (value: string) =>
+      /[;"\n\r]/.test(value) ? `"${value.replace(/"/g, '""')}"` : value;
+    const date = (value: Date | null) => (value ? value.toISOString().slice(0, 10) : "");
+    const lines = [
+      "Titre;Statut;Priorité;Début;Échéance;Estimation (h);Temps passé (h);Assignés",
+      ...tasks.map((task) =>
+        [
+          escape(task.title),
+          task.status,
+          `P${task.priority}`,
+          date(task.startDate),
+          date(task.dueDate),
+          task.estimateHours?.toString() ?? "",
+          String(
+            task.timeEntries.reduce((total, entry) => total + Number(entry.hours), 0),
+          ),
+          escape(
+            task.assignees
+              .map((assignee) => `${assignee.user.firstName} ${assignee.user.lastName}`)
+              .join(", "),
+          ),
+        ].join(";"),
+      ),
+    ];
+    return `﻿${lines.join("\r\n")}`;
+  }
+
   /** Données du diagramme de Gantt : tâches, dépendances, chemin critique. */
   async gantt(payload: JwtPayload, projectId: string): Promise<GanttView> {
     await this.requireProject(payload, projectId);

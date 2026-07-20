@@ -13,6 +13,7 @@ import { PrismaModule } from "./core/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { MembersModule } from "./modules/members/members.module";
 import { ProjectModule } from "./modules/project/project.module";
+import { DocumentModule } from "./modules/document/document.module";
 import { SearchModule } from "./modules/search/search.module";
 import { BoardModule } from "./modules/board/board.module";
 import { TaskModule } from "./modules/task/task.module";
@@ -68,6 +69,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     TaskModule,
     BoardModule,
     SearchModule,
+    DocumentModule,
   ],
   controllers: [HealthController],
   providers: [

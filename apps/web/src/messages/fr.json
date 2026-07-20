@@ -204,7 +204,18 @@
     "tasks": "Tâches",
     "board": "Board",
     "gantt": "Gantt",
-    "dashboard": "Dashboard"
+    "dashboard": "Dashboard",
+    "documents": "Documents"
+  },
+  "documents": {
+    "title": "Documents",
+    "upload": "Téléverser",
+    "maxSize": "25 Mo max",
+    "empty": "Aucun document. Téléversez le premier fichier !",
+    "uploadedBy": "par {name}",
+    "download": "Télécharger",
+    "delete": "Supprimer",
+    "tooLarge": "Fichier trop volumineux (25 Mo max)."
   },
   "search": {
     "placeholder": "Rechercher projets et tâches…",
@@ -287,7 +298,8 @@
     "notePlaceholder": "Note (optionnel)",
     "totalSpent": "{hours} h",
     "delete": "Supprimer la tâche",
-    "deleteEntry": "Supprimer la saisie"
+    "deleteEntry": "Supprimer la saisie",
+    "exportCsv": "Exporter CSV"
   },
   "members": {
     "title": "Membres",

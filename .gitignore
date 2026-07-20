@@ -32,5 +32,9 @@ pnpm-debug.log*
 # Docker volumes
 infra/docker/data/
 
+# Documents téléversés (GED)
+apps/api/storage/
+storage/
+
 # Artefacts TypeScript
 *.tsbuildinfo
