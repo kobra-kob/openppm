@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { useEffect } from "react";
 import { GlobalSearch } from "@/components/global-search";
 import { LocaleSwitch } from "@/components/locale-switch";
+import { NotificationBell } from "@/components/notification-bell";
 import { ProfileMenu } from "@/components/profile-menu";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuthStore } from "@/lib/auth-store";
@@ -51,6 +52,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <GlobalSearch />
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <NotificationBell />
           <LocaleSwitch />
           <ThemeToggle />
           <ProfileMenu />

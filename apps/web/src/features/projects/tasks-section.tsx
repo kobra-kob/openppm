@@ -655,6 +655,166 @@ function TaskPanel({
           </Button>
         </form>
       )}
+
+      <CommentsSection
+        projectId={detail.projectId}
+        taskId={detail.id}
+        members={members}
+        canWork={canWork}
+        locale={locale}
+      />
+    </div>
+  );
+}
+
+interface CommentView {
+  id: string;
+  body: string;
+  mentions: string[];
+  author: { id: string; name: string };
+  createdAt: string;
+  editable: boolean;
+}
+
+/** Fil de commentaires d'une tâche avec mentions @membre. */
+function CommentsSection({
+  projectId,
+  taskId,
+  members,
+  canWork,
+  locale,
+}: {
+  projectId: string;
+  taskId: string;
+  members: ProjectMemberView[];
+  canWork: boolean;
+  locale: string;
+}) {
+  const t = useTranslations("comments");
+  const queryClient = useQueryClient();
+  const [body, setBody] = useState("");
+  const [mentions, setMentions] = useState<ProjectMemberView[]>([]);
+
+  const { data: comments } = useQuery({
+    queryKey: ["comments", projectId, taskId],
+    queryFn: () => api<CommentView[]>(`/projects/${projectId}/tasks/${taskId}/comments`),
+  });
+
+  const invalidate = () =>
+    void queryClient.invalidateQueries({ queryKey: ["comments", projectId, taskId] });
+
+  const createComment = useMutation({
+    mutationFn: () =>
+      api<CommentView>(`/projects/${projectId}/tasks/${taskId}/comments`, {
+        method: "POST",
+        body: JSON.stringify({ body: body.trim(), mentions: mentions.map((m) => m.userId) }),
+      }),
+    onSuccess: () => {
+      setBody("");
+      setMentions([]);
+      invalidate();
+    },
+  });
+
+  const deleteComment = useMutation({
+    mutationFn: (id: string) =>
+      api<void>(`/projects/${projectId}/tasks/${taskId}/comments/${id}`, { method: "DELETE" }),
+    onSuccess: invalidate,
+  });
+
+  const toggleMention = (member: ProjectMemberView) => {
+    setMentions((current) =>
+      current.some((m) => m.userId === member.userId)
+        ? current.filter((m) => m.userId !== member.userId)
+        : [...current, member],
+    );
+  };
+
+  return (
+    <div className="border-t border-border-subtle pt-3">
+      <h4 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted">
+        {t("title")}
+      </h4>
+      <ul className="mb-3 space-y-2">
+        {(comments ?? []).length === 0 && (
+          <li className="text-xs text-muted">{t("empty")}</li>
+        )}
+        {(comments ?? []).map((comment) => (
+          <li key={comment.id} className="flex items-start gap-2 text-sm">
+            <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-accent/20 text-[10px] font-semibold text-accent">
+              {comment.author.name
+                .split(" ")
+                .map((part) => part.charAt(0))
+                .join("")
+                .slice(0, 2)}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs">
+                <span className="font-medium">{comment.author.name}</span>{" "}
+                <span className="text-muted">
+                  {new Date(comment.createdAt).toLocaleString(locale)}
+                </span>
+              </p>
+              <p className="whitespace-pre-wrap break-words text-sm">{comment.body}</p>
+            </div>
+            {comment.editable && (
+              <button
+                type="button"
+                onClick={() => deleteComment.mutate(comment.id)}
+                aria-label={t("delete")}
+                className="text-muted hover:text-danger"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </li>
+        ))}
+      </ul>
+
+      {canWork && (
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (body.trim()) createComment.mutate();
+          }}
+          className="space-y-2"
+        >
+          <textarea
+            placeholder={t("placeholder")}
+            maxLength={5000}
+            rows={2}
+            value={body}
+            onChange={(event) => setBody(event.target.value)}
+            className="w-full rounded-(--radius-control) border border-border-subtle bg-surface-solid px-2 py-1.5 text-sm focus:border-accent focus:outline-none"
+          />
+          {members.length > 0 && (
+            <div className="flex flex-wrap items-center gap-1">
+              <span className="text-[11px] text-muted">{t("mentionHint")} :</span>
+              {members.map((member) => {
+                const active = mentions.some((m) => m.userId === member.userId);
+                return (
+                  <button
+                    key={member.userId}
+                    type="button"
+                    onClick={() => toggleMention(member)}
+                    className={cn(
+                      "rounded-full px-2 py-0.5 text-[11px] transition-colors",
+                      active
+                        ? "bg-accent text-accent-foreground"
+                        : "bg-border-subtle text-muted hover:text-foreground",
+                    )}
+                  >
+                    @{member.name}
+                  </button>
+                );
+              })}
+            </div>
+          )}
+          <Button type="submit" variant="ghost" className="px-3 py-1 text-xs" disabled={!body.trim()}>
+            {t("send")}
+          </Button>
+        </form>
+      )}
     </div>
   );
 }

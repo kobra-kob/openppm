@@ -76,6 +76,8 @@ model User {
   taskAssignments  TaskAssignee[]
   timeEntries      TimeEntry[]
   uploadedDocuments Document[]
+  notifications    Notification[]
+  comments         Comment[]
 
   @@index([organizationId])
   @@map("users")
@@ -528,6 +530,44 @@ model Favorite {
 
   @@id([userId, entityType, entityId])
   @@map("favorites")
+}
+
+// ── Notifications & commentaires ───────────────────────────────────────
+
+/// Notification in-app d'un utilisateur. `payload` porte les données de
+/// rendu (type, libellé, cibles) résolues côté client via i18n.
+model Notification {
+  id             String    @id @default(uuid(7)) @db.Char(36)
+  organizationId String    @map("organization_id") @db.Char(36)
+  userId         String    @map("user_id") @db.Char(36)
+  type           String    @db.VarChar(60)
+  payload        Json
+  readAt         DateTime? @map("read_at")
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@map("notifications")
+}
+
+/// Commentaire polymorphe (entity_type + entity_id). Phase 1 : tâches.
+/// `mentions` : liste des user_id mentionnés (résolus au moment du post).
+model Comment {
+  id             String   @id @default(uuid(7)) @db.Char(36)
+  organizationId String   @map("organization_id") @db.Char(36)
+  entityType     String   @map("entity_type") @db.VarChar(60)
+  entityId       String   @map("entity_id") @db.Char(36)
+  authorId       String   @map("author_id") @db.Char(36)
+  body           String   @db.Text
+  mentions       Json?
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  author User @relation(fields: [authorId], references: [id])
+
+  @@index([entityType, entityId, createdAt])
+  @@map("comments")
 }
 
 // ── Audit ──────────────────────────────────────────────────────────────

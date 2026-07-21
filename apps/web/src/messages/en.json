@@ -223,6 +223,22 @@
     "tasks": "Tasks",
     "empty": "No results."
   },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "No notifications.",
+    "markAllRead": "Mark all as read",
+    "assigned": "{author} assigned you the task “{task}”",
+    "comment": "{author} commented on “{task}”",
+    "mention": "{author} mentioned you on “{task}”"
+  },
+  "comments": {
+    "title": "Comments",
+    "placeholder": "Write a comment… (@ to mention)",
+    "send": "Comment",
+    "empty": "No comments.",
+    "delete": "Delete",
+    "mentionHint": "Mention a member"
+  },
   "myTasks": {
     "title": "My tasks",
     "due": "Due {date}"

@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { ChecklistItem, ProjectRole, RoleKey, TaskStatus } from "@openppm/db";
 import { AuditService } from "../../../core/audit/audit.service";
+import { NotificationsService } from "../../../core/notifications/notifications.service";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
 import { computeCriticalPath } from "../domain/critical-path.policy";
@@ -99,6 +100,7 @@ export class TasksService {
   constructor(
     @Inject(TASK_REPOSITORY) private readonly repository: TaskRepository,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ── Lecture ──────────────────────────────────────────────────────────
@@ -270,7 +272,29 @@ export class TasksService {
       after: { title: task.title, projectId, parentId: task.parentId },
       ...context,
     });
+    // Notifie les assignés initiaux (hors créateur)
+    await this.notifyAssigned(payload, projectId, task.id, task.title, assigneeIds);
     return this.toView(task, 0);
+  }
+
+  /** Notifie in-app les utilisateurs assignés à une tâche, sauf l'acteur. */
+  private async notifyAssigned(
+    payload: JwtPayload,
+    projectId: string,
+    taskId: string,
+    taskTitle: string,
+    assigneeIds: string[],
+  ): Promise<void> {
+    await this.notifications.notifyMany(
+      assigneeIds
+        .filter((userId) => userId !== payload.sub)
+        .map((userId) => ({
+          organizationId: payload.org,
+          userId,
+          type: "task.assigned" as const,
+          payload: { taskId, taskTitle, projectId, authorName: payload.name },
+        })),
+    );
   }
 
   async update(
@@ -377,6 +401,20 @@ export class TasksService {
       after: { userId: dto.userId },
       ...context,
     });
+    // Notifie l'assigné (sauf auto-assignation)
+    if (dto.userId !== payload.sub) {
+      await this.notifications.notify({
+        organizationId: payload.org,
+        userId: dto.userId,
+        type: "task.assigned",
+        payload: {
+          taskId,
+          taskTitle: task.title,
+          projectId,
+          authorName: payload.name,
+        },
+      });
+    }
     return this.refreshView(projectId, taskId);
   }
 

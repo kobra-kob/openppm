@@ -223,6 +223,22 @@
     "tasks": "Tâches",
     "empty": "Aucun résultat."
   },
+  "notifications": {
+    "title": "Notifications",
+    "empty": "Aucune notification.",
+    "markAllRead": "Tout marquer comme lu",
+    "assigned": "{author} vous a assigné la tâche « {task} »",
+    "comment": "{author} a commenté « {task} »",
+    "mention": "{author} vous a mentionné sur « {task} »"
+  },
+  "comments": {
+    "title": "Commentaires",
+    "placeholder": "Écrire un commentaire… (@ pour mentionner)",
+    "send": "Commenter",
+    "empty": "Aucun commentaire.",
+    "delete": "Supprimer",
+    "mentionHint": "Mentionner un membre"
+  },
   "myTasks": {
     "title": "Mes tâches",
     "due": "Échéance {date}"

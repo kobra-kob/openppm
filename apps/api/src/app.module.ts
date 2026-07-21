@@ -9,8 +9,10 @@ import { AuditModule } from "./core/audit/audit.module";
 import { FavoritesModule } from "./core/favorites/favorites.module";
 import { HealthController } from "./core/health/health.controller";
 import { MailerModule } from "./core/mailer/mailer.module";
+import { NotificationsModule } from "./core/notifications/notifications.module";
 import { PrismaModule } from "./core/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
+import { CommentModule } from "./modules/comment/comment.module";
 import { MembersModule } from "./modules/members/members.module";
 import { ProjectModule } from "./modules/project/project.module";
 import { DocumentModule } from "./modules/document/document.module";
@@ -63,6 +65,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     AuditModule,
     FavoritesModule,
     MailerModule,
+    NotificationsModule,
     AuthModule,
     MembersModule,
     ProjectModule,
@@ -70,6 +73,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     BoardModule,
     SearchModule,
     DocumentModule,
+    CommentModule,
   ],
   controllers: [HealthController],
   providers: [

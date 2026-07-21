@@ -34,6 +34,8 @@ describe("Recherche globale (intégration)", () => {
     await prisma.project.deleteMany();
     await prisma.projectTemplate.deleteMany();
     await prisma.projectCategory.deleteMany();
+    await prisma.comment.deleteMany();
+    await prisma.notification.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.passwordReset.deleteMany();
     await prisma.auditLog.deleteMany();
