@@ -185,6 +185,50 @@
       "project_member_role_changed": "a changé le rôle d'un membre"
     }
   },
+  "topNav": {
+    "projects": "Projets",
+    "portfolios": "Portefeuilles"
+  },
+  "portfolios": {
+    "title": "Portefeuilles",
+    "subtitle": "Regroupez vos projets et pilotez les enveloppes budgétaires.",
+    "new": "Nouveau portefeuille",
+    "empty": "Aucun portefeuille. Créez le premier !",
+    "owner": "Responsable",
+    "noOwner": "Sans responsable",
+    "envelope": "Enveloppe",
+    "allocated": "Alloué",
+    "committed": "Engagé",
+    "remaining": "Disponible",
+    "projectsCount": "{count} projet(s)",
+    "noEnvelope": "Non définie",
+    "backToList": "Retour aux portefeuilles",
+    "status": {
+      "active": "Actif",
+      "archived": "Archivé"
+    },
+    "form": {
+      "name": "Nom du portefeuille",
+      "description": "Description",
+      "owner": "Responsable",
+      "envelope": "Enveloppe budgétaire (€)",
+      "create": "Créer",
+      "save": "Enregistrer",
+      "cancel": "Annuler",
+      "edit": "Modifier",
+      "delete": "Supprimer"
+    },
+    "detail": {
+      "consumption": "Consommation de l'enveloppe",
+      "overCommitted": "Enveloppe dépassée",
+      "projectsTitle": "Projets du portefeuille",
+      "attach": "Rattacher un projet",
+      "attachHint": "Choisir un projet…",
+      "detach": "Retirer",
+      "noProjects": "Aucun projet rattaché.",
+      "noUnassigned": "Tous les projets sont déjà rattachés."
+    }
+  },
   "workspace": {
     "title": "Project Workspace",
     "myProjects": "Mes projets",

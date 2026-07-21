@@ -33,6 +33,7 @@ model Organization {
   projects          Project[]
   projectCategories ProjectCategory[]
   projectTemplates  ProjectTemplate[]
+  portfolios        Portfolio[]
 
   @@map("organizations")
 }
@@ -78,6 +79,7 @@ model User {
   uploadedDocuments Document[]
   notifications    Notification[]
   comments         Comment[]
+  ownedPortfolios  Portfolio[]       @relation("PortfolioOwner")
 
   @@index([organizationId])
   @@map("users")
@@ -271,8 +273,10 @@ model Project {
   priority       Int           @default(3)
   startDate      DateTime?     @map("start_date") @db.Date
   endDate        DateTime?     @map("end_date") @db.Date
+  /// Budget approuvé via le workflow de gouvernance (non saisi librement).
   budget         Decimal?      @db.Decimal(14, 2)
   categoryId     String?       @map("category_id") @db.Char(36)
+  portfolioId    String?       @map("portfolio_id") @db.Char(36)
   managerId      String?       @map("manager_id") @db.Char(36)
   createdById    String        @map("created_by_id") @db.Char(36)
   archivedAt     DateTime?     @map("archived_at")
@@ -282,6 +286,7 @@ model Project {
 
   organization Organization     @relation(fields: [organizationId], references: [id])
   category     ProjectCategory? @relation(fields: [categoryId], references: [id])
+  portfolio    Portfolio?       @relation(fields: [portfolioId], references: [id])
   manager      User?            @relation("ProjectManager", fields: [managerId], references: [id])
   createdBy    User             @relation("ProjectCreator", fields: [createdById], references: [id])
   members      ProjectMember[]
@@ -290,6 +295,7 @@ model Project {
   documents    Document[]
 
   @@unique([organizationId, code])
+  @@index([organizationId, portfolioId])
   @@index([organizationId, status])
   @@index([organizationId, deletedAt])
   @@map("projects")
@@ -530,6 +536,37 @@ model Favorite {
 
   @@id([userId, entityType, entityId])
   @@map("favorites")
+}
+
+// ── Portefeuilles ──────────────────────────────────────────────────────
+
+enum PortfolioStatus {
+  active
+  archived
+}
+
+/// Portefeuille : regroupe des projets sous une enveloppe budgétaire.
+/// Les budgets projets découlent de la gouvernance, pas d'une saisie libre.
+model Portfolio {
+  id              String          @id @default(uuid(7)) @db.Char(36)
+  organizationId  String          @map("organization_id") @db.Char(36)
+  name            String          @db.VarChar(140)
+  description     String?         @db.Text
+  ownerId         String?         @map("owner_id") @db.Char(36)
+  /// Enveloppe budgétaire totale allouée au portefeuille
+  budgetEnvelope  Decimal?        @map("budget_envelope") @db.Decimal(16, 2)
+  status          PortfolioStatus @default(active)
+  createdById     String          @map("created_by_id") @db.Char(36)
+  createdAt       DateTime        @default(now()) @map("created_at")
+  updatedAt       DateTime        @updatedAt @map("updated_at")
+  deletedAt       DateTime?       @map("deleted_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  owner        User?        @relation("PortfolioOwner", fields: [ownerId], references: [id])
+  projects     Project[]
+
+  @@index([organizationId, deletedAt])
+  @@map("portfolios")
 }
 
 // ── Notifications & commentaires ───────────────────────────────────────

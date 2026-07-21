@@ -185,6 +185,50 @@
       "project_member_role_changed": "changed a member's role"
     }
   },
+  "topNav": {
+    "projects": "Projects",
+    "portfolios": "Portfolios"
+  },
+  "portfolios": {
+    "title": "Portfolios",
+    "subtitle": "Group your projects and steer budget envelopes.",
+    "new": "New portfolio",
+    "empty": "No portfolios yet. Create the first one!",
+    "owner": "Owner",
+    "noOwner": "No owner",
+    "envelope": "Envelope",
+    "allocated": "Allocated",
+    "committed": "Committed",
+    "remaining": "Available",
+    "projectsCount": "{count} project(s)",
+    "noEnvelope": "Not set",
+    "backToList": "Back to portfolios",
+    "status": {
+      "active": "Active",
+      "archived": "Archived"
+    },
+    "form": {
+      "name": "Portfolio name",
+      "description": "Description",
+      "owner": "Owner",
+      "envelope": "Budget envelope (€)",
+      "create": "Create",
+      "save": "Save",
+      "cancel": "Cancel",
+      "edit": "Edit",
+      "delete": "Delete"
+    },
+    "detail": {
+      "consumption": "Envelope consumption",
+      "overCommitted": "Envelope exceeded",
+      "projectsTitle": "Portfolio projects",
+      "attach": "Attach a project",
+      "attachHint": "Choose a project…",
+      "detach": "Remove",
+      "noProjects": "No projects attached.",
+      "noUnassigned": "All projects are already attached."
+    }
+  },
   "workspace": {
     "title": "Project Workspace",
     "myProjects": "My projects",

@@ -14,6 +14,7 @@ import { PrismaModule } from "./core/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { CommentModule } from "./modules/comment/comment.module";
 import { MembersModule } from "./modules/members/members.module";
+import { PortfolioModule } from "./modules/portfolio/portfolio.module";
 import { ProjectModule } from "./modules/project/project.module";
 import { DocumentModule } from "./modules/document/document.module";
 import { SearchModule } from "./modules/search/search.module";
@@ -68,6 +69,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     NotificationsModule,
     AuthModule,
     MembersModule,
+    PortfolioModule,
     ProjectModule,
     TaskModule,
     BoardModule,

@@ -38,6 +38,7 @@ describe("2FA TOTP (intégration)", () => {
     await prisma.favorite.deleteMany();
     await prisma.projectMember.deleteMany();
     await prisma.project.deleteMany();
+    await prisma.portfolio.deleteMany();
     await prisma.projectTemplate.deleteMany();
     await prisma.projectCategory.deleteMany();
     await prisma.comment.deleteMany();

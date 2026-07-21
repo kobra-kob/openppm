@@ -9,6 +9,7 @@ import { GlobalSearch } from "@/components/global-search";
 import { LocaleSwitch } from "@/components/locale-switch";
 import { NotificationBell } from "@/components/notification-bell";
 import { ProfileMenu } from "@/components/profile-menu";
+import { TopNav } from "@/components/top-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuthStore } from "@/lib/auth-store";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -48,7 +49,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {t("appName")}
           </span>
         </Link>
-        <div className="mx-4 flex min-w-0 flex-1 justify-center">
+        <TopNav />
+        <div className="mx-2 hidden min-w-0 flex-1 justify-center sm:flex">
           <GlobalSearch />
         </div>
         <div className="flex shrink-0 items-center gap-2">
