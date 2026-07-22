@@ -28,7 +28,7 @@ describe("Finances détaillées (intégration)", () => {
         organizationId: org.id,
         email,
         passwordHash,
-        firstName: email.split("@")[0],
+        firstName: email.split("@")[0] ?? email,
         lastName: "Test",
         userRoles: { create: { roleId: role.id } },
       },

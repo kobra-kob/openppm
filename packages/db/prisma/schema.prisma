@@ -84,6 +84,9 @@ model User {
   approvalDecisions ApprovalStep[]   @relation("ApprovalDecider")
   budgetLines      BudgetLine[]      @relation("BudgetLineAuthor")
   costEntries      CostEntry[]       @relation("CostEntryAuthor")
+  createdQuotes    Quote[]           @relation("QuoteCreator")
+  reviewedQuotes   Quote[]           @relation("QuoteReviewer")
+  approvedQuotes   Quote[]           @relation("QuoteApprover")
 
   @@index([organizationId])
   @@map("users")
@@ -302,6 +305,7 @@ model Project {
   budgetRequests BudgetRequest[]
   budgetLines    BudgetLine[]
   costEntries    CostEntry[]
+  quotes         Quote[]
 
   @@unique([organizationId, code])
   @@index([organizationId, portfolioId])
@@ -687,6 +691,71 @@ model CostEntry {
 
   @@index([projectId, incurredOn])
   @@map("cost_entries")
+}
+
+// ── Devis (quotations) ─────────────────────────────────────────────────
+
+/// Cycle de validation à deux niveaux :
+/// draft → submitted → reviewed (niveau 1) → approved (niveau 2) ; rejected à tout stade.
+enum QuoteStatus {
+  draft
+  submitted
+  reviewed
+  approved
+  rejected
+}
+
+/// Devis rattaché à un projet. Totaux HT/TVA/TTC calculés depuis les lignes.
+model Quote {
+  id              String      @id @default(uuid(7)) @db.Char(36)
+  organizationId  String      @map("organization_id") @db.Char(36)
+  projectId       String      @map("project_id") @db.Char(36)
+  reference       String      @db.VarChar(30)
+  title           String      @db.VarChar(160)
+  customerName    String?     @map("customer_name") @db.VarChar(160)
+  status          QuoteStatus @default(draft)
+  /// Numéro de révision (une nouvelle version repart d'un devis clôturé)
+  revision        Int         @default(1)
+  /// Taux de TVA appliqué (%)
+  vatRate         Decimal     @default(20) @map("vat_rate") @db.Decimal(5, 2)
+  validUntil      DateTime?   @map("valid_until") @db.Date
+  notes           String?     @db.Text
+  createdById     String      @map("created_by_id") @db.Char(36)
+  submittedAt     DateTime?   @map("submitted_at")
+  reviewedById    String?     @map("reviewed_by_id") @db.Char(36)
+  reviewedAt      DateTime?   @map("reviewed_at")
+  approvedById    String?     @map("approved_by_id") @db.Char(36)
+  approvedAt      DateTime?   @map("approved_at")
+  decisionComment String?     @map("decision_comment") @db.VarChar(500)
+  createdAt       DateTime    @default(now()) @map("created_at")
+  updatedAt       DateTime    @updatedAt @map("updated_at")
+
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy  User        @relation("QuoteCreator", fields: [createdById], references: [id])
+  reviewedBy User?       @relation("QuoteReviewer", fields: [reviewedById], references: [id])
+  approvedBy User?       @relation("QuoteApprover", fields: [approvedById], references: [id])
+  lines      QuoteLine[]
+
+  @@unique([organizationId, reference])
+  @@index([projectId, status])
+  @@map("quotes")
+}
+
+/// Ligne de devis. Montant HT = quantité × prix unitaire × (1 − remise%).
+model QuoteLine {
+  id           String   @id @default(uuid(7)) @db.Char(36)
+  quoteId      String   @map("quote_id") @db.Char(36)
+  label        String   @db.VarChar(200)
+  quantity     Decimal  @default(1) @db.Decimal(10, 2)
+  unitPrice    Decimal  @map("unit_price") @db.Decimal(12, 2)
+  discountRate Decimal  @default(0) @map("discount_rate") @db.Decimal(5, 2)
+  position     Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId, position])
+  @@map("quote_lines")
 }
 
 // ── Notifications & commentaires ───────────────────────────────────────

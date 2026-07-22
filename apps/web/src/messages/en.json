@@ -43,6 +43,13 @@
     "BUDGET_REQUEST_NOT_FOUND": "Budget request not found.",
     "APPROVAL_STEP_NOT_FOUND": "Approval step not found.",
     "STEP_NOT_CURRENT": "This is not the step awaiting a decision.",
+    "QUOTE_NOT_FOUND": "Quote not found.",
+    "QUOTE_LINE_NOT_FOUND": "Quote line not found.",
+    "QUOTE_LOCKED": "The quote can only be edited while in draft.",
+    "QUOTE_NOT_DRAFT": "The quote is not a draft.",
+    "QUOTE_EMPTY": "Add at least one line before submitting.",
+    "QUOTE_NOT_SUBMITTED": "The quote is not awaiting review.",
+    "QUOTE_NOT_REVIEWED": "The quote must pass level-1 review first.",
     "UNKNOWN": "An unexpected error occurred. Please retry."
   },
   "auth": {
@@ -258,7 +265,65 @@
     "dashboard": "Dashboard",
     "budget": "Governance",
     "finance": "Finances",
+    "quotes": "Quotes",
     "documents": "Documents"
+  },
+  "quotes": {
+    "subtitle": "Quotes attached to the project, with two-level validation.",
+    "new": "New quote",
+    "empty": "No quote yet. Create the first one!",
+    "readOnly": "Read-only: you don't have editing rights.",
+    "back": "Back to quotes",
+    "rev": "rev. {n}",
+    "totalHT": "Subtotal (excl. tax)",
+    "totalTTC": "Total (incl. tax)",
+    "vat": "VAT ({rate}%)",
+    "status": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "reviewed": "Reviewed (L1)",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "step": {
+      "draft": "Draft",
+      "submitted": "Submitted",
+      "reviewed": "Review L1",
+      "approved": "Approved L2"
+    },
+    "form": {
+      "title": "Quote title",
+      "customer": "Customer",
+      "vatRate": "VAT (%)",
+      "create": "Create",
+      "cancel": "Cancel"
+    },
+    "lines": {
+      "title": "Quote lines",
+      "label": "Description",
+      "qty": "Qty",
+      "unit": "Unit price",
+      "discount": "Discount",
+      "total": "Line total",
+      "empty": "No line yet. Add items.",
+      "add": "Add",
+      "remove": "Remove"
+    },
+    "workflow": {
+      "title": "Validation",
+      "createdBy": "Created by {name}",
+      "submitted": "Submitted",
+      "reviewedBy": "Reviewed by {name}",
+      "approvedBy": "Approved by {name}",
+      "reviewPrompt": "Level-1 review (management)",
+      "approvePrompt": "Final level-2 approval (finance / direction)",
+      "commentPlaceholder": "Comment (optional)",
+      "approve": "Approve",
+      "reject": "Reject",
+      "submit": "Submit for approval",
+      "delete": "Delete",
+      "revise": "Create a revision"
+    }
   },
   "finance": {
     "noBudget": "No approved budget yet: run the governance flow to set the project budget. You can already prepare the breakdown and record costs.",

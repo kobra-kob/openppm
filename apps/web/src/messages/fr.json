@@ -43,6 +43,13 @@
     "BUDGET_REQUEST_NOT_FOUND": "Demande de budget introuvable.",
     "APPROVAL_STEP_NOT_FOUND": "Étape d'approbation introuvable.",
     "STEP_NOT_CURRENT": "Ce n'est pas l'étape en attente de décision.",
+    "QUOTE_NOT_FOUND": "Devis introuvable.",
+    "QUOTE_LINE_NOT_FOUND": "Ligne de devis introuvable.",
+    "QUOTE_LOCKED": "Le devis n'est modifiable qu'à l'état brouillon.",
+    "QUOTE_NOT_DRAFT": "Le devis n'est pas un brouillon.",
+    "QUOTE_EMPTY": "Ajoutez au moins une ligne avant de soumettre.",
+    "QUOTE_NOT_SUBMITTED": "Le devis n'est pas en attente de revue.",
+    "QUOTE_NOT_REVIEWED": "Le devis doit d'abord passer la revue de niveau 1.",
     "UNKNOWN": "Une erreur inattendue s'est produite. Réessayez."
   },
   "auth": {
@@ -258,7 +265,65 @@
     "dashboard": "Dashboard",
     "budget": "Gouvernance",
     "finance": "Finances",
+    "quotes": "Devis",
     "documents": "Documents"
+  },
+  "quotes": {
+    "subtitle": "Devis rattachés au projet, avec validation à deux niveaux.",
+    "new": "Nouveau devis",
+    "empty": "Aucun devis. Créez le premier !",
+    "readOnly": "Consultation seule : vous n'avez pas les droits de rédaction.",
+    "back": "Retour aux devis",
+    "rev": "rév. {n}",
+    "totalHT": "Total HT",
+    "totalTTC": "Total TTC",
+    "vat": "TVA ({rate}%)",
+    "status": {
+      "draft": "Brouillon",
+      "submitted": "Soumis",
+      "reviewed": "Revu (N1)",
+      "approved": "Validé",
+      "rejected": "Rejeté"
+    },
+    "step": {
+      "draft": "Brouillon",
+      "submitted": "Soumis",
+      "reviewed": "Revue N1",
+      "approved": "Validé N2"
+    },
+    "form": {
+      "title": "Intitulé du devis",
+      "customer": "Client",
+      "vatRate": "TVA (%)",
+      "create": "Créer",
+      "cancel": "Annuler"
+    },
+    "lines": {
+      "title": "Lignes du devis",
+      "label": "Désignation",
+      "qty": "Qté",
+      "unit": "P.U. HT",
+      "discount": "Remise",
+      "total": "Total HT",
+      "empty": "Aucune ligne. Ajoutez des prestations.",
+      "add": "Ajouter",
+      "remove": "Supprimer"
+    },
+    "workflow": {
+      "title": "Validation",
+      "createdBy": "Créé par {name}",
+      "submitted": "Soumis",
+      "reviewedBy": "Revu par {name}",
+      "approvedBy": "Validé par {name}",
+      "reviewPrompt": "Revue niveau 1 (encadrement)",
+      "approvePrompt": "Validation finale niveau 2 (finance / direction)",
+      "commentPlaceholder": "Commentaire (facultatif)",
+      "approve": "Approuver",
+      "reject": "Rejeter",
+      "submit": "Soumettre à validation",
+      "delete": "Supprimer",
+      "revise": "Créer une révision"
+    }
   },
   "finance": {
     "noBudget": "Aucun budget approuvé pour l'instant : lancez le circuit de gouvernance pour fixer le budget du projet. Vous pouvez déjà préparer la répartition et enregistrer des coûts.",
