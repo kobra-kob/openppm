@@ -90,7 +90,8 @@ describe("Consolidation financière du portefeuille (intégration)", () => {
         .send({ projectId: project.body.id })
         .expect(201);
     }
-    const [alpha, beta] = projectIds;
+    const alpha = projectIds[0]!;
+    const beta = projectIds[1]!;
 
     // Budgets approuvés (pilotés normalement par la gouvernance)
     await prisma.project.update({ where: { id: alpha }, data: { budget: 200000, laborRate: 100 } });
@@ -163,7 +164,7 @@ describe("Consolidation financière du portefeuille (intégration)", () => {
   });
 
   it("le devis approuvé apparaît dans la finance du projet", async () => {
-    const [alpha] = projectIds;
+    const alpha = projectIds[0]!;
     const finance = await request(server())
       .get(`/api/v1/projects/${alpha}/finance`)
       .set("Authorization", `Bearer ${token}`)
@@ -176,7 +177,8 @@ describe("Consolidation financière du portefeuille (intégration)", () => {
   });
 
   it("la consolidation portefeuille agrège exactement la somme des projets", async () => {
-    const [alpha, beta] = projectIds;
+    const alpha = projectIds[0]!;
+    const beta = projectIds[1]!;
     const [fa, fb, conso] = await Promise.all([
       request(server()).get(`/api/v1/projects/${alpha}/finance`).set("Authorization", `Bearer ${token}`),
       request(server()).get(`/api/v1/projects/${beta}/finance`).set("Authorization", `Bearer ${token}`),
@@ -210,6 +212,21 @@ describe("Consolidation financière du portefeuille (intégration)", () => {
     const rowAlpha = conso.body.projects.find((p: { id: string }) => p.id === alpha);
     expect(rowAlpha.actualTotal).toBe(31000);
     expect(rowAlpha.quotesApprovedHT).toBe(50000);
+  });
+
+  it("le résumé de tous les portefeuilles (liste) reprend les mêmes chiffres", async () => {
+    const rows = await request(server())
+      .get("/api/v1/finance/portfolios")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+    const row = rows.body.find((r: { portfolioId: string }) => r.portfolioId === portfolioId);
+    expect(row).toBeDefined();
+    expect(row.budgetEnvelope).toBe(500000);
+    expect(row.approvedBudget).toBe(300000);
+    expect(row.actualTotal).toBe(41000);
+    expect(row.remaining).toBe(259000);
+    expect(row.envelopeConsumedPct).toBe(8.2);
+    expect(row.quotesApprovedHT).toBe(50000);
   });
 
   it("refuse un portefeuille inexistant (404)", async () => {

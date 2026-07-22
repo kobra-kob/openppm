@@ -182,8 +182,71 @@ export class PrismaFinanceRepository implements FinanceRepository {
       select: { id: true, code: true, name: true, status: true, budget: true, laborRate: true },
       orderBy: { createdAt: "asc" },
     });
+    return {
+      portfolio: {
+        id: portfolio.id,
+        name: portfolio.name,
+        budgetEnvelope: portfolio.budgetEnvelope?.toString() ?? null,
+      },
+      projects: await this.buildProjectBundles(projects),
+    };
+  }
+
+  async loadOrgPortfolioBundles(organizationId: string): Promise<PortfolioFinanceBundle[]> {
+    const portfolios = await this.prisma.portfolio.findMany({
+      where: { organizationId, deletedAt: null },
+      select: { id: true, name: true, budgetEnvelope: true },
+      orderBy: { createdAt: "asc" },
+    });
+    const projects = await this.prisma.project.findMany({
+      where: { organizationId, deletedAt: null, portfolioId: { not: null } },
+      select: {
+        id: true,
+        code: true,
+        name: true,
+        status: true,
+        budget: true,
+        laborRate: true,
+        portfolioId: true,
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    const bundles = await this.buildProjectBundles(projects);
+    // Corrèle chaque bundle à son portefeuille (même ordre que `projects`)
+    const byPortfolio = new Map<string, ProjectFinanceBundle[]>();
+    projects.forEach((project, index) => {
+      if (project.portfolioId) {
+        const list = byPortfolio.get(project.portfolioId) ?? [];
+        list.push(bundles[index]!);
+        byPortfolio.set(project.portfolioId, list);
+      }
+    });
+    return portfolios.map((portfolio) => ({
+      portfolio: {
+        id: portfolio.id,
+        name: portfolio.name,
+        budgetEnvelope: portfolio.budgetEnvelope?.toString() ?? null,
+      },
+      projects: byPortfolio.get(portfolio.id) ?? [],
+    }));
+  }
+
+  /** Assemble les bundles finance de projets en requêtes batchées (dont devis). */
+  private async buildProjectBundles(
+    projects: Array<{
+      id: string;
+      code: string;
+      name: string;
+      status: ProjectFinanceBundle["project"]["status"];
+      budget: { toString(): string } | null;
+      laborRate: { toString(): string } | null;
+    }>,
+  ): Promise<ProjectFinanceBundle[]> {
     const projectIds = projects.map((project) => project.id);
-    const [budgetLines, costEntries, hours, quotes] = await Promise.all([
+    if (projectIds.length === 0) {
+      return [];
+    }
+    const [budgetLines, costEntries, hours, quotes, tasks] = await Promise.all([
       this.prisma.budgetLine.findMany({ where: { projectId: { in: projectIds } } }),
       this.prisma.costEntry.findMany({
         where: { projectId: { in: projectIds } },
@@ -195,16 +258,12 @@ export class PrismaFinanceRepository implements FinanceRepository {
         _sum: { hours: true },
       }),
       this.loadQuoteTotals(projectIds),
+      this.prisma.task.findMany({
+        where: { projectId: { in: projectIds } },
+        select: { id: true, projectId: true },
+      }),
     ]);
-    // Regroupe les heures par projet (via la tâche)
-    const taskProject = new Map(
-      (
-        await this.prisma.task.findMany({
-          where: { projectId: { in: projectIds } },
-          select: { id: true, projectId: true },
-        })
-      ).map((task) => [task.id, task.projectId]),
-    );
+    const taskProject = new Map(tasks.map((task) => [task.id, task.projectId]));
     const hoursByProject = new Map<string, number>();
     for (const row of hours) {
       const projectId = taskProject.get(row.taskId);
@@ -215,31 +274,24 @@ export class PrismaFinanceRepository implements FinanceRepository {
         );
       }
     }
-    return {
-      portfolio: {
-        id: portfolio.id,
-        name: portfolio.name,
-        budgetEnvelope: portfolio.budgetEnvelope?.toString() ?? null,
+    return projects.map((project) => ({
+      project: {
+        id: project.id,
+        code: project.code,
+        name: project.name,
+        status: project.status,
+        budget: project.budget?.toString() ?? null,
+        laborRate: project.laborRate?.toString() ?? null,
       },
-      projects: projects.map((project) => ({
-        project: {
-          id: project.id,
-          code: project.code,
-          name: project.name,
-          status: project.status,
-          budget: project.budget?.toString() ?? null,
-          laborRate: project.laborRate?.toString() ?? null,
-        },
-        budgetLines: budgetLines
-          .filter((line) => line.projectId === project.id)
-          .map((line) => this.toLine(line)),
-        costEntries: costEntries
-          .filter((cost) => cost.projectId === project.id)
-          .map((cost) => this.toCost(cost)),
-        laborHours: hoursByProject.get(project.id) ?? 0,
-        quotes: quotes.get(project.id) ?? [],
-      })),
-    };
+      budgetLines: budgetLines
+        .filter((line) => line.projectId === project.id)
+        .map((line) => this.toLine(line)),
+      costEntries: costEntries
+        .filter((cost) => cost.projectId === project.id)
+        .map((cost) => this.toCost(cost)),
+      laborHours: hoursByProject.get(project.id) ?? 0,
+      quotes: quotes.get(project.id) ?? [],
+    }));
   }
 
   /** Totaux HT/TTC des devis, groupés par projet (source unique quote-totals). */

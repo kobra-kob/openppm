@@ -12,6 +12,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import {
   formatEuro,
   PORTFOLIO_MANAGER_ROLES,
+  PortfolioFinanceSummaryRow,
   PortfolioView,
 } from "@/features/portfolios/shared";
 
@@ -32,6 +33,11 @@ export default function PortfoliosPage() {
     queryKey: ["portfolios"],
     queryFn: () => api<PortfolioView[]>("/portfolios"),
   });
+  const { data: financeRows } = useQuery({
+    queryKey: ["portfolios-finance"],
+    queryFn: () => api<PortfolioFinanceSummaryRow[]>("/finance/portfolios"),
+  });
+  const financeByPortfolio = new Map((financeRows ?? []).map((row) => [row.portfolioId, row]));
 
   const createMutation = useMutation({
     mutationFn: () =>
@@ -45,6 +51,7 @@ export default function PortfoliosPage() {
       }),
     onSuccess: (portfolio) => {
       void queryClient.invalidateQueries({ queryKey: ["portfolios"] });
+      void queryClient.invalidateQueries({ queryKey: ["portfolios-finance"] });
       router.push(`/portfolios/${portfolio.id}`);
     },
     onError: (caught) => {
@@ -136,12 +143,11 @@ export default function PortfoliosPage() {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {(portfolios ?? []).map((portfolio) => {
-            const envelope = portfolio.budgetEnvelope ? Number(portfolio.budgetEnvelope) : null;
-            const pct =
-              envelope && envelope > 0
-                ? Math.min(100, Math.round((portfolio.committedBudget / envelope) * 100))
-                : null;
-            const over = envelope !== null && portfolio.committedBudget > envelope;
+            const fin = financeByPortfolio.get(portfolio.id);
+            const envelope = fin?.budgetEnvelope ?? null;
+            const actual = fin?.actualTotal ?? 0;
+            const pct = fin?.envelopeConsumedPct ?? null;
+            const over = envelope !== null && actual > envelope;
             return (
               <Link key={portfolio.id} href={`/portfolios/${portfolio.id}`}>
                 <Card className="h-full transition-shadow hover:shadow-md">
@@ -155,9 +161,9 @@ export default function PortfoliosPage() {
                   </p>
                   <div className="mt-3">
                     <div className="flex items-center justify-between text-xs">
-                      <span className="text-muted">{t("committed")}</span>
-                      <span className="font-medium">
-                        {formatEuro(portfolio.committedBudget, locale)}
+                      <span className="text-muted">{t("detail.actual")}</span>
+                      <span className="font-medium tabular-nums">
+                        {formatEuro(actual, locale)}
                         {envelope !== null && ` / ${formatEuro(envelope, locale)}`}
                       </span>
                     </div>
@@ -165,11 +171,22 @@ export default function PortfoliosPage() {
                       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-border-subtle">
                         <div
                           className={over ? "h-full bg-danger" : "h-full bg-accent"}
-                          style={{ width: `${pct}%` }}
+                          style={{ width: `${Math.min(100, pct)}%` }}
                         />
                       </div>
                     )}
                   </div>
+                  {fin && (fin.quotesApprovedHT > 0 || (fin.approvedBudget ?? 0) > 0) && (
+                    <p className="mt-2 flex justify-between text-[11px] text-muted">
+                      <span>
+                        {t("detail.approvedBudget")}:{" "}
+                        {fin.approvedBudget !== null ? formatEuro(fin.approvedBudget, locale) : "—"}
+                      </span>
+                      <span>
+                        {t("detail.quotesApproved")}: {formatEuro(fin.quotesApprovedHT, locale)}
+                      </span>
+                    </p>
+                  )}
                 </Card>
               </Link>
             );

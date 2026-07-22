@@ -2,15 +2,25 @@ import { Controller, Get, Param, ParseUUIDPipe } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import { CurrentUser } from "../../auth/infrastructure/decorators/current-user.decorator";
-import { FinanceService, PortfolioFinanceView } from "../application/finance.service";
+import {
+  FinanceService,
+  PortfolioFinanceSummaryRow,
+  PortfolioFinanceView,
+} from "../application/finance.service";
 
 @ApiTags("finance")
 @ApiBearerAuth()
-@Controller("portfolios/:portfolioId/finance")
+@Controller()
 export class PortfolioFinanceController {
   constructor(private readonly finance: FinanceService) {}
 
-  @Get()
+  @Get("finance/portfolios")
+  @ApiOperation({ summary: "Résumés financiers de tous les portefeuilles (liste)" })
+  getSummaries(@CurrentUser() user: JwtPayload): Promise<PortfolioFinanceSummaryRow[]> {
+    return this.finance.getPortfolioSummaries(user);
+  }
+
+  @Get("portfolios/:portfolioId/finance")
   @ApiOperation({ summary: "Consolidation financière du portefeuille (mêmes stats, agrégées)" })
   getConsolidation(
     @CurrentUser() user: JwtPayload,

@@ -59,6 +59,17 @@ export interface PortfolioFinanceView {
   }>;
 }
 
+/** Résumé financier compact d'un portefeuille (liste). */
+export interface PortfolioFinanceSummaryRow {
+  portfolioId: string;
+  budgetEnvelope: number | null;
+  approvedBudget: number | null;
+  actualTotal: number;
+  remaining: number | null;
+  envelopeConsumedPct: number | null;
+  quotesApprovedHT: number;
+}
+
 /** Rôles autorisés à gérer les portefeuilles. */
 export const PORTFOLIO_MANAGER_ROLES = ["admin", "manager", "pmo"];
 

@@ -110,4 +110,7 @@ export interface FinanceRepository {
     organizationId: string,
     portfolioId: string,
   ): Promise<PortfolioFinanceBundle | null>;
+
+  /** Charge les données de finance de tous les portefeuilles de l'organisation. */
+  loadOrgPortfolioBundles(organizationId: string): Promise<PortfolioFinanceBundle[]>;
 }

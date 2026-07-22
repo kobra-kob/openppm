@@ -82,6 +82,17 @@ export interface FinanceView extends FinanceSummary {
   }>;
 }
 
+/** Résumé financier compact d'un portefeuille (liste des portefeuilles). */
+export interface PortfolioFinanceSummaryRow {
+  portfolioId: string;
+  budgetEnvelope: number | null;
+  approvedBudget: number | null;
+  actualTotal: number;
+  remaining: number | null;
+  envelopeConsumedPct: number | null;
+  quotesApprovedHT: number;
+}
+
 /** Consolidation financière d'un portefeuille (mêmes chiffres, agrégés). */
 export interface PortfolioFinanceView extends FinanceSummary {
   portfolioId: string;
@@ -117,6 +128,26 @@ export class FinanceService {
       throw new NotFoundException({ code: "PROJECT_NOT_FOUND", message: "Projet introuvable" });
     }
     return this.buildView(payload, context, bundle);
+  }
+
+  /** Résumés financiers de tous les portefeuilles (pour la liste). */
+  async getPortfolioSummaries(payload: JwtPayload): Promise<PortfolioFinanceSummaryRow[]> {
+    const bundles = await this.repository.loadOrgPortfolioBundles(payload.org);
+    return bundles.map((bundle) => {
+      const summary = aggregateSummaries(bundle.projects.map((p) => computeSummary(p)));
+      const envelope =
+        bundle.portfolio.budgetEnvelope !== null ? Number(bundle.portfolio.budgetEnvelope) : null;
+      return {
+        portfolioId: bundle.portfolio.id,
+        budgetEnvelope: envelope,
+        approvedBudget: summary.approvedBudget,
+        actualTotal: summary.actual.total,
+        remaining: summary.remaining,
+        envelopeConsumedPct:
+          envelope && envelope > 0 ? round((summary.actual.total / envelope) * 100) : null,
+        quotesApprovedHT: summary.quotes.approvedTotalHT,
+      };
+    });
   }
 
   /** Consolidation financière d'un portefeuille — mêmes chiffres, agrégés. */
