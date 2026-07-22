@@ -82,6 +82,8 @@ model User {
   ownedPortfolios  Portfolio[]       @relation("PortfolioOwner")
   budgetRequests   BudgetRequest[]   @relation("BudgetRequester")
   approvalDecisions ApprovalStep[]   @relation("ApprovalDecider")
+  budgetLines      BudgetLine[]      @relation("BudgetLineAuthor")
+  costEntries      CostEntry[]       @relation("CostEntryAuthor")
 
   @@index([organizationId])
   @@map("users")
@@ -277,6 +279,8 @@ model Project {
   endDate        DateTime?     @map("end_date") @db.Date
   /// Budget approuvé via le workflow de gouvernance (non saisi librement).
   budget         Decimal?      @db.Decimal(14, 2)
+  /// Taux horaire (€) servant à valoriser les temps saisis en coût de main-d'œuvre.
+  laborRate      Decimal?      @map("labor_rate") @db.Decimal(10, 2)
   categoryId     String?       @map("category_id") @db.Char(36)
   portfolioId    String?       @map("portfolio_id") @db.Char(36)
   managerId      String?       @map("manager_id") @db.Char(36)
@@ -296,6 +300,8 @@ model Project {
   board          Board?
   documents      Document[]
   budgetRequests BudgetRequest[]
+  budgetLines    BudgetLine[]
+  costEntries    CostEntry[]
 
   @@unique([organizationId, code])
   @@index([organizationId, portfolioId])
@@ -630,6 +636,57 @@ model ApprovalStep {
 
   @@index([budgetRequestId, stepOrder])
   @@map("approval_steps")
+}
+
+// ── Finances détaillées ────────────────────────────────────────────────
+
+enum BudgetCategory {
+  capex
+  opex
+}
+
+/// Ligne de budget prévisionnel d'un projet (répartition CAPEX/OPEX du
+/// budget approuvé). Sert de référentiel de rattachement des coûts réels.
+model BudgetLine {
+  id             String         @id @default(uuid(7)) @db.Char(36)
+  organizationId String         @map("organization_id") @db.Char(36)
+  projectId      String         @map("project_id") @db.Char(36)
+  category       BudgetCategory
+  label          String         @db.VarChar(160)
+  plannedAmount  Decimal        @map("planned_amount") @db.Decimal(14, 2)
+  createdById    String         @map("created_by_id") @db.Char(36)
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  createdBy User        @relation("BudgetLineAuthor", fields: [createdById], references: [id])
+  costs     CostEntry[]
+
+  @@index([projectId, category])
+  @@map("budget_lines")
+}
+
+/// Coût réel enregistré sur un projet (dépense engagée ou facturée).
+/// Rattachable à une ligne de budget. Le coût de main-d'œuvre est calculé
+/// à part depuis les temps saisis (taux horaire du projet) et non stocké ici.
+model CostEntry {
+  id             String         @id @default(uuid(7)) @db.Char(36)
+  organizationId String         @map("organization_id") @db.Char(36)
+  projectId      String         @map("project_id") @db.Char(36)
+  budgetLineId   String?        @map("budget_line_id") @db.Char(36)
+  category       BudgetCategory
+  label          String         @db.VarChar(160)
+  amount         Decimal        @db.Decimal(14, 2)
+  incurredOn     DateTime       @map("incurred_on") @db.Date
+  createdById    String         @map("created_by_id") @db.Char(36)
+  createdAt      DateTime       @default(now()) @map("created_at")
+
+  project    Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  budgetLine BudgetLine? @relation(fields: [budgetLineId], references: [id], onDelete: SetNull)
+  createdBy  User        @relation("CostEntryAuthor", fields: [createdById], references: [id])
+
+  @@index([projectId, incurredOn])
+  @@map("cost_entries")
 }
 
 // ── Notifications & commentaires ───────────────────────────────────────

@@ -257,7 +257,47 @@
     "gantt": "Gantt",
     "dashboard": "Dashboard",
     "budget": "Governance",
+    "finance": "Finances",
     "documents": "Documents"
+  },
+  "finance": {
+    "noBudget": "No approved budget yet: run the governance flow to set the project budget. You can already prepare the breakdown and record costs.",
+    "consumption": "Budget consumption",
+    "overBudget": "Over budget by {amount}",
+    "category": "Type",
+    "label": "Label",
+    "delete": "Delete",
+    "cat": { "capex": "CAPEX", "opex": "OPEX" },
+    "kpi": {
+      "approved": "Approved budget",
+      "planned": "Planned",
+      "actual": "Actual cost",
+      "remaining": "Remaining"
+    },
+    "labor": {
+      "title": "Labor cost",
+      "hours": "Logged time",
+      "cost": "Valued cost",
+      "rate": "Hourly rate (€)",
+      "apply": "Apply"
+    },
+    "lines": {
+      "title": "Planned breakdown",
+      "planned": "Planned",
+      "committed": "Committed",
+      "unallocated": "Unallocated:",
+      "empty": "No line yet. Break the budget down into CAPEX/OPEX items.",
+      "add": "Add"
+    },
+    "costs": {
+      "title": "Actual costs",
+      "date": "Date",
+      "amount": "Amount",
+      "line": "Line",
+      "noLine": "— None —",
+      "empty": "No cost recorded.",
+      "add": "Record"
+    }
   },
   "budget": {
     "intro": {

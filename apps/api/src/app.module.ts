@@ -14,6 +14,7 @@ import { PrismaModule } from "./core/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { BudgetGovernanceModule } from "./modules/budget-governance/budget-governance.module";
 import { CommentModule } from "./modules/comment/comment.module";
+import { FinanceModule } from "./modules/finance/finance.module";
 import { MembersModule } from "./modules/members/members.module";
 import { PortfolioModule } from "./modules/portfolio/portfolio.module";
 import { ProjectModule } from "./modules/project/project.module";
@@ -73,6 +74,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     PortfolioModule,
     ProjectModule,
     BudgetGovernanceModule,
+    FinanceModule,
     TaskModule,
     BoardModule,
     SearchModule,

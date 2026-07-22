@@ -257,7 +257,47 @@
     "gantt": "Gantt",
     "dashboard": "Dashboard",
     "budget": "Gouvernance",
+    "finance": "Finances",
     "documents": "Documents"
+  },
+  "finance": {
+    "noBudget": "Aucun budget approuvé pour l'instant : lancez le circuit de gouvernance pour fixer le budget du projet. Vous pouvez déjà préparer la répartition et enregistrer des coûts.",
+    "consumption": "Consommation du budget",
+    "overBudget": "Dépassement de {amount}",
+    "category": "Nature",
+    "label": "Libellé",
+    "delete": "Supprimer",
+    "cat": { "capex": "CAPEX", "opex": "OPEX" },
+    "kpi": {
+      "approved": "Budget approuvé",
+      "planned": "Prévu réparti",
+      "actual": "Coût réel",
+      "remaining": "Reste disponible"
+    },
+    "labor": {
+      "title": "Coût de la main-d'œuvre",
+      "hours": "Temps saisi",
+      "cost": "Coût valorisé",
+      "rate": "Taux horaire (€)",
+      "apply": "Appliquer"
+    },
+    "lines": {
+      "title": "Répartition prévisionnelle",
+      "planned": "Prévu",
+      "committed": "Engagé",
+      "unallocated": "Non affecté :",
+      "empty": "Aucune ligne. Répartissez le budget en postes CAPEX/OPEX.",
+      "add": "Ajouter"
+    },
+    "costs": {
+      "title": "Coûts réels",
+      "date": "Date",
+      "amount": "Montant",
+      "line": "Ligne",
+      "noLine": "— Aucune —",
+      "empty": "Aucun coût enregistré.",
+      "add": "Enregistrer"
+    }
   },
   "budget": {
     "intro": {
