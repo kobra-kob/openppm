@@ -272,7 +272,6 @@
     "subtitle": "Quotes attached to the project, with two-level validation.",
     "new": "New quote",
     "empty": "No quote yet. Create the first one!",
-    "readOnly": "Read-only: you don't have editing rights.",
     "back": "Back to quotes",
     "rev": "rev. {n}",
     "totalHT": "Subtotal (excl. tax)",

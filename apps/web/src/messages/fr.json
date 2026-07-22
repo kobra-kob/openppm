@@ -272,7 +272,6 @@
     "subtitle": "Devis rattachés au projet, avec validation à deux niveaux.",
     "new": "Nouveau devis",
     "empty": "Aucun devis. Créez le premier !",
-    "readOnly": "Consultation seule : vous n'avez pas les droits de rédaction.",
     "back": "Retour aux devis",
     "rev": "rév. {n}",
     "totalHT": "Total HT",
