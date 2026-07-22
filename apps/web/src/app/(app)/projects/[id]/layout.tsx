@@ -62,7 +62,7 @@ export default function ProjectWorkspaceLayout({
   return (
     <div className="flex min-h-0 flex-1">
       {/* Sidebar des modules — visible uniquement dans un projet */}
-      <aside className="glass sticky top-14 flex h-[calc(100vh-3.5rem)] w-56 shrink-0 flex-col border-r border-border-subtle px-3 py-4">
+      <aside className="glass-strong sticky top-14 flex h-[calc(100vh-3.5rem)] w-56 shrink-0 flex-col border-r border-border-subtle px-3 py-4">
         <Link
           href="/"
           className="mb-4 inline-flex items-center gap-1.5 px-2 text-sm text-muted transition-colors hover:text-foreground"

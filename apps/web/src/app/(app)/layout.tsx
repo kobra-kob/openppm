@@ -40,9 +40,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="glass sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b border-border-subtle px-4">
+      <header className="glass-strong sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b border-border-subtle px-4">
         <Link href="/" className="flex shrink-0 items-center gap-2">
-          <div className="flex size-8 items-center justify-center rounded-lg bg-accent text-accent-foreground">
+          <div className="btn-macos flex size-8 items-center justify-center rounded-[9px] text-accent-foreground">
             <Command size={18} />
           </div>
           <span className="hidden font-semibold tracking-tight sm:block">

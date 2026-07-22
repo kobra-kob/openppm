@@ -13,12 +13,14 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-(--radius-control) px-4 py-2 text-sm font-medium",
-        "transition-all duration-150 active:scale-[0.98] disabled:pointer-events-none disabled:opacity-50",
-        "focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-accent",
-        variant === "primary" && "bg-accent text-accent-foreground hover:opacity-90 shadow-sm",
-        variant === "ghost" && "text-foreground hover:bg-border-subtle",
-        variant === "danger" && "bg-danger text-white hover:opacity-90",
+        "inline-flex items-center justify-center gap-2 rounded-(--radius-control) px-4 py-[7px] text-sm font-medium",
+        "transition-all duration-150 active:scale-[0.97] disabled:pointer-events-none disabled:opacity-50",
+        "focus-visible:outline-none focus-visible:ring-[3px] focus-visible:ring-[var(--ring)]",
+        variant === "primary" && "btn-macos text-accent-foreground",
+        variant === "ghost" &&
+          "text-foreground hover:bg-[color-mix(in_srgb,var(--foreground)_8%,transparent)]",
+        variant === "danger" &&
+          "bg-danger text-white shadow-[var(--shadow-btn)] hover:brightness-105",
         className,
       )}
       {...props}
@@ -34,9 +36,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     <input
       ref={ref}
       className={cn(
-        "w-full rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm",
-        "placeholder:text-muted transition-shadow",
-        "focus:outline-none focus:ring-2 focus:ring-accent/60 focus:border-accent",
+        "w-full rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-[7px] text-sm",
+        "placeholder:text-muted transition-all",
+        "focus:outline-none focus:border-accent focus:ring-[3px] focus:ring-[var(--ring)]",
         className,
       )}
       {...props}
@@ -63,7 +65,7 @@ export function Card({
 }: React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div
-      className={cn("glass rounded-(--radius-card) p-6 shadow-sm", className)}
+      className={cn("glass rounded-(--radius-card) p-6 shadow-[var(--shadow-card)]", className)}
       {...props}
     />
   );

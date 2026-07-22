@@ -15,21 +15,24 @@ export function TopNav() {
   const t = useTranslations("topNav");
   const pathname = usePathname();
   return (
-    <nav className="flex shrink-0 items-center gap-1">
-      {LINKS.map((link) => (
-        <Link
-          key={link.key}
-          href={link.href}
-          className={cn(
-            "whitespace-nowrap rounded-(--radius-control) px-2.5 py-1.5 text-sm font-medium transition-colors",
-            link.match(pathname)
-              ? "bg-accent/15 text-accent"
-              : "text-muted hover:text-foreground",
-          )}
-        >
-          {t(link.key)}
-        </Link>
-      ))}
+    <nav className="flex shrink-0 items-center gap-0.5 rounded-[10px] bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)] p-[3px]">
+      {LINKS.map((link) => {
+        const active = link.match(pathname);
+        return (
+          <Link
+            key={link.key}
+            href={link.href}
+            className={cn(
+              "whitespace-nowrap rounded-[7px] px-3 py-1 text-[13px] font-medium transition-all",
+              active
+                ? "bg-surface-solid text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.14)]"
+                : "text-muted hover:text-foreground",
+            )}
+          >
+            {t(link.key)}
+          </Link>
+        );
+      })}
     </nav>
   );
 }

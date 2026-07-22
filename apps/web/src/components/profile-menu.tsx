@@ -53,7 +53,7 @@ export function ProfileMenu() {
             onClick={() => setOpen(false)}
             className="fixed inset-0 z-20 cursor-default"
           />
-          <div className="glass absolute right-0 z-30 mt-2 w-64 rounded-(--radius-card) p-2 shadow-lg">
+          <div className="glass-strong absolute right-0 z-30 mt-2 w-64 rounded-(--radius-card) p-2 shadow-[var(--shadow-pop)]">
             <div className="border-b border-border-subtle px-3 pb-2 pt-1">
               <p className="truncate text-sm font-medium">
                 {user.firstName} {user.lastName}
