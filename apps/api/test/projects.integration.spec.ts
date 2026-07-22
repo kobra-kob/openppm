@@ -111,7 +111,6 @@ describe("Projects (intégration)", () => {
           priority: 2,
           startDate: "2026-09-01",
           endDate: "2027-03-31",
-          budget: 250000,
         })
         .expect(201);
       expect(response.body.code).toBe("P-0001");
@@ -242,11 +241,18 @@ describe("Projects (intégration)", () => {
       const response = await request(server())
         .patch(`/api/v1/projects/${projectId}`)
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ health: "amber", priority: 1, budget: 300000 })
+        .send({ health: "amber", priority: 1 })
         .expect(200);
       expect(response.body.health).toBe("amber");
       expect(response.body.priority).toBe(1);
-      expect(Number(response.body.budget)).toBe(300000);
+    });
+
+    it("refuse la saisie directe d'un budget (400) — géré par la gouvernance", async () => {
+      await request(server())
+        .patch(`/api/v1/projects/${projectId}`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ budget: 300000 })
+        .expect(400);
     });
 
     it("ajoute un membre, change son rôle, l'édition lui devient possible", async () => {

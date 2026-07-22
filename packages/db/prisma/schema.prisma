@@ -80,6 +80,8 @@ model User {
   notifications    Notification[]
   comments         Comment[]
   ownedPortfolios  Portfolio[]       @relation("PortfolioOwner")
+  budgetRequests   BudgetRequest[]   @relation("BudgetRequester")
+  approvalDecisions ApprovalStep[]   @relation("ApprovalDecider")
 
   @@index([organizationId])
   @@map("users")
@@ -289,10 +291,11 @@ model Project {
   portfolio    Portfolio?       @relation(fields: [portfolioId], references: [id])
   manager      User?            @relation("ProjectManager", fields: [managerId], references: [id])
   createdBy    User             @relation("ProjectCreator", fields: [createdById], references: [id])
-  members      ProjectMember[]
-  tasks        Task[]
-  board        Board?
-  documents    Document[]
+  members        ProjectMember[]
+  tasks          Task[]
+  board          Board?
+  documents      Document[]
+  budgetRequests BudgetRequest[]
 
   @@unique([organizationId, code])
   @@index([organizationId, portfolioId])
@@ -567,6 +570,66 @@ model Portfolio {
 
   @@index([organizationId, deletedAt])
   @@map("portfolios")
+}
+
+// ── Gouvernance budgétaire ─────────────────────────────────────────────
+
+enum BudgetRequestStatus {
+  draft
+  pending
+  approved
+  rejected
+}
+
+enum ApprovalDecision {
+  pending
+  approved
+  rejected
+}
+
+/// Demande de budget d'un projet, validée étape par étape.
+/// Un budget approuvé fixe le budget du projet et l'active.
+model BudgetRequest {
+  id             String              @id @default(uuid(7)) @db.Char(36)
+  organizationId String              @map("organization_id") @db.Char(36)
+  projectId      String              @map("project_id") @db.Char(36)
+  amount         Decimal             @db.Decimal(14, 2)
+  capexAmount    Decimal             @default(0) @map("capex_amount") @db.Decimal(14, 2)
+  opexAmount     Decimal             @default(0) @map("opex_amount") @db.Decimal(14, 2)
+  justification  String?             @db.Text
+  status         BudgetRequestStatus @default(pending)
+  /// Index de l'étape en attente de décision (0-based)
+  currentStep    Int                 @default(0) @map("current_step")
+  requestedById  String              @map("requested_by_id") @db.Char(36)
+  decidedAt      DateTime?           @map("decided_at")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  project     Project        @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  requestedBy User           @relation("BudgetRequester", fields: [requestedById], references: [id])
+  steps       ApprovalStep[]
+
+  @@index([projectId, status])
+  @@map("budget_requests")
+}
+
+model ApprovalStep {
+  id              String           @id @default(uuid(7)) @db.Char(36)
+  budgetRequestId String           @map("budget_request_id") @db.Char(36)
+  stepOrder       Int              @map("step_order")
+  /// Rôle habilité à décider de cette étape
+  approverRole    RoleKey          @map("approver_role")
+  status          ApprovalDecision @default(pending)
+  decidedById     String?          @map("decided_by_id") @db.Char(36)
+  comment         String?          @db.VarChar(500)
+  decidedAt       DateTime?        @map("decided_at")
+  createdAt       DateTime         @default(now()) @map("created_at")
+
+  budgetRequest BudgetRequest @relation(fields: [budgetRequestId], references: [id], onDelete: Cascade)
+  decidedBy     User?         @relation("ApprovalDecider", fields: [decidedById], references: [id])
+
+  @@index([budgetRequestId, stepOrder])
+  @@map("approval_steps")
 }
 
 // ── Notifications & commentaires ───────────────────────────────────────

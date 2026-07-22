@@ -56,12 +56,6 @@ export class CreateProjectDto {
   @IsDateString()
   endDate?: string;
 
-  @ApiPropertyOptional({ example: 250000 })
-  @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
-  budget?: number;
-
   @ApiPropertyOptional({ description: "Chef de projet (membre de l'organisation)" })
   @IsOptional()
   @IsUUID()
@@ -87,7 +81,6 @@ export class UpdateProjectDto extends PartialType(
     "priority",
     "startDate",
     "endDate",
-    "budget",
     "managerId",
     "categoryId",
   ] as const),

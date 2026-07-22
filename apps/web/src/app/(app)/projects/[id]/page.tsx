@@ -43,7 +43,6 @@ export default function ProjectDetailsPage() {
     priority: "3",
     startDate: "",
     endDate: "",
-    budget: "",
     categoryId: "",
   });
   const [newMember, setNewMember] = useState({ userId: "", role: "member" });
@@ -98,7 +97,6 @@ export default function ProjectDetailsPage() {
           priority: Number(editForm.priority),
           ...(editForm.startDate ? { startDate: editForm.startDate } : {}),
           ...(editForm.endDate ? { endDate: editForm.endDate } : {}),
-          ...(editForm.budget ? { budget: Number(editForm.budget) } : {}),
           categoryId: editForm.categoryId || null,
         }),
       }),
@@ -169,7 +167,6 @@ export default function ProjectDetailsPage() {
       priority: String(project.priority),
       startDate: project.startDate?.slice(0, 10) ?? "",
       endDate: project.endDate?.slice(0, 10) ?? "",
-      budget: project.budget ?? "",
       categoryId: project.category?.id ?? "",
     });
     setEditing(true);
@@ -294,17 +291,6 @@ export default function ProjectDetailsPage() {
                     </option>
                   ))}
                 </select>
-              </div>
-              <div>
-                <Label htmlFor="eBudget">{t("form.budget")}</Label>
-                <Input
-                  id="eBudget"
-                  type="number"
-                  min={0}
-                  step="0.01"
-                  value={editForm.budget}
-                  onChange={(event) => setEditForm((c) => ({ ...c, budget: event.target.value }))}
-                />
               </div>
             </div>
             <div>

@@ -36,6 +36,13 @@
     "MFA_ALREADY_ENABLED": "Two-factor authentication is already enabled.",
     "MFA_NOT_ENABLED": "Two-factor authentication is not enabled.",
     "MFA_SETUP_REQUIRED": "Set up two-factor authentication first.",
+    "PROJECT_NOT_IN_PORTFOLIO": "Attach the project to a portfolio before requesting a budget.",
+    "BUDGET_REQUEST_PENDING": "A budget request is already in progress for this project.",
+    "BUDGET_AMOUNT_REQUIRED": "The total amount (CAPEX + OPEX) must be greater than zero.",
+    "BUDGET_REQUEST_CLOSED": "This budget request is already closed.",
+    "BUDGET_REQUEST_NOT_FOUND": "Budget request not found.",
+    "APPROVAL_STEP_NOT_FOUND": "Approval step not found.",
+    "STEP_NOT_CURRENT": "This is not the step awaiting a decision.",
     "UNKNOWN": "An unexpected error occurred. Please retry."
   },
   "auth": {
@@ -249,7 +256,52 @@
     "board": "Board",
     "gantt": "Gantt",
     "dashboard": "Dashboard",
+    "budget": "Governance",
     "documents": "Documents"
+  },
+  "budget": {
+    "intro": {
+      "title": "Budget is driven by governance",
+      "body": "A project budget is not entered freely: it is set through an approval chain (Finance review, then Direction sign-off) once the project is attached to a portfolio. On final approval, the budget is recorded and the project is activated."
+    },
+    "noPortfolio": "This project is not attached to any portfolio. Attach it from the portfolio page to request a budget.",
+    "cannotRequest": "Only the project manager or a cross-functional role (admin, manager, PMO) can submit a budget request.",
+    "status": {
+      "draft": "Draft",
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "role": {
+      "finance": "Finance",
+      "admin": "Direction",
+      "manager": "Manager",
+      "pmo": "PMO"
+    },
+    "request": {
+      "title": "Budget request",
+      "capex": "CAPEX",
+      "opex": "OPEX",
+      "total": "Total",
+      "submittedBy": "Submitted by {name}",
+      "approvedNotice": "Budget approved: {amount}. The project is now active."
+    },
+    "step": {
+      "label": "Step {order} — {role}",
+      "approvedBy": "Approved by {name}",
+      "rejectedBy": "Rejected by {name}",
+      "pendingBy": "Awaiting ({name})",
+      "commentPlaceholder": "Comment (optional)",
+      "approve": "Approve",
+      "reject": "Reject"
+    },
+    "form": {
+      "title": "Submit a budget request",
+      "titleNew": "Submit a new request",
+      "justification": "Justification",
+      "total": "Total amount:",
+      "submit": "Submit request"
+    }
   },
   "documents": {
     "title": "Documents",

@@ -71,9 +71,11 @@ export function Card({
 
 export function Alert({
   tone,
+  className,
   children,
 }: {
-  tone: "error" | "success";
+  tone: "error" | "success" | "warning" | "info";
+  className?: string;
   children: React.ReactNode;
 }) {
   return (
@@ -83,6 +85,9 @@ export function Alert({
         "rounded-(--radius-control) border px-3 py-2 text-sm",
         tone === "error" && "border-danger/30 bg-danger/10 text-danger",
         tone === "success" && "border-success/30 bg-success/10 text-success",
+        tone === "warning" && "border-amber-500/30 bg-amber-500/10 text-amber-600 dark:text-amber-400",
+        tone === "info" && "border-accent/30 bg-accent/10 text-accent",
+        className,
       )}
     >
       {children}

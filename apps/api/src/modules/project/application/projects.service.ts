@@ -154,10 +154,10 @@ export class ProjectsService {
     context: RequestContext,
   ): Promise<ProjectView> {
     // Le template complète les champs absents du DTO (le DTO a priorité)
+    // Le budget n'est pas appliqué ici : il découle du workflow de gouvernance.
     let defaults: {
       description?: string;
       priority?: number;
-      budget?: number;
       categoryId?: string;
       durationDays?: number;
     } = {};
@@ -172,7 +172,6 @@ export class ProjectsService {
       defaults = {
         description: template.description ?? undefined,
         priority: template.priority,
-        budget: template.budget ? Number(template.budget) : undefined,
         categoryId: template.categoryId ?? undefined,
         durationDays: template.durationDays ?? undefined,
       };
@@ -216,7 +215,6 @@ export class ProjectsService {
       priority: dto.priority ?? defaults.priority,
       startDate,
       endDate,
-      budget: dto.budget ?? defaults.budget,
       categoryId,
       managerId: dto.managerId,
       createdById: payload.sub,
@@ -251,7 +249,6 @@ export class ProjectsService {
     if (dto.description !== undefined) input.description = dto.description;
     if (dto.priority !== undefined) input.priority = dto.priority;
     if (dto.health !== undefined) input.health = dto.health;
-    if (dto.budget !== undefined) input.budget = dto.budget;
     if (dto.startDate !== undefined || dto.endDate !== undefined) {
       const { startDate, endDate } = this.parseDates(
         dto.startDate ?? project.startDate?.toISOString(),

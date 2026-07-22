@@ -146,8 +146,11 @@ describe("Catégories / templates / favoris (intégration)", () => {
       await request(server())
         .patch(`/api/v1/projects/${projectId}`)
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ startDate: "2026-09-01", endDate: "2026-09-11", budget: 50000, priority: 2 })
+        .send({ startDate: "2026-09-01", endDate: "2026-09-11", priority: 2 })
         .expect(200);
+      // Le budget projet est piloté par la gouvernance : on le fixe côté base
+      // pour vérifier qu'un template le reprend comme budget prévisionnel.
+      await prisma.project.update({ where: { id: projectId }, data: { budget: 50000 } });
 
       const template = await request(server())
         .post("/api/v1/project-templates")
@@ -161,7 +164,7 @@ describe("Catégories / templates / favoris (intégration)", () => {
       expect(template.body.category.id).toBe(categoryId);
     });
 
-    it("crée un projet à partir du template : défauts appliqués, DTO prioritaire", async () => {
+    it("crée un projet à partir du template : défauts appliqués, budget non transmis", async () => {
       const project = await request(server())
         .post("/api/v1/projects")
         .set("Authorization", `Bearer ${adminToken}`)
@@ -169,11 +172,11 @@ describe("Catégories / templates / favoris (intégration)", () => {
           name: "Nouveau site client",
           templateId,
           startDate: "2026-10-01",
-          budget: 60000,
         })
         .expect(201);
       expect(project.body.priority).toBe(2);
-      expect(Number(project.body.budget)).toBe(60000);
+      // Le budget du template n'est pas appliqué : il relèvera de la gouvernance
+      expect(project.body.budget).toBeNull();
       expect(project.body.category.id).toBe(categoryId);
       expect(project.body.endDate?.slice(0, 10)).toBe("2026-10-11");
     });

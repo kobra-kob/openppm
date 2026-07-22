@@ -36,6 +36,13 @@
     "MFA_ALREADY_ENABLED": "La double authentification est déjà active.",
     "MFA_NOT_ENABLED": "La double authentification n'est pas active.",
     "MFA_SETUP_REQUIRED": "Initialisez d'abord la double authentification.",
+    "PROJECT_NOT_IN_PORTFOLIO": "Rattachez d'abord le projet à un portefeuille avant de demander un budget.",
+    "BUDGET_REQUEST_PENDING": "Une demande de budget est déjà en cours pour ce projet.",
+    "BUDGET_AMOUNT_REQUIRED": "Le montant total (CAPEX + OPEX) doit être supérieur à zéro.",
+    "BUDGET_REQUEST_CLOSED": "Cette demande de budget est déjà clôturée.",
+    "BUDGET_REQUEST_NOT_FOUND": "Demande de budget introuvable.",
+    "APPROVAL_STEP_NOT_FOUND": "Étape d'approbation introuvable.",
+    "STEP_NOT_CURRENT": "Ce n'est pas l'étape en attente de décision.",
     "UNKNOWN": "Une erreur inattendue s'est produite. Réessayez."
   },
   "auth": {
@@ -249,7 +256,52 @@
     "board": "Board",
     "gantt": "Gantt",
     "dashboard": "Dashboard",
+    "budget": "Gouvernance",
     "documents": "Documents"
+  },
+  "budget": {
+    "intro": {
+      "title": "Le budget se pilote par la gouvernance",
+      "body": "Le budget d'un projet n'est pas saisi librement : il est fixé par un circuit d'approbation (revue Finance, puis validation Direction) une fois le projet rattaché à un portefeuille. À l'approbation finale, le budget est enregistré et le projet activé."
+    },
+    "noPortfolio": "Ce projet n'est rattaché à aucun portefeuille. Rattachez-le depuis la fiche du portefeuille pour pouvoir demander un budget.",
+    "cannotRequest": "Seul le chef de projet ou un rôle transverse (administrateur, manager, PMO) peut soumettre une demande de budget.",
+    "status": {
+      "draft": "Brouillon",
+      "pending": "En attente",
+      "approved": "Approuvé",
+      "rejected": "Rejeté"
+    },
+    "role": {
+      "finance": "Finance",
+      "admin": "Direction",
+      "manager": "Manager",
+      "pmo": "PMO"
+    },
+    "request": {
+      "title": "Demande de budget",
+      "capex": "CAPEX",
+      "opex": "OPEX",
+      "total": "Total",
+      "submittedBy": "Soumise par {name}",
+      "approvedNotice": "Budget approuvé : {amount}. Le projet est désormais actif."
+    },
+    "step": {
+      "label": "Étape {order} — {role}",
+      "approvedBy": "Approuvé par {name}",
+      "rejectedBy": "Rejeté par {name}",
+      "pendingBy": "En attente ({name})",
+      "commentPlaceholder": "Commentaire (facultatif)",
+      "approve": "Approuver",
+      "reject": "Rejeter"
+    },
+    "form": {
+      "title": "Soumettre une demande de budget",
+      "titleNew": "Soumettre une nouvelle demande",
+      "justification": "Justification",
+      "total": "Montant total :",
+      "submit": "Soumettre la demande"
+    }
   },
   "documents": {
     "title": "Documents",
