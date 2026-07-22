@@ -10,6 +10,7 @@ import { AuditService } from "../../../core/audit/audit.service";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
 import { QUOTE_REPOSITORY } from "../domain/quote.repository";
+import { computeQuoteTotals, lineTotalHT } from "../domain/quote-totals";
 import type {
   ProjectQuoteContext,
   QuoteRecord,
@@ -341,16 +342,15 @@ export class QuoteService {
     quote: QuoteRecord,
   ): QuoteView {
     const vatRate = Number(quote.vatRate);
-    const lines: QuoteLineView[] = quote.lines.map((line) => {
-      const quantity = Number(line.quantity);
-      const unitPrice = Number(line.unitPrice);
-      const discountRate = Number(line.discountRate);
-      const lineTotalHT = round(quantity * unitPrice * (1 - discountRate / 100));
-      return { id: line.id, label: line.label, quantity, unitPrice, discountRate, lineTotalHT };
-    });
-    const totalHT = round(lines.reduce((acc, line) => acc + line.lineTotalHT, 0));
-    const vatAmount = round((totalHT * vatRate) / 100);
-    const totalTTC = round(totalHT + vatAmount);
+    const lines: QuoteLineView[] = quote.lines.map((line) => ({
+      id: line.id,
+      label: line.label,
+      quantity: Number(line.quantity),
+      unitPrice: Number(line.unitPrice),
+      discountRate: Number(line.discountRate),
+      lineTotalHT: lineTotalHT(line),
+    }));
+    const { totalHT, vatAmount, totalTTC } = computeQuoteTotals(quote.lines, vatRate);
 
     const canEdit = this.canEdit(payload, project) && quote.status === QuoteStatus.draft;
     return {
@@ -459,8 +459,4 @@ export class QuoteService {
       ...context,
     });
   }
-}
-
-function round(value: number): number {
-  return Math.round((value + Number.EPSILON) * 100) / 100;
 }

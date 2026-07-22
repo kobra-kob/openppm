@@ -234,6 +234,13 @@
     },
     "detail": {
       "consumption": "Consommation de l'enveloppe",
+      "consolidation": "Consolidation financière",
+      "ofEnvelope": "de l'enveloppe",
+      "approvedBudget": "Budget approuvé",
+      "planned": "Prévu réparti",
+      "actual": "Coût réel",
+      "quotesApproved": "Devis approuvés",
+      "project": "Projet",
       "overCommitted": "Enveloppe dépassée",
       "projectsTitle": "Projets du portefeuille",
       "attach": "Rattacher un projet",
@@ -361,6 +368,14 @@
       "noLine": "— Aucune —",
       "empty": "Aucun coût enregistré.",
       "add": "Enregistrer"
+    },
+    "quotes": {
+      "title": "Devis",
+      "link": "Voir les devis →",
+      "approvedHT": "Devis approuvés (HT)",
+      "approvedTTC": "Devis approuvés (TTC)",
+      "counts": "Approuvés / en attente",
+      "countsValue": "{approved} / {pending}"
     }
   },
   "budget": {

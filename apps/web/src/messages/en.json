@@ -234,6 +234,13 @@
     },
     "detail": {
       "consumption": "Envelope consumption",
+      "consolidation": "Financial consolidation",
+      "ofEnvelope": "of envelope",
+      "approvedBudget": "Approved budget",
+      "planned": "Planned",
+      "actual": "Actual cost",
+      "quotesApproved": "Approved quotes",
+      "project": "Project",
       "overCommitted": "Envelope exceeded",
       "projectsTitle": "Portfolio projects",
       "attach": "Attach a project",
@@ -361,6 +368,14 @@
       "noLine": "— None —",
       "empty": "No cost recorded.",
       "add": "Record"
+    },
+    "quotes": {
+      "title": "Quotes",
+      "link": "View quotes →",
+      "approvedHT": "Approved quotes (excl. tax)",
+      "approvedTTC": "Approved quotes (incl. tax)",
+      "counts": "Approved / pending",
+      "countsValue": "{approved} / {pending}"
     }
   },
   "budget": {

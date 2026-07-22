@@ -1,7 +1,8 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock3, Landmark, PiggyBank, Plus, Trash2, TrendingDown, Wallet } from "lucide-react";
+import { Clock3, FileText, Landmark, PiggyBank, Plus, Trash2, TrendingDown, Wallet } from "lucide-react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
@@ -26,6 +27,13 @@ interface FinanceView {
   };
   remaining: number | null;
   unallocated: number | null;
+  quotes: {
+    count: number;
+    approvedCount: number;
+    pendingCount: number;
+    approvedTotalHT: number;
+    approvedTotalTTC: number;
+  };
   budgetLines: Array<{
     id: string;
     category: Category;
@@ -234,6 +242,43 @@ export default function FinancePage() {
               </Button>
             </form>
           )}
+        </div>
+      </Card>
+
+      {/* Devis reliés à la finance */}
+      <Card>
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-muted">
+            <FileText size={16} />
+            <h2 className="text-sm font-semibold uppercase tracking-wider">{t("quotes.title")}</h2>
+          </div>
+          <Link
+            href={`/projects/${id}/quotes`}
+            className="text-xs text-accent transition-colors hover:underline"
+          >
+            {t("quotes.link")}
+          </Link>
+        </div>
+        <div className="flex flex-wrap items-end gap-6">
+          <div className="text-sm">
+            <p className="text-muted">{t("quotes.approvedHT")}</p>
+            <p className="text-lg font-semibold tabular-nums text-accent">
+              {money(data.quotes.approvedTotalHT)}
+            </p>
+          </div>
+          <div className="text-sm">
+            <p className="text-muted">{t("quotes.approvedTTC")}</p>
+            <p className="text-lg font-semibold tabular-nums">{money(data.quotes.approvedTotalTTC)}</p>
+          </div>
+          <div className="text-sm">
+            <p className="text-muted">{t("quotes.counts")}</p>
+            <p className="text-lg font-semibold tabular-nums">
+              {t("quotes.countsValue", {
+                approved: data.quotes.approvedCount,
+                pending: data.quotes.pendingCount,
+              })}
+            </p>
+          </div>
         </div>
       </Card>
 

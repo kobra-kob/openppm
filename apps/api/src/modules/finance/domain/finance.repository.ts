@@ -1,4 +1,4 @@
-import type { BudgetCategory, ProjectRole } from "@openppm/db";
+import type { BudgetCategory, ProjectRole, ProjectStatus, QuoteStatus } from "@openppm/db";
 
 export const FINANCE_REPOSITORY = Symbol("FINANCE_REPOSITORY");
 
@@ -50,6 +50,34 @@ export interface CreateCostEntryInput {
   createdById: string;
 }
 
+/** Totaux d'un devis (calculés via la source unique quote-totals). */
+export interface QuoteTotalsRecord {
+  status: QuoteStatus;
+  totalHT: number;
+  totalTTC: number;
+}
+
+/** Données brutes de finance d'un projet — socle des synthèses. */
+export interface ProjectFinanceBundle {
+  project: {
+    id: string;
+    code: string;
+    name: string;
+    status: ProjectStatus;
+    budget: string | null;
+    laborRate: string | null;
+  };
+  budgetLines: BudgetLineRecord[];
+  costEntries: CostEntryRecord[];
+  laborHours: number;
+  quotes: QuoteTotalsRecord[];
+}
+
+export interface PortfolioFinanceBundle {
+  portfolio: { id: string; name: string; budgetEnvelope: string | null };
+  projects: ProjectFinanceBundle[];
+}
+
 export interface FinanceRepository {
   loadProjectContext(organizationId: string, projectId: string): Promise<ProjectFinanceContext | null>;
   setLaborRate(projectId: string, laborRate: number | null): Promise<void>;
@@ -70,4 +98,16 @@ export interface FinanceRepository {
 
   /** Total des heures saisies sur les tâches du projet (main-d'œuvre). */
   sumProjectHours(projectId: string): Promise<number>;
+
+  /** Charge en un bloc les données de finance d'un projet (dont devis). */
+  loadProjectBundle(
+    organizationId: string,
+    projectId: string,
+  ): Promise<ProjectFinanceBundle | null>;
+
+  /** Charge les données de finance de tous les projets d'un portefeuille. */
+  loadPortfolioBundle(
+    organizationId: string,
+    portfolioId: string,
+  ): Promise<PortfolioFinanceBundle | null>;
 }

@@ -1,7 +1,17 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, FolderKanban, Trash2, Wallet, X } from "lucide-react";
+import {
+  ArrowLeft,
+  FileText,
+  FolderKanban,
+  Landmark,
+  PiggyBank,
+  Trash2,
+  TrendingDown,
+  Wallet,
+  X,
+} from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -13,6 +23,7 @@ import { StatusBadge } from "@/features/projects/shared";
 import {
   formatEuro,
   PORTFOLIO_MANAGER_ROLES,
+  PortfolioFinanceView,
   PortfolioProject,
   PortfolioView,
 } from "@/features/portfolios/shared";
@@ -42,9 +53,14 @@ export default function PortfolioDetailPage() {
     queryFn: () => api<PortfolioProject[]>("/portfolios/unassigned-projects"),
     enabled: canManage,
   });
+  const { data: finance } = useQuery({
+    queryKey: ["portfolio-finance", id],
+    queryFn: () => api<PortfolioFinanceView>(`/portfolios/${id}/finance`),
+  });
 
   const refresh = () => {
     void queryClient.invalidateQueries({ queryKey: ["portfolio", id] });
+    void queryClient.invalidateQueries({ queryKey: ["portfolio-finance", id] });
     void queryClient.invalidateQueries({ queryKey: ["portfolios"] });
     void queryClient.invalidateQueries({ queryKey: ["portfolios-unassigned"] });
   };
@@ -101,13 +117,8 @@ export default function PortfolioDetailPage() {
     return null;
   }
 
-  const envelope = portfolio.budgetEnvelope ? Number(portfolio.budgetEnvelope) : null;
-  const remaining = envelope !== null ? envelope - portfolio.committedBudget : null;
-  const pct =
-    envelope && envelope > 0
-      ? Math.min(100, Math.round((portfolio.committedBudget / envelope) * 100))
-      : null;
-  const over = envelope !== null && portfolio.committedBudget > envelope;
+  const envelopeOver =
+    !!finance && finance.budgetEnvelope !== null && finance.actual.total > finance.budgetEnvelope;
 
   const startEditing = () => {
     setEditForm({
@@ -209,34 +220,100 @@ export default function PortfolioDetailPage() {
         </Card>
       )}
 
-      {/* Consommation de l'enveloppe */}
-      <Card>
-        <div className="mb-3 flex items-center justify-between">
-          <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
-            {t("detail.consumption")}
-          </h2>
-          {over && (
-            <span className="rounded-full bg-danger/15 px-2 py-0.5 text-xs font-medium text-danger">
-              {t("detail.overCommitted")}
-            </span>
-          )}
-        </div>
-        <div className="grid gap-4 sm:grid-cols-4">
-          <Kpi label={t("envelope")} value={envelope !== null ? formatEuro(envelope, locale) : t("noEnvelope")} />
-          <Kpi label={t("allocated")} value={formatEuro(portfolio.allocatedBudget, locale)} />
-          <Kpi label={t("committed")} value={formatEuro(portfolio.committedBudget, locale)} />
-          <Kpi
-            label={t("remaining")}
-            value={remaining !== null ? formatEuro(remaining, locale) : "—"}
-            danger={remaining !== null && remaining < 0}
-          />
-        </div>
-        {pct !== null && (
-          <div className="mt-4 h-2 overflow-hidden rounded-full bg-border-subtle">
-            <div className={over ? "h-full bg-danger" : "h-full bg-accent"} style={{ width: `${pct}%` }} />
+      {/* Consolidation financière — mêmes chiffres que les fiches projet, agrégés */}
+      {finance && (
+        <Card>
+          <div className="mb-3 flex items-center justify-between">
+            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted">
+              {t("detail.consolidation")}
+            </h2>
+            {finance.envelopeConsumedPct !== null && (
+              <span className={cn("text-xs font-medium tabular-nums", envelopeOver && "text-danger")}>
+                {finance.envelopeConsumedPct}% {t("detail.ofEnvelope")}
+              </span>
+            )}
           </div>
-        )}
-      </Card>
+
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+            <Kpi
+              icon={Wallet}
+              label={t("envelope")}
+              value={finance.budgetEnvelope !== null ? formatEuro(finance.budgetEnvelope, locale) : t("noEnvelope")}
+            />
+            <Kpi
+              icon={Landmark}
+              label={t("detail.approvedBudget")}
+              value={finance.approvedBudget !== null ? formatEuro(finance.approvedBudget, locale) : "—"}
+            />
+            <Kpi icon={Landmark} label={t("detail.planned")} value={formatEuro(finance.planned.total, locale)} />
+            <Kpi icon={TrendingDown} label={t("detail.actual")} value={formatEuro(finance.actual.total, locale)} />
+            <Kpi
+              icon={PiggyBank}
+              label={t("remaining")}
+              value={finance.remaining !== null ? formatEuro(finance.remaining, locale) : "—"}
+              danger={finance.remaining !== null && finance.remaining < 0}
+            />
+            <Kpi
+              icon={FileText}
+              label={t("detail.quotesApproved")}
+              value={formatEuro(finance.quotes.approvedTotalHT, locale)}
+            />
+          </div>
+
+          {finance.envelopeConsumedPct !== null && (
+            <div className="mt-4 h-2 overflow-hidden rounded-full bg-border-subtle">
+              <div
+                className={envelopeOver ? "h-full bg-danger" : "h-full bg-accent"}
+                style={{ width: `${Math.min(100, finance.envelopeConsumedPct)}%` }}
+              />
+            </div>
+          )}
+
+          {/* Ventilation par projet — se recoupe avec la fiche Finances de chaque projet */}
+          {finance.projects.length > 0 && (
+            <div className="mt-4 overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border-subtle text-left text-xs uppercase tracking-wider text-muted">
+                    <th className="py-2 font-medium">{t("detail.project")}</th>
+                    <th className="py-2 text-right font-medium">{t("detail.approvedBudget")}</th>
+                    <th className="py-2 text-right font-medium">{t("detail.actual")}</th>
+                    <th className="py-2 text-right font-medium">{t("remaining")}</th>
+                    <th className="py-2 text-right font-medium">{t("detail.quotesApproved")}</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {finance.projects.map((project) => (
+                    <tr key={project.id} className="border-b border-border-subtle/60">
+                      <td className="py-2">
+                        <Link href={`/projects/${project.id}/finance`} className="hover:underline">
+                          <span className="font-mono text-xs text-muted">{project.code}</span>{" "}
+                          {project.name}
+                        </Link>
+                      </td>
+                      <td className="py-2 text-right tabular-nums">
+                        {project.approvedBudget !== null ? formatEuro(project.approvedBudget, locale) : "—"}
+                      </td>
+                      <td className="py-2 text-right tabular-nums">{formatEuro(project.actualTotal, locale)}</td>
+                      <td
+                        className={cn(
+                          "py-2 text-right tabular-nums",
+                          project.remaining !== null && project.remaining < 0 && "text-danger",
+                        )}
+                      >
+                        {project.remaining !== null ? formatEuro(project.remaining, locale) : "—"}
+                      </td>
+                      <td className="py-2 text-right tabular-nums text-muted">
+                        {formatEuro(project.quotesApprovedHT, locale)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* Projets rattachés */}
       <Card>
@@ -309,11 +386,23 @@ export default function PortfolioDetailPage() {
   );
 }
 
-function Kpi({ label, value, danger }: { label: string; value: string; danger?: boolean }) {
+function Kpi({
+  label,
+  value,
+  danger,
+  icon: Icon,
+}: {
+  label: string;
+  value: string;
+  danger?: boolean;
+  icon?: typeof Wallet;
+}) {
   return (
     <div>
-      <p className="text-[11px] font-semibold uppercase tracking-wider text-muted">{label}</p>
-      <p className={cn("mt-0.5 text-lg font-semibold tracking-tight", danger && "text-danger")}>
+      <p className="flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-muted">
+        {Icon && <Icon size={12} />} {label}
+      </p>
+      <p className={cn("mt-0.5 text-lg font-semibold tracking-tight tabular-nums", danger && "text-danger")}>
         {value}
       </p>
     </div>

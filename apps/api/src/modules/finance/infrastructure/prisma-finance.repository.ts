@@ -1,13 +1,17 @@
 import { Injectable } from "@nestjs/common";
 import { BudgetCategory } from "@openppm/db";
 import { PrismaService } from "../../../core/prisma/prisma.service";
+import { computeQuoteTotals } from "../../quote/domain/quote-totals";
 import type {
   BudgetLineRecord,
   CostEntryRecord,
   CreateBudgetLineInput,
   CreateCostEntryInput,
   FinanceRepository,
+  PortfolioFinanceBundle,
+  ProjectFinanceBundle,
   ProjectFinanceContext,
+  QuoteTotalsRecord,
 } from "../domain/finance.repository";
 
 @Injectable()
@@ -127,6 +131,148 @@ export class PrismaFinanceRepository implements FinanceRepository {
       _sum: { hours: true },
     });
     return Number(result._sum.hours ?? 0);
+  }
+
+  async loadProjectBundle(
+    organizationId: string,
+    projectId: string,
+  ): Promise<ProjectFinanceBundle | null> {
+    const project = await this.prisma.project.findFirst({
+      where: { id: projectId, organizationId, deletedAt: null },
+      select: { id: true, code: true, name: true, status: true, budget: true, laborRate: true },
+    });
+    if (!project) {
+      return null;
+    }
+    const [budgetLines, costEntries, laborHours, quotes] = await Promise.all([
+      this.listBudgetLines(projectId),
+      this.listCostEntries(projectId),
+      this.sumProjectHours(projectId),
+      this.loadQuoteTotals([projectId]),
+    ]);
+    return {
+      project: {
+        id: project.id,
+        code: project.code,
+        name: project.name,
+        status: project.status,
+        budget: project.budget?.toString() ?? null,
+        laborRate: project.laborRate?.toString() ?? null,
+      },
+      budgetLines,
+      costEntries,
+      laborHours,
+      quotes: quotes.get(projectId) ?? [],
+    };
+  }
+
+  async loadPortfolioBundle(
+    organizationId: string,
+    portfolioId: string,
+  ): Promise<PortfolioFinanceBundle | null> {
+    const portfolio = await this.prisma.portfolio.findFirst({
+      where: { id: portfolioId, organizationId, deletedAt: null },
+      select: { id: true, name: true, budgetEnvelope: true },
+    });
+    if (!portfolio) {
+      return null;
+    }
+    const projects = await this.prisma.project.findMany({
+      where: { portfolioId, organizationId, deletedAt: null },
+      select: { id: true, code: true, name: true, status: true, budget: true, laborRate: true },
+      orderBy: { createdAt: "asc" },
+    });
+    const projectIds = projects.map((project) => project.id);
+    const [budgetLines, costEntries, hours, quotes] = await Promise.all([
+      this.prisma.budgetLine.findMany({ where: { projectId: { in: projectIds } } }),
+      this.prisma.costEntry.findMany({
+        where: { projectId: { in: projectIds } },
+        include: { createdBy: { select: { firstName: true, lastName: true } } },
+      }),
+      this.prisma.timeEntry.groupBy({
+        by: ["taskId"],
+        where: { task: { projectId: { in: projectIds } } },
+        _sum: { hours: true },
+      }),
+      this.loadQuoteTotals(projectIds),
+    ]);
+    // Regroupe les heures par projet (via la tâche)
+    const taskProject = new Map(
+      (
+        await this.prisma.task.findMany({
+          where: { projectId: { in: projectIds } },
+          select: { id: true, projectId: true },
+        })
+      ).map((task) => [task.id, task.projectId]),
+    );
+    const hoursByProject = new Map<string, number>();
+    for (const row of hours) {
+      const projectId = taskProject.get(row.taskId);
+      if (projectId) {
+        hoursByProject.set(
+          projectId,
+          (hoursByProject.get(projectId) ?? 0) + Number(row._sum.hours ?? 0),
+        );
+      }
+    }
+    return {
+      portfolio: {
+        id: portfolio.id,
+        name: portfolio.name,
+        budgetEnvelope: portfolio.budgetEnvelope?.toString() ?? null,
+      },
+      projects: projects.map((project) => ({
+        project: {
+          id: project.id,
+          code: project.code,
+          name: project.name,
+          status: project.status,
+          budget: project.budget?.toString() ?? null,
+          laborRate: project.laborRate?.toString() ?? null,
+        },
+        budgetLines: budgetLines
+          .filter((line) => line.projectId === project.id)
+          .map((line) => this.toLine(line)),
+        costEntries: costEntries
+          .filter((cost) => cost.projectId === project.id)
+          .map((cost) => this.toCost(cost)),
+        laborHours: hoursByProject.get(project.id) ?? 0,
+        quotes: quotes.get(project.id) ?? [],
+      })),
+    };
+  }
+
+  /** Totaux HT/TTC des devis, groupés par projet (source unique quote-totals). */
+  private async loadQuoteTotals(
+    projectIds: string[],
+  ): Promise<Map<string, QuoteTotalsRecord[]>> {
+    const result = new Map<string, QuoteTotalsRecord[]>();
+    if (projectIds.length === 0) {
+      return result;
+    }
+    const quotes = await this.prisma.quote.findMany({
+      where: { projectId: { in: projectIds } },
+      select: {
+        projectId: true,
+        status: true,
+        vatRate: true,
+        lines: { select: { quantity: true, unitPrice: true, discountRate: true } },
+      },
+    });
+    for (const quote of quotes) {
+      const totals = computeQuoteTotals(
+        quote.lines.map((line) => ({
+          quantity: line.quantity.toString(),
+          unitPrice: line.unitPrice.toString(),
+          discountRate: line.discountRate.toString(),
+        })),
+        quote.vatRate.toString(),
+      );
+      const list = result.get(quote.projectId) ?? [];
+      list.push({ status: quote.status, totalHT: totals.totalHT, totalTTC: totals.totalTTC });
+      result.set(quote.projectId, list);
+    }
+    return result;
   }
 
   private toLine(line: {

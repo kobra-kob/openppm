@@ -21,6 +21,44 @@ export interface PortfolioView {
   createdAt: string;
 }
 
+/** Consolidation financière d'un portefeuille (mêmes chiffres que les projets). */
+export interface PortfolioFinanceView {
+  portfolioId: string;
+  name: string;
+  budgetEnvelope: number | null;
+  envelopeConsumedPct: number | null;
+  projectCount: number;
+  approvedBudget: number | null;
+  planned: { capex: number; opex: number; total: number };
+  actual: {
+    manualCapex: number;
+    manualOpex: number;
+    manualTotal: number;
+    laborHours: number;
+    laborCost: number;
+    total: number;
+  };
+  remaining: number | null;
+  unallocated: number | null;
+  quotes: {
+    count: number;
+    approvedCount: number;
+    pendingCount: number;
+    approvedTotalHT: number;
+    approvedTotalTTC: number;
+  };
+  projects: Array<{
+    id: string;
+    code: string;
+    name: string;
+    status: string;
+    approvedBudget: number | null;
+    actualTotal: number;
+    remaining: number | null;
+    quotesApprovedHT: number;
+  }>;
+}
+
 /** Rôles autorisés à gérer les portefeuilles. */
 export const PORTFOLIO_MANAGER_ROLES = ["admin", "manager", "pmo"];
 
