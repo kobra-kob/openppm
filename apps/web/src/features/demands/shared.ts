@@ -1,5 +1,40 @@
 export type DemandUrgency = "low" | "medium" | "high" | "critical";
 export type WorkflowStateKind = "initial" | "intermediate" | "final_ok" | "final_ko";
+export type RiskLevel = "low" | "medium" | "high";
+
+export interface BusinessCaseRisk {
+  id: string;
+  label: string;
+  probability: RiskLevel;
+  impact: RiskLevel;
+  severity: RiskLevel;
+  mitigation: string | null;
+}
+
+export interface BusinessCaseView {
+  id: string;
+  demandId: string;
+  roi: string | null;
+  costs: string | null;
+  benefits: string | null;
+  assumptions: string | null;
+  resources: string | null;
+  dependencies: string | null;
+  plannedStartDate: string | null;
+  plannedEndDate: string | null;
+  createdBy: { id: string; name: string };
+  createdAt: string;
+  updatedAt: string;
+  risks: BusinessCaseRisk[];
+  canEdit: boolean;
+}
+
+/** Couleur de pastille selon le niveau de risque (probabilité / impact / sévérité). */
+export const RISK_BADGE: Record<RiskLevel, string> = {
+  low: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+  medium: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+  high: "bg-red-500/15 text-red-600 dark:text-red-400",
+};
 
 export interface DemandState {
   key: string;

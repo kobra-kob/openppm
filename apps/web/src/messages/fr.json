@@ -277,6 +277,8 @@
     "commentPlaceholder": "Commentaire (obligatoire pour un refus ou un retour)",
     "historyTitle": "Historique",
     "rejectedNotice": "Cette demande a été rejetée.",
+    "tabDetail": "Détail",
+    "tabBusinessCase": "Business Case",
     "urgency": {
       "low": "Faible",
       "medium": "Moyenne",
@@ -300,6 +302,40 @@
       "create": "Créer la demande",
       "save": "Enregistrer",
       "cancel": "Annuler"
+    }
+  },
+  "businessCase": {
+    "title": "Business Case",
+    "loading": "Chargement…",
+    "empty": "Aucun Business Case rédigé pour cette demande.",
+    "create": "Rédiger le Business Case",
+    "edit": "Modifier",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "none": "—",
+    "roi": "Retour sur investissement",
+    "costs": "Coûts",
+    "benefits": "Bénéfices",
+    "assumptions": "Hypothèses",
+    "resources": "Ressources",
+    "dependencies": "Dépendances",
+    "plannedStart": "Début prévisionnel",
+    "plannedEnd": "Fin prévisionnelle",
+    "planned": "Planning prévisionnel",
+    "author": "Rédigé par {name}",
+    "risksTitle": "Risques identifiés",
+    "addRisk": "Ajouter un risque",
+    "removeRisk": "Retirer",
+    "noRisk": "Aucun risque identifié.",
+    "riskLabel": "Intitulé du risque",
+    "probability": "Probabilité",
+    "impact": "Impact",
+    "severity": "Sévérité",
+    "mitigation": "Mesure d'atténuation",
+    "level": {
+      "low": "Faible",
+      "medium": "Moyen",
+      "high": "Élevé"
     }
   },
   "workspace": {

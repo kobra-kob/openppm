@@ -277,6 +277,8 @@
     "commentPlaceholder": "Comment (required to reject or send back)",
     "historyTitle": "History",
     "rejectedNotice": "This demand was rejected.",
+    "tabDetail": "Details",
+    "tabBusinessCase": "Business Case",
     "urgency": {
       "low": "Low",
       "medium": "Medium",
@@ -300,6 +302,40 @@
       "create": "Create demand",
       "save": "Save",
       "cancel": "Cancel"
+    }
+  },
+  "businessCase": {
+    "title": "Business Case",
+    "loading": "Loading…",
+    "empty": "No business case written for this demand yet.",
+    "create": "Write the business case",
+    "edit": "Edit",
+    "save": "Save",
+    "cancel": "Cancel",
+    "none": "—",
+    "roi": "Return on investment",
+    "costs": "Costs",
+    "benefits": "Benefits",
+    "assumptions": "Assumptions",
+    "resources": "Resources",
+    "dependencies": "Dependencies",
+    "plannedStart": "Planned start",
+    "plannedEnd": "Planned end",
+    "planned": "Planned schedule",
+    "author": "Written by {name}",
+    "risksTitle": "Identified risks",
+    "addRisk": "Add a risk",
+    "removeRisk": "Remove",
+    "noRisk": "No risk identified.",
+    "riskLabel": "Risk label",
+    "probability": "Probability",
+    "impact": "Impact",
+    "severity": "Severity",
+    "mitigation": "Mitigation",
+    "level": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High"
     }
   },
   "workspace": {

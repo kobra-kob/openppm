@@ -9,6 +9,7 @@ import { FormEvent, useState } from "react";
 import { Alert, Button, Card, Input, Label, cn } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 import { formatEuro } from "@/features/portfolios/shared";
+import { BusinessCasePanel } from "@/features/demands/business-case-panel";
 import {
   DemandDetailView,
   DemandUrgency,
@@ -35,6 +36,7 @@ export default function DemandDetailPage() {
 
   const [error, setError] = useState<string | null>(null);
   const [comment, setComment] = useState("");
+  const [tab, setTab] = useState<"detail" | "businessCase">("detail");
   const [editing, setEditing] = useState(false);
   const [form, setForm] = useState({
     title: "",
@@ -216,6 +218,29 @@ export default function DemandDetailPage() {
         )}
       </Card>
 
+      {/* Onglets Détail / Business Case */}
+      <div className="flex gap-1 border-b border-border-subtle">
+        {(["detail", "businessCase"] as const).map((value) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => setTab(value)}
+            className={cn(
+              "-mb-px border-b-2 px-4 py-2 text-sm font-medium transition-colors",
+              tab === value
+                ? "border-accent text-accent"
+                : "border-transparent text-muted hover:text-foreground",
+            )}
+          >
+            {value === "detail" ? t("tabDetail") : t("tabBusinessCase")}
+          </button>
+        ))}
+      </div>
+
+      {tab === "businessCase" && <BusinessCasePanel demandId={id} />}
+
+      {tab === "detail" && (
+        <>
       {/* Édition en ligne */}
       {editing && (
         <Card>
@@ -421,6 +446,8 @@ export default function DemandDetailPage() {
           })}
         </ol>
       </Card>
+        </>
+      )}
     </div>
   );
 }
