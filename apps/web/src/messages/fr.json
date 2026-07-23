@@ -171,6 +171,8 @@
     },
     "detail": {
       "infoTitle": "Informations",
+      "code": "Numéro de projet",
+      "codeHint": "Numéro attribué automatiquement, non modifiable",
       "manager": "Chef de projet",
       "none": "—",
       "descriptionTitle": "Description",

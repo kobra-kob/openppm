@@ -171,6 +171,8 @@
     },
     "detail": {
       "infoTitle": "Details",
+      "code": "Project number",
+      "codeHint": "Automatically assigned, cannot be changed",
       "manager": "Project manager",
       "none": "—",
       "descriptionTitle": "Description",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { BookmarkPlus, History, Info, Trash2, UsersRound } from "lucide-react";
+import { BookmarkPlus, History, Info, Lock, Trash2, UsersRound } from "lucide-react";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
@@ -325,6 +325,17 @@ export default function ProjectDetailsPage() {
             </h2>
           </div>
           <dl className="space-y-2 text-sm">
+            {/* Numéro attribué automatiquement : affiché grisé, non modifiable */}
+            <div className="flex items-center justify-between">
+              <dt className="text-muted">{t("detail.code")}</dt>
+              <dd
+                className="flex items-center gap-1.5 font-mono text-muted"
+                title={t("detail.codeHint")}
+              >
+                <Lock size={12} aria-hidden />
+                {project.code}
+              </dd>
+            </div>
             <div className="flex justify-between">
               <dt className="text-muted">{t("form.priority")}</dt>
               <dd className="font-medium">{t("priorityShort", { value: project.priority })}</dd>
