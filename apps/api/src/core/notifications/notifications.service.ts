@@ -8,7 +8,8 @@ import { PrismaService } from "../prisma/prisma.service";
 export type NotificationType =
   | "task.assigned"
   | "task.comment"
-  | "task.mention";
+  | "task.mention"
+  | "demand.transition";
 
 export interface CreateNotificationInput {
   organizationId: string;

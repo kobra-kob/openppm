@@ -8,15 +8,37 @@ import {
 } from "@nestjs/common";
 import { DemandUrgency, RoleKey } from "@openppm/db";
 import { AuditService } from "../../../core/audit/audit.service";
+import { NotificationsService } from "../../../core/notifications/notifications.service";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
+import { WorkflowService, WorkflowView } from "../../workflow/application/workflow.service";
 import { formatDemandCode } from "../domain/demand-code";
+import {
+  DEFAULT_DEMAND_WORKFLOW,
+  DEMAND_ENTITY_TYPE,
+} from "../domain/demand-workflow";
 import { DEMAND_REPOSITORY } from "../domain/demand.repository";
 import type { DemandRecord, DemandRepository } from "../domain/demand.repository";
 import type { CreateDemandDto, ListDemandsQuery, UpdateDemandDto } from "./dto/demand.dtos";
 
-/** Rôles transverses pouvant intervenir sur toutes les demandes. */
+/** Rôles transverses pouvant intervenir sur toutes les demandes (édition). */
 const DEMAND_MANAGER_ROLES: string[] = [RoleKey.admin, RoleKey.manager, RoleKey.pmo];
+
+/** Rôles pouvant tenter une transition sur une demande dont ils ne sont pas l'auteur. */
+const DEMAND_WORKFLOW_ROLES: string[] = [
+  RoleKey.admin,
+  RoleKey.manager,
+  RoleKey.pmo,
+  RoleKey.finance,
+  RoleKey.business_analyst,
+  RoleKey.executive,
+];
+
+export interface DemandStateView {
+  key: string;
+  label: string;
+  isFinal: boolean;
+}
 
 export interface DemandView {
   id: string;
@@ -33,9 +55,15 @@ export interface DemandView {
   estimatedDurationDays: number | null;
   targetPortfolio: { id: string; name: string } | null;
   tags: string[];
+  state: DemandStateView | null;
   canEdit: boolean;
   createdAt: Date;
   updatedAt: Date;
+}
+
+/** Détail : le workflow complet (états, transitions franchissables, historique). */
+export interface DemandDetailView extends DemandView {
+  workflow: WorkflowView;
 }
 
 export interface DemandListView {
@@ -49,7 +77,9 @@ export interface DemandListView {
 export class DemandsService {
   constructor(
     @Inject(DEMAND_REPOSITORY) private readonly repository: DemandRepository,
+    private readonly workflow: WorkflowService,
     private readonly audit: AuditService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   async list(payload: JwtPayload, query: ListDemandsQuery): Promise<DemandListView> {
@@ -61,23 +91,29 @@ export class DemandsService {
       page: query.page,
       pageSize: query.pageSize,
     });
+    const states = await this.workflow.currentStates(
+      DEMAND_ENTITY_TYPE,
+      items.map((item) => item.id),
+    );
     return {
-      items: items.map((item) => this.toView(payload, item)),
+      items: items.map((item) => this.toView(payload, item, states.get(item.id) ?? null)),
       total,
       page: query.page,
       pageSize: query.pageSize,
     };
   }
 
-  async get(payload: JwtPayload, id: string): Promise<DemandView> {
-    return this.toView(payload, await this.require(payload, id));
+  async get(payload: JwtPayload, id: string): Promise<DemandDetailView> {
+    const demand = await this.require(payload, id);
+    const workflow = await this.workflow.describe(payload, DEMAND_ENTITY_TYPE, id);
+    return this.toDetailView(payload, demand, workflow);
   }
 
   async create(
     payload: JwtPayload,
     dto: CreateDemandDto,
     context: RequestContext,
-  ): Promise<DemandView> {
+  ): Promise<DemandDetailView> {
     await this.assertPortfolio(payload.org, dto.targetPortfolioId);
     const reference = await this.nextReference(payload.org);
     const demand = await this.repository.create({
@@ -96,6 +132,11 @@ export class DemandsService {
       targetPortfolioId: dto.targetPortfolioId ?? null,
       tags: dto.tags ?? [],
     });
+
+    // Démarrage du cycle de vie : la définition par défaut est créée si absente
+    await this.workflow.ensureDefinition(payload.org, DEFAULT_DEMAND_WORKFLOW);
+    const workflow = await this.workflow.start(payload, DEMAND_ENTITY_TYPE, demand.id);
+
     await this.audit.log({
       action: "demand.created",
       entityType: "demand",
@@ -105,7 +146,7 @@ export class DemandsService {
       after: { reference: demand.reference, title: demand.title },
       ...context,
     });
-    return this.toView(payload, demand);
+    return this.toDetailView(payload, demand, workflow);
   }
 
   async update(
@@ -113,7 +154,7 @@ export class DemandsService {
     id: string,
     dto: UpdateDemandDto,
     context: RequestContext,
-  ): Promise<DemandView> {
+  ): Promise<DemandDetailView> {
     const demand = await this.require(payload, id);
     this.assertCanEdit(payload, demand);
     if (dto.targetPortfolioId) {
@@ -145,7 +186,70 @@ export class DemandsService {
       after: JSON.parse(JSON.stringify(dto)),
       ...context,
     });
-    return this.toView(payload, updated);
+    const workflow = await this.workflow.describe(payload, DEMAND_ENTITY_TYPE, id);
+    return this.toDetailView(payload, updated, workflow);
+  }
+
+  /** Franchit une étape du workflow de la demande. */
+  async transition(
+    payload: JwtPayload,
+    id: string,
+    transitionKey: string,
+    comment: string | undefined,
+    context: RequestContext,
+  ): Promise<DemandDetailView> {
+    const demand = await this.require(payload, id);
+    // Un utilisateur non transverse ne peut agir que sur ses propres demandes.
+    // Les rôles habilités par la transition sont ensuite contrôlés par le moteur.
+    if (
+      demand.requesterId !== payload.sub &&
+      !payload.roles.some((role) => DEMAND_WORKFLOW_ROLES.includes(role))
+    ) {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Vous ne pouvez agir que sur vos propres demandes",
+      });
+    }
+
+    const result = await this.workflow.fire(
+      payload,
+      DEMAND_ENTITY_TYPE,
+      id,
+      transitionKey,
+      comment,
+      context,
+    );
+
+    // Notifie le demandeur de l'avancement (hors action de sa part)
+    if (demand.requesterId !== payload.sub) {
+      await this.notifications.notify({
+        organizationId: payload.org,
+        userId: demand.requesterId,
+        type: "demand.transition",
+        payload: {
+          demandId: demand.id,
+          reference: demand.reference,
+          stateLabel: result.view.currentState.label,
+          actorName: payload.name,
+        },
+      });
+    }
+
+    // L'automatisation `createProject` du comité sera interprétée au lot de
+    // conversion (D4). On la journalise pour l'instant afin d'en garder la trace.
+    if (result.autoAction?.createProject) {
+      await this.audit.log({
+        action: "demand.ready_for_project",
+        entityType: "demand",
+        entityId: id,
+        organizationId: payload.org,
+        userId: payload.sub,
+        after: { reference: demand.reference },
+        ...context,
+      });
+    }
+
+    return this.toDetailView(payload, demand, result.view);
   }
 
   async remove(payload: JwtPayload, id: string, context: RequestContext): Promise<void> {
@@ -217,7 +321,11 @@ export class DemandsService {
     );
   }
 
-  private toView(payload: JwtPayload, demand: DemandRecord): DemandView {
+  private toView(
+    payload: JwtPayload,
+    demand: DemandRecord,
+    state: { stateKey: string; stateLabel: string; kind: string } | null,
+  ): DemandView {
     return {
       id: demand.id,
       reference: demand.reference,
@@ -233,9 +341,29 @@ export class DemandsService {
       estimatedDurationDays: demand.estimatedDurationDays,
       targetPortfolio: demand.targetPortfolio,
       tags: demand.tags,
+      state: state
+        ? {
+            key: state.stateKey,
+            label: state.stateLabel,
+            isFinal: state.kind === "final_ok" || state.kind === "final_ko",
+          }
+        : null,
       canEdit: this.canEdit(payload, demand),
       createdAt: demand.createdAt,
       updatedAt: demand.updatedAt,
     };
+  }
+
+  private toDetailView(
+    payload: JwtPayload,
+    demand: DemandRecord,
+    workflow: WorkflowView,
+  ): DemandDetailView {
+    const base = this.toView(payload, demand, {
+      stateKey: workflow.currentState.key,
+      stateLabel: workflow.currentState.label,
+      kind: workflow.currentState.kind,
+    });
+    return { ...base, workflow };
   }
 }

@@ -98,7 +98,7 @@ model User {
 
 // ── RBAC ───────────────────────────────────────────────────────────────
 
-/// Clés des 8 rôles système. Les rôles personnalisés (phase Enterprise)
+/// Clés des rôles système. Les rôles personnalisés (phase Enterprise)
 /// auront key = null et is_system = false.
 enum RoleKey {
   admin
@@ -109,6 +109,10 @@ enum RoleKey {
   employee
   observer
   guest
+  /// Analyste métier : prépare le Business Case (Demand Management)
+  business_analyst
+  /// Direction / Comité d'investissement : validation finale des demandes
+  executive
 }
 
 model Role {

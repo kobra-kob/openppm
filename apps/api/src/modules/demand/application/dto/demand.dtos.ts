@@ -169,6 +169,14 @@ export class UpdateDemandDto {
   tags?: string[];
 }
 
+export class TransitionDemandDto {
+  @ApiPropertyOptional({ description: "Commentaire (obligatoire pour certaines transitions)" })
+  @IsOptional()
+  @IsString()
+  @MaxLength(1000)
+  comment?: string;
+}
+
 export class ListDemandsQuery {
   @ApiPropertyOptional({
     enum: ["mine", "all"],

@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Prisma } from "@openppm/db";
+import { Prisma, WorkflowStateKind } from "@openppm/db";
 import { PrismaService } from "../../../core/prisma/prisma.service";
 import type {
   WorkflowDefinitionInput,
@@ -173,6 +173,32 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
       include: INSTANCE_INCLUDE,
     });
     return found ? toInstance(found) : null;
+  }
+
+  async findInstanceStates(
+    entityType: string,
+    entityIds: string[],
+  ): Promise<Map<string, { stateKey: string; stateLabel: string; kind: WorkflowStateKind }>> {
+    if (entityIds.length === 0) {
+      return new Map();
+    }
+    const rows = await this.prisma.workflowInstance.findMany({
+      where: { entityType, entityId: { in: entityIds } },
+      select: {
+        entityId: true,
+        currentState: { select: { key: true, label: true, kind: true } },
+      },
+    });
+    return new Map(
+      rows.map((row) => [
+        row.entityId,
+        {
+          stateKey: row.currentState.key,
+          stateLabel: row.currentState.label,
+          kind: row.currentState.kind,
+        },
+      ]),
+    );
   }
 
   async createInstance(input: {

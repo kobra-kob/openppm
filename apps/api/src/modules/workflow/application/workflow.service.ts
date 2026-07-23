@@ -105,6 +105,30 @@ export class WorkflowService {
     return this.repository.listDefinitions(payload.org);
   }
 
+  /**
+   * Garantit qu'une définition par défaut existe pour ce type d'entité, en la
+   * créant depuis un gabarit si besoin. Idempotent : les organisations déjà
+   * configurées ne sont pas touchées (compatibilité production).
+   */
+  async ensureDefinition(
+    organizationId: string,
+    template: WorkflowDefinitionInput,
+  ): Promise<WorkflowDefinitionRecord> {
+    const existing = await this.repository.findDefaultDefinition(
+      organizationId,
+      template.entityType,
+    );
+    return existing ?? this.defineWorkflow(organizationId, template);
+  }
+
+  /** État courant de plusieurs entités (pour les listes). */
+  currentStates(
+    entityType: string,
+    entityIds: string[],
+  ): Promise<Map<string, { stateKey: string; stateLabel: string; kind: WorkflowStateKind }>> {
+    return this.repository.findInstanceStates(entityType, entityIds);
+  }
+
   /** Démarre le workflow d'une entité sur l'état initial de la définition. */
   async start(
     payload: JwtPayload,

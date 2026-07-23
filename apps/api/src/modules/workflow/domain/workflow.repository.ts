@@ -97,6 +97,11 @@ export interface WorkflowRepository {
   ): Promise<WorkflowDefinitionRecord>;
 
   findInstance(entityType: string, entityId: string): Promise<WorkflowInstanceRecord | null>;
+  /** État courant de plusieurs entités, en une requête (listes). */
+  findInstanceStates(
+    entityType: string,
+    entityIds: string[],
+  ): Promise<Map<string, { stateKey: string; stateLabel: string; kind: WorkflowStateKind }>>;
   createInstance(input: {
     organizationId: string;
     definitionId: string;

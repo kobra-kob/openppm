@@ -16,10 +16,15 @@ import type { Request } from "express";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
 import { CurrentUser } from "../../auth/infrastructure/decorators/current-user.decorator";
-import { DemandListView, DemandView, DemandsService } from "../application/demands.service";
+import {
+  DemandDetailView,
+  DemandListView,
+  DemandsService,
+} from "../application/demands.service";
 import {
   CreateDemandDto,
   ListDemandsQuery,
+  TransitionDemandDto,
   UpdateDemandDto,
 } from "../application/dto/demand.dtos";
 
@@ -44,16 +49,16 @@ export class DemandsController {
     @CurrentUser() user: JwtPayload,
     @Body() dto: CreateDemandDto,
     @Req() request: Request,
-  ): Promise<DemandView> {
+  ): Promise<DemandDetailView> {
     return this.demands.create(user, dto, this.context(request));
   }
 
   @Get(":id")
-  @ApiOperation({ summary: "Détail d'une demande" })
+  @ApiOperation({ summary: "Détail d'une demande, avec son workflow" })
   get(
     @CurrentUser() user: JwtPayload,
     @Param("id", ParseUUIDPipe) id: string,
-  ): Promise<DemandView> {
+  ): Promise<DemandDetailView> {
     return this.demands.get(user, id);
   }
 
@@ -64,8 +69,20 @@ export class DemandsController {
     @Param("id", ParseUUIDPipe) id: string,
     @Body() dto: UpdateDemandDto,
     @Req() request: Request,
-  ): Promise<DemandView> {
+  ): Promise<DemandDetailView> {
     return this.demands.update(user, id, dto, this.context(request));
+  }
+
+  @Post(":id/transitions/:key")
+  @ApiOperation({ summary: "Franchir une étape du workflow de la demande" })
+  transition(
+    @CurrentUser() user: JwtPayload,
+    @Param("id", ParseUUIDPipe) id: string,
+    @Param("key") key: string,
+    @Body() dto: TransitionDemandDto,
+    @Req() request: Request,
+  ): Promise<DemandDetailView> {
+    return this.demands.transition(user, id, key, dto.comment, this.context(request));
   }
 
   @Delete(":id")

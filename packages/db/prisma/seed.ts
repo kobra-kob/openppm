@@ -15,6 +15,8 @@ const SYSTEM_ROLES: Array<{ key: RoleKey; name: string }> = [
   { key: RoleKey.employee, name: "Employé" },
   { key: RoleKey.observer, name: "Observateur" },
   { key: RoleKey.guest, name: "Invité" },
+  { key: RoleKey.business_analyst, name: "Analyste métier" },
+  { key: RoleKey.executive, name: "Direction" },
 ];
 
 async function main(): Promise<void> {
