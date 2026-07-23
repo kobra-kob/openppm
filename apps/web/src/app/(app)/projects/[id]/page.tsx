@@ -44,6 +44,7 @@ export default function ProjectDetailsPage() {
     startDate: "",
     endDate: "",
     categoryId: "",
+    managerId: "",
   });
   const [newMember, setNewMember] = useState({ userId: "", role: "member" });
   const [error, setError] = useState<string | null>(null);
@@ -98,6 +99,7 @@ export default function ProjectDetailsPage() {
           ...(editForm.startDate ? { startDate: editForm.startDate } : {}),
           ...(editForm.endDate ? { endDate: editForm.endDate } : {}),
           categoryId: editForm.categoryId || null,
+          managerId: editForm.managerId || null,
         }),
       }),
     onSuccess: () => {
@@ -168,6 +170,7 @@ export default function ProjectDetailsPage() {
       startDate: project.startDate?.slice(0, 10) ?? "",
       endDate: project.endDate?.slice(0, 10) ?? "",
       categoryId: project.category?.id ?? "",
+      managerId: project.manager?.id ?? "",
     });
     setEditing(true);
     setError(null);
@@ -288,6 +291,22 @@ export default function ProjectDetailsPage() {
                   {(categories ?? []).map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="eManager">{t("detail.manager")}</Label>
+                <select
+                  id="eManager"
+                  value={editForm.managerId}
+                  onChange={(event) => setEditForm((c) => ({ ...c, managerId: event.target.value }))}
+                  className="w-full rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                >
+                  <option value="">{t("form.noManager")}</option>
+                  {(orgMembers ?? []).map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.firstName} {member.lastName}
                     </option>
                   ))}
                 </select>

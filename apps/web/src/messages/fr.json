@@ -159,6 +159,7 @@
       "noTemplate": "Sans template",
       "category": "Catégorie",
       "noCategory": "Sans catégorie",
+      "noManager": "Sans chef de projet",
       "description": "Description",
       "priority": "Priorité",
       "startDate": "Début",

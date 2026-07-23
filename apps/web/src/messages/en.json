@@ -159,6 +159,7 @@
       "noTemplate": "No template",
       "category": "Category",
       "noCategory": "No category",
+      "noManager": "No project manager",
       "description": "Description",
       "priority": "Priority",
       "startDate": "Start",

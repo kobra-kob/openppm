@@ -141,6 +141,56 @@ describe("Projects (intégration)", () => {
       expect(Number(second.body.code.slice(4))).toBe(Number(first.body.code.slice(4)) + 1);
     });
 
+    it("définit le chef de projet à la création, puis le change et le retire", async () => {
+      // À la création : le chef de projet rejoint l'équipe comme manager
+      const created = await request(server())
+        .post("/api/v1/projects")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ name: "Projet avec chef", managerId: employeeId })
+        .expect(201);
+      expect(created.body.manager.id).toBe(employeeId);
+      expect(
+        created.body.members.find((m: { userId: string }) => m.userId === employeeId).role,
+      ).toBe("manager");
+
+      // Modification depuis la fiche : on retire le chef de projet
+      const cleared = await request(server())
+        .patch(`/api/v1/projects/${created.body.id}`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ managerId: null })
+        .expect(200);
+      expect(cleared.body.manager).toBeNull();
+
+      // Puis on le redéfinit
+      const restored = await request(server())
+        .patch(`/api/v1/projects/${created.body.id}`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ managerId: employeeId })
+        .expect(200);
+      expect(restored.body.manager.id).toBe(employeeId);
+
+      // Nettoyage : ce projet rend l'employé membre, ce qui fausserait les
+      // tests de périmètre (scope=mine) qui le supposent sans projet.
+      await request(server())
+        .delete(`/api/v1/projects/${created.body.id}`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .expect(204);
+    });
+
+    it("refuse un chef de projet hors de l'organisation (400)", async () => {
+      // Bob appartient à l'organisation Beta
+      const outsider = await prisma.user.findUniqueOrThrow({
+        where: { email: "bob@projets.test" },
+        select: { id: true },
+      });
+      const response = await request(server())
+        .post("/api/v1/projects")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ name: "Chef externe", managerId: outsider.id })
+        .expect(400);
+      expect(response.body.code).toBe("MANAGER_NOT_IN_ORG");
+    });
+
     it("refuse un numéro fourni par l'utilisateur (400)", async () => {
       await request(server())
         .post("/api/v1/projects")

@@ -40,6 +40,12 @@ interface Template {
   name: string;
 }
 
+interface OrgMember {
+  id: string;
+  firstName: string;
+  lastName: string;
+}
+
 const HEALTH_PILL: Record<ProjectHealth, string> = {
   green: "bg-success/15 text-success",
   amber: "bg-[#ff9f0a]/15 text-[#ff9f0a]",
@@ -72,6 +78,7 @@ export default function WorkspacePage() {
     description: "",
     templateId: "",
     categoryId: "",
+    managerId: "",
   });
   const [error, setError] = useState<string | null>(null);
 
@@ -105,6 +112,13 @@ export default function WorkspacePage() {
     enabled: canCreate,
   });
 
+  // Membres de l'organisation : candidats au rôle de chef de projet
+  const { data: orgMembers } = useQuery({
+    queryKey: ["members"],
+    queryFn: () => api<OrgMember[]>("/members"),
+    enabled: canCreate,
+  });
+
   const { data: myTasks } = useQuery({
     queryKey: ["my-tasks"],
     queryFn: () => api<MyTask[]>("/me/tasks"),
@@ -122,6 +136,7 @@ export default function WorkspacePage() {
           ...(form.description ? { description: form.description } : {}),
           ...(form.templateId ? { templateId: form.templateId } : {}),
           ...(form.categoryId ? { categoryId: form.categoryId } : {}),
+          ...(form.managerId ? { managerId: form.managerId } : {}),
         }),
       }),
     onSuccess: (project) => {
@@ -290,6 +305,22 @@ export default function WorkspacePage() {
                   {(categories ?? []).map((category) => (
                     <option key={category.id} value={category.id}>
                       {category.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="pManager">{tProjects("detail.manager")}</Label>
+                <select
+                  id="pManager"
+                  value={form.managerId}
+                  onChange={(event) => setForm((c) => ({ ...c, managerId: event.target.value }))}
+                  className="w-full rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm focus:border-accent focus:outline-none"
+                >
+                  <option value="">{tProjects("form.noManager")}</option>
+                  {(orgMembers ?? []).map((member) => (
+                    <option key={member.id} value={member.id}>
+                      {member.firstName} {member.lastName}
                     </option>
                   ))}
                 </select>
