@@ -54,6 +54,11 @@ describe("Members / invitations (intégration)", () => {
     await prisma.groupMember.deleteMany();
     await prisma.group.deleteMany();
     await prisma.user.deleteMany();
+    await prisma.workflowTransitionLog.deleteMany();
+    await prisma.workflowInstance.deleteMany();
+    await prisma.workflowTransition.deleteMany();
+    await prisma.workflowState.deleteMany();
+    await prisma.workflowDefinition.deleteMany();
     await prisma.organization.deleteMany();
 
     // Deux organisations pour vérifier l'isolation

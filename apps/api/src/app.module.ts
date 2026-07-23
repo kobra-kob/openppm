@@ -19,6 +19,7 @@ import { MembersModule } from "./modules/members/members.module";
 import { PortfolioModule } from "./modules/portfolio/portfolio.module";
 import { ProjectModule } from "./modules/project/project.module";
 import { QuoteModule } from "./modules/quote/quote.module";
+import { WorkflowModule } from "./modules/workflow/workflow.module";
 import { DocumentModule } from "./modules/document/document.module";
 import { SearchModule } from "./modules/search/search.module";
 import { BoardModule } from "./modules/board/board.module";
@@ -71,6 +72,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     MailerModule,
     NotificationsModule,
     AuthModule,
+    WorkflowModule,
     MembersModule,
     PortfolioModule,
     ProjectModule,

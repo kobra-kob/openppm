@@ -55,6 +55,11 @@ describe("Consolidation financière du portefeuille (intégration)", () => {
     await prisma.groupMember.deleteMany();
     await prisma.group.deleteMany();
     await prisma.user.deleteMany();
+    await prisma.workflowTransitionLog.deleteMany();
+    await prisma.workflowInstance.deleteMany();
+    await prisma.workflowTransition.deleteMany();
+    await prisma.workflowState.deleteMany();
+    await prisma.workflowDefinition.deleteMany();
     await prisma.organization.deleteMany();
 
     const admin = await request(server()).post("/api/v1/auth/register").send({

@@ -34,6 +34,7 @@ model Organization {
   projectCategories ProjectCategory[]
   projectTemplates  ProjectTemplate[]
   portfolios        Portfolio[]
+  workflowDefinitions WorkflowDefinition[]
 
   @@map("organizations")
 }
@@ -84,6 +85,7 @@ model User {
   approvalDecisions ApprovalStep[]   @relation("ApprovalDecider")
   budgetLines      BudgetLine[]      @relation("BudgetLineAuthor")
   costEntries      CostEntry[]       @relation("CostEntryAuthor")
+  workflowActions  WorkflowTransitionLog[] @relation("WorkflowActor")
   createdQuotes    Quote[]           @relation("QuoteCreator")
   reviewedQuotes   Quote[]           @relation("QuoteReviewer")
   approvedQuotes   Quote[]           @relation("QuoteApprover")
@@ -817,4 +819,126 @@ model AuditLog {
   @@index([organizationId, createdAt])
   @@index([entityType, entityId])
   @@map("audit_logs")
+}
+
+// ── Moteur de workflow (générique et réutilisable) ─────────────────────
+//
+// Les états et les transitions vivent en base : aucun statut n'est codé en
+// dur. Le moteur ignore tout du métier — il pilote n'importe quel type
+// d'entité via `entityType` (demand, project, risk, …).
+
+enum WorkflowStateKind {
+  initial
+  intermediate
+  /// État terminal favorable (ex. « approuvée »)
+  final_ok
+  /// État terminal défavorable (ex. « rejetée »)
+  final_ko
+}
+
+/// Définition d'un workflow pour un type d'entité donné.
+model WorkflowDefinition {
+  id             String   @id @default(uuid(7)) @db.Char(36)
+  organizationId String   @map("organization_id") @db.Char(36)
+  /// Identifiant stable de la définition (ex. « demand-default »)
+  key            String   @db.VarChar(60)
+  /// Type d'entité piloté (ex. « demand »)
+  entityType     String   @map("entity_type") @db.VarChar(60)
+  name           String   @db.VarChar(140)
+  /// Définition retenue par défaut pour ce type d'entité
+  isDefault      Boolean  @default(false) @map("is_default")
+  active         Boolean  @default(true)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization         @relation(fields: [organizationId], references: [id])
+  states       WorkflowState[]
+  transitions  WorkflowTransition[]
+  instances    WorkflowInstance[]
+
+  @@unique([organizationId, key])
+  @@index([organizationId, entityType, active])
+  @@map("workflow_definitions")
+}
+
+model WorkflowState {
+  id           String            @id @default(uuid(7)) @db.Char(36)
+  definitionId String            @map("definition_id") @db.Char(36)
+  key          String            @db.VarChar(60)
+  label        String            @db.VarChar(140)
+  kind         WorkflowStateKind @default(intermediate)
+  position     Int               @default(0)
+
+  definition      WorkflowDefinition   @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+  transitionsFrom WorkflowTransition[] @relation("TransitionFrom")
+  transitionsTo   WorkflowTransition[] @relation("TransitionTo")
+  instances       WorkflowInstance[]
+
+  @@unique([definitionId, key])
+  @@index([definitionId, position])
+  @@map("workflow_states")
+}
+
+model WorkflowTransition {
+  id              String  @id @default(uuid(7)) @db.Char(36)
+  definitionId    String  @map("definition_id") @db.Char(36)
+  fromStateId     String  @map("from_state_id") @db.Char(36)
+  toStateId       String  @map("to_state_id") @db.Char(36)
+  key             String  @db.VarChar(60)
+  label           String  @db.VarChar(140)
+  /// Clés de rôles autorisés (RoleKey). Absent ou vide = aucun rôle exigé.
+  allowedRoles    Json?   @map("allowed_roles")
+  requiresComment Boolean @default(false) @map("requires_comment")
+  /// Automatisations à déclencher après franchissement, interprétées par le
+  /// module métier appelant (ex. { "createProject": true }).
+  autoAction      Json?   @map("auto_action")
+  position        Int     @default(0)
+
+  definition WorkflowDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
+  fromState  WorkflowState      @relation("TransitionFrom", fields: [fromStateId], references: [id], onDelete: Cascade)
+  toState    WorkflowState      @relation("TransitionTo", fields: [toStateId], references: [id], onDelete: Cascade)
+
+  @@unique([definitionId, key])
+  @@index([definitionId, fromStateId, position])
+  @@map("workflow_transitions")
+}
+
+/// Position courante d'une entité dans son workflow (une seule par entité).
+model WorkflowInstance {
+  id             String    @id @default(uuid(7)) @db.Char(36)
+  organizationId String    @map("organization_id") @db.Char(36)
+  definitionId   String    @map("definition_id") @db.Char(36)
+  entityType     String    @map("entity_type") @db.VarChar(60)
+  entityId       String    @map("entity_id") @db.Char(36)
+  currentStateId String    @map("current_state_id") @db.Char(36)
+  startedAt      DateTime  @default(now()) @map("started_at")
+  closedAt       DateTime? @map("closed_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+
+  definition   WorkflowDefinition      @relation(fields: [definitionId], references: [id])
+  currentState WorkflowState           @relation(fields: [currentStateId], references: [id])
+  logs         WorkflowTransitionLog[]
+
+  @@unique([entityType, entityId])
+  @@index([organizationId, entityType])
+  @@map("workflow_instances")
+}
+
+/// Journal immuable des franchissements. Les états sont stockés par leur clé
+/// (et non par référence) afin que l'historique survive à une reconfiguration.
+model WorkflowTransitionLog {
+  id            String   @id @default(uuid(7)) @db.Char(36)
+  instanceId    String   @map("instance_id") @db.Char(36)
+  transitionKey String?  @map("transition_key") @db.VarChar(60)
+  fromStateKey  String?  @map("from_state_key") @db.VarChar(60)
+  toStateKey    String   @map("to_state_key") @db.VarChar(60)
+  actorId       String?  @map("actor_id") @db.Char(36)
+  comment       String?  @db.VarChar(1000)
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  instance WorkflowInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  actor    User?            @relation("WorkflowActor", fields: [actorId], references: [id])
+
+  @@index([instanceId, createdAt])
+  @@map("workflow_transition_logs")
 }
