@@ -66,11 +66,9 @@ export default function WorkspacePage() {
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
     name: "",
-    code: "",
     priority: "3",
     startDate: "",
     endDate: "",
-    budget: "",
     description: "",
     templateId: "",
     categoryId: "",
@@ -118,11 +116,9 @@ export default function WorkspacePage() {
         method: "POST",
         body: JSON.stringify({
           name: form.name,
-          ...(form.code ? { code: form.code } : {}),
           priority: Number(form.priority),
           ...(form.startDate ? { startDate: form.startDate } : {}),
           ...(form.endDate ? { endDate: form.endDate } : {}),
-          ...(form.budget ? { budget: Number(form.budget) } : {}),
           ...(form.description ? { description: form.description } : {}),
           ...(form.templateId ? { templateId: form.templateId } : {}),
           ...(form.categoryId ? { categoryId: form.categoryId } : {}),
@@ -263,10 +259,7 @@ export default function WorkspacePage() {
                 <Label htmlFor="pName">{tProjects("form.name")}</Label>
                 <Input id="pName" required minLength={2} maxLength={140} value={form.name} onChange={update("name")} />
               </div>
-              <div>
-                <Label htmlFor="pCode">{tProjects("form.code")}</Label>
-                <Input id="pCode" maxLength={20} value={form.code} onChange={update("code")} />
-              </div>
+              {/* Le numéro de projet (PROJxxxxx) est attribué automatiquement */}
               {(templates ?? []).length > 0 && (
                 <div>
                   <Label htmlFor="pTemplate">{tProjects("form.template")}</Label>
@@ -316,10 +309,7 @@ export default function WorkspacePage() {
                   ))}
                 </select>
               </div>
-              <div>
-                <Label htmlFor="pBudget">{tProjects("form.budget")}</Label>
-                <Input id="pBudget" type="number" min={0} step="0.01" value={form.budget} onChange={update("budget")} />
-              </div>
+              {/* Pas de budget ici : il est fixé par le circuit de gouvernance */}
               <div>
                 <Label htmlFor="pStart">{tProjects("form.startDate")}</Label>
                 <Input id="pStart" type="date" value={form.startDate} onChange={update("startDate")} />

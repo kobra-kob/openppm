@@ -17,7 +17,6 @@
     "INVALID_RESET_TOKEN": "Ce lien de réinitialisation est invalide ou expiré.",
     "INVALID_REFRESH_TOKEN": "Votre session a expiré, reconnectez-vous.",
     "INVALID_INVITATION": "Cette invitation est invalide, expirée ou déjà utilisée.",
-    "CODE_ALREADY_USED": "Ce code projet est déjà utilisé.",
     "INVALID_DATE_RANGE": "La date de fin doit être postérieure à la date de début.",
     "INVALID_STATUS_TRANSITION": "Cette transition d'état n'est pas autorisée.",
     "MANAGER_NOT_IN_ORG": "Le chef de projet doit appartenir à l'organisation.",
@@ -156,7 +155,6 @@
     },
     "form": {
       "name": "Nom du projet",
-      "code": "Code (optionnel, ex. CRM-2026)",
       "template": "Template",
       "noTemplate": "Sans template",
       "category": "Catégorie",

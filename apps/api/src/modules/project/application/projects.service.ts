@@ -11,6 +11,7 @@ import { AuditService } from "../../../core/audit/audit.service";
 import { FavoritesService } from "../../../core/favorites/favorites.service";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
+import { formatProjectCode } from "../domain/project-code";
 import { allowedTransitions, canTransition } from "../domain/project-status.policy";
 import { PROJECT_REPOSITORY } from "../domain/project.repository";
 import type {
@@ -198,7 +199,7 @@ export class ProjectsService {
         message: "Catégorie introuvable",
       });
     }
-    const code = await this.resolveCode(payload.org, dto.code);
+    const code = await this.nextProjectCode(payload.org);
 
     // Créateur et chef de projet rejoignent l'équipe comme managers du projet
     const initialMembers = new Map<string, ProjectRole>();
@@ -506,26 +507,21 @@ export class ProjectsService {
     return { startDate, endDate };
   }
 
-  private async resolveCode(organizationId: string, requested?: string): Promise<string> {
-    if (requested) {
-      if (await this.repository.isCodeTaken(organizationId, requested)) {
-        throw new ConflictException({
-          code: "CODE_ALREADY_USED",
-          message: "Ce code projet est déjà utilisé",
-        });
-      }
-      return requested;
-    }
-    const count = await this.repository.countAll(organizationId);
-    for (let candidate = count + 1; candidate <= count + 100; candidate += 1) {
-      const code = `P-${String(candidate).padStart(4, "0")}`;
+  /**
+   * Attribue le prochain numéro unique `PROJxxxxx`. Toujours généré : le code
+   * n'est jamais fourni ni modifiable par l'utilisateur.
+   */
+  private async nextProjectCode(organizationId: string): Promise<string> {
+    const start = (await this.repository.maxCodeSequence(organizationId)) + 1;
+    for (let sequence = start; sequence < start + 100; sequence += 1) {
+      const code = formatProjectCode(sequence);
       if (!(await this.repository.isCodeTaken(organizationId, code))) {
         return code;
       }
     }
     throw new ConflictException({
       code: "CODE_GENERATION_FAILED",
-      message: "Impossible de générer un code projet unique",
+      message: "Impossible de générer un numéro de projet unique",
     });
   }
 }

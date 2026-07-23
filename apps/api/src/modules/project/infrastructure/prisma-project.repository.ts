@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { Prisma, ProjectCategory, ProjectRole, ProjectStatus } from "@openppm/db";
 import { PrismaService } from "../../../core/prisma/prisma.service";
+import { PROJECT_CODE_PREFIX } from "../domain/project-code";
 import {
   CreateCategoryInput,
   CreateProjectInput,
@@ -114,6 +115,20 @@ export class PrismaProjectRepository implements ProjectRepository {
 
   countAll(organizationId: string): Promise<number> {
     return this.prisma.project.count({ where: { organizationId } });
+  }
+
+  async maxCodeSequence(organizationId: string): Promise<number> {
+    // Le tri lexicographique suffit : la séquence est zéro-remplie sur 5 chiffres.
+    const last = await this.prisma.project.findFirst({
+      where: { organizationId, code: { startsWith: PROJECT_CODE_PREFIX } },
+      orderBy: { code: "desc" },
+      select: { code: true },
+    });
+    if (!last) {
+      return 0;
+    }
+    const sequence = Number.parseInt(last.code.slice(PROJECT_CODE_PREFIX.length), 10);
+    return Number.isFinite(sequence) ? sequence : 0;
   }
 
   create(input: CreateProjectInput): Promise<ProjectWithRelations> {

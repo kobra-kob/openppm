@@ -22,16 +22,10 @@ export class CreateProjectDto {
   @Length(2, 140)
   name!: string;
 
-  @ApiPropertyOptional({
-    description: "Code unique (généré automatiquement si absent)",
-    example: "CRM-2026",
-  })
-  @IsOptional()
-  @Transform(({ value }) => (typeof value === "string" ? value.trim().toUpperCase() : value))
-  @Matches(/^[A-Z0-9][A-Z0-9-]{1,19}$/, {
-    message: "code: 2 à 20 caractères alphanumériques majuscules ou tirets",
-  })
-  code?: string;
+  /*
+   * Pas de champ `code` : le numéro de projet (PROJxxxxx) est attribué
+   * automatiquement par le serveur et n'est ni saisissable ni modifiable.
+   */
 
   @ApiPropertyOptional()
   @IsOptional()

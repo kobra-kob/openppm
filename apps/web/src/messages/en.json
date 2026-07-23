@@ -17,7 +17,6 @@
     "INVALID_RESET_TOKEN": "This reset link is invalid or expired.",
     "INVALID_REFRESH_TOKEN": "Your session has expired, please sign in again.",
     "INVALID_INVITATION": "This invitation is invalid, expired or already used.",
-    "CODE_ALREADY_USED": "This project code is already in use.",
     "INVALID_DATE_RANGE": "End date must be after start date.",
     "INVALID_STATUS_TRANSITION": "This status transition is not allowed.",
     "MANAGER_NOT_IN_ORG": "The project manager must belong to the organization.",
@@ -156,7 +155,6 @@
     },
     "form": {
       "name": "Project name",
-      "code": "Code (optional, e.g. CRM-2026)",
       "template": "Template",
       "noTemplate": "No template",
       "category": "Category",

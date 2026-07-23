@@ -113,7 +113,8 @@ describe("Projects (intégration)", () => {
           endDate: "2027-03-31",
         })
         .expect(201);
-      expect(response.body.code).toBe("P-0001");
+      // Premier projet de l'organisation → PROJ00001
+      expect(response.body.code).toBe("PROJ00001");
       expect(response.body.status).toBe("draft");
       expect(response.body.members).toHaveLength(1);
       expect(response.body.members[0].role).toBe("manager");
@@ -121,19 +122,39 @@ describe("Projects (intégration)", () => {
       projectId = response.body.id;
     });
 
-    it("accepte un code personnalisé et refuse les doublons (409)", async () => {
+    it("attribue un numéro PROJxxxxx séquentiel et unique", async () => {
+      const first = await request(server())
+        .post("/api/v1/projects")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ name: "Projet numéroté A" })
+        .expect(201);
+      const second = await request(server())
+        .post("/api/v1/projects")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ name: "Projet numéroté B" })
+        .expect(201);
+
+      expect(first.body.code).toMatch(/^PROJ\d{5}$/);
+      expect(second.body.code).toMatch(/^PROJ\d{5}$/);
+      expect(second.body.code).not.toBe(first.body.code);
+      // La séquence s'incrémente
+      expect(Number(second.body.code.slice(4))).toBe(Number(first.body.code.slice(4)) + 1);
+    });
+
+    it("refuse un numéro fourni par l'utilisateur (400)", async () => {
       await request(server())
         .post("/api/v1/projects")
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ name: "Projet codé", code: "crm-2026" })
-        .expect(201)
-        .then((response) => expect(response.body.code).toBe("CRM-2026"));
-      const dup = await request(server())
-        .post("/api/v1/projects")
+        .send({ name: "Code imposé", code: "CRM-2026" })
+        .expect(400);
+    });
+
+    it("refuse de modifier le numéro d'un projet (400)", async () => {
+      await request(server())
+        .patch(`/api/v1/projects/${projectId}`)
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ name: "Doublon", code: "CRM-2026" })
-        .expect(409);
-      expect(dup.body.code).toBe("CODE_ALREADY_USED");
+        .send({ code: "HACK00001" })
+        .expect(400);
     });
 
     it("refuse une plage de dates incohérente (400)", async () => {
@@ -160,8 +181,9 @@ describe("Projects (intégration)", () => {
         .get("/api/v1/projects?search=CRM&page=1&pageSize=10")
         .set("Authorization", `Bearer ${adminToken}`)
         .expect(200);
-      expect(response.body.total).toBe(2);
-      expect(response.body.items.map((p: { code: string }) => p.code)).toContain("P-0001");
+      // Seul « Refonte CRM » correspond (recherche sur le nom et le numéro)
+      expect(response.body.total).toBe(1);
+      expect(response.body.items.map((p: { code: string }) => p.code)).toContain("PROJ00001");
     });
 
     it("scope=mine ne montre que les projets où l'on est impliqué", async () => {

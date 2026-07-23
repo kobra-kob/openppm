@@ -98,6 +98,29 @@ describe("Recherche globale (intégration)", () => {
     expect(byDescription.body.tasks).toHaveLength(0);
   });
 
+  it("trouve un projet par son numéro PROJxxxxx (complet ou partiel)", async () => {
+    const projects = await request(server())
+      .get("/api/v1/projects")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .expect(200);
+    const target = projects.body.items[0];
+    expect(target.code).toMatch(/^PROJ\d{5}$/);
+
+    // Numéro complet
+    const exact = await request(server())
+      .get(`/api/v1/search?q=${target.code}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .expect(200);
+    expect(exact.body.projects.some((p: { id: string }) => p.id === target.id)).toBe(true);
+
+    // Recherche partielle sur la séquence (ex. « 0001 »)
+    const partial = await request(server())
+      .get(`/api/v1/search?q=${target.code.slice(-4)}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .expect(200);
+    expect(partial.body.projects.some((p: { id: string }) => p.id === target.id)).toBe(true);
+  });
+
   it("refuse une requête trop courte (400) et exige un jeton (401)", async () => {
     await request(server())
       .get("/api/v1/search?q=a")

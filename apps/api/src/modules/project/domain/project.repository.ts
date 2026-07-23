@@ -104,6 +104,11 @@ export interface ProjectRepository {
   isCodeTaken(organizationId: string, code: string): Promise<boolean>;
   /** Compte tous les projets de l'org (corbeille comprise) pour générer un code. */
   countAll(organizationId: string): Promise<number>;
+  /**
+   * Plus grand numéro de séquence déjà attribué (codes PROJxxxxx), corbeille
+   * comprise. Robuste aux suppressions, contrairement à un simple comptage.
+   */
+  maxCodeSequence(organizationId: string): Promise<number>;
   create(input: CreateProjectInput): Promise<ProjectWithRelations>;
   update(id: string, input: UpdateProjectInput): Promise<ProjectWithRelations>;
   setStatus(
