@@ -47,6 +47,9 @@ describe("Finances détaillées (intégration)", () => {
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.demandTag.deleteMany();
+    await prisma.demand.deleteMany();
+
     await prisma.costEntry.deleteMany();
     await prisma.budgetLine.deleteMany();
     await prisma.comment.deleteMany();

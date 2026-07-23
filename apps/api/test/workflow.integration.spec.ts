@@ -66,8 +66,11 @@ describe("Moteur de workflow (intégration)", () => {
     configureApp(app);
     await app.init();
     prisma = app.get(PrismaService);
+
     workflow = app.get(WorkflowService);
 
+    await prisma.demandTag.deleteMany();
+    await prisma.demand.deleteMany();
     await prisma.workflowTransitionLog.deleteMany();
     await prisma.workflowInstance.deleteMany();
     await prisma.workflowTransition.deleteMany();

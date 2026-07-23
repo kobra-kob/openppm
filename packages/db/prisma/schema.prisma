@@ -35,6 +35,7 @@ model Organization {
   projectTemplates  ProjectTemplate[]
   portfolios        Portfolio[]
   workflowDefinitions WorkflowDefinition[]
+  demands           Demand[]
 
   @@map("organizations")
 }
@@ -86,6 +87,7 @@ model User {
   budgetLines      BudgetLine[]      @relation("BudgetLineAuthor")
   costEntries      CostEntry[]       @relation("CostEntryAuthor")
   workflowActions  WorkflowTransitionLog[] @relation("WorkflowActor")
+  requestedDemands Demand[]          @relation("DemandRequester")
   createdQuotes    Quote[]           @relation("QuoteCreator")
   reviewedQuotes   Quote[]           @relation("QuoteReviewer")
   approvedQuotes   Quote[]           @relation("QuoteApprover")
@@ -579,6 +581,7 @@ model Portfolio {
   organization Organization @relation(fields: [organizationId], references: [id])
   owner        User?        @relation("PortfolioOwner", fields: [ownerId], references: [id])
   projects     Project[]
+  demands      Demand[]
 
   @@index([organizationId, deletedAt])
   @@map("portfolios")
@@ -941,4 +944,62 @@ model WorkflowTransitionLog {
 
   @@index([instanceId, createdAt])
   @@map("workflow_transition_logs")
+}
+
+// ── Demand Management ──────────────────────────────────────────────────
+//
+// Une demande représente une idée ou un besoin métier avant qu'il ne devienne
+// un projet. Son avancement n'est pas porté par une colonne de statut : il est
+// piloté par le moteur de workflow (WorkflowInstance sur entityType « demand »).
+
+enum DemandUrgency {
+  low
+  medium
+  high
+  critical
+}
+
+model Demand {
+  id             String        @id @default(uuid(7)) @db.Char(36)
+  organizationId String        @map("organization_id") @db.Char(36)
+  /// Numéro unique attribué automatiquement (DEMD00001), non modifiable
+  reference      String        @db.VarChar(30)
+  title          String        @db.VarChar(160)
+  description    String?       @db.Text
+  objectives     String?       @db.Text
+  justification  String?       @db.Text
+  requesterId    String        @map("requester_id") @db.Char(36)
+  department     String?       @db.VarChar(120)
+  /// Priorité 1 (haute) à 5 (basse), même échelle que les projets
+  priority       Int           @default(3)
+  urgency        DemandUrgency @default(medium)
+  estimatedBudget       Decimal? @map("estimated_budget") @db.Decimal(14, 2)
+  estimatedDurationDays Int?     @map("estimated_duration_days")
+  /// Portefeuille visé (facultatif à la création, affiné lors de la qualification)
+  targetPortfolioId String?  @map("target_portfolio_id") @db.Char(36)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+  deletedAt      DateTime? @map("deleted_at")
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  requester       User         @relation("DemandRequester", fields: [requesterId], references: [id])
+  targetPortfolio Portfolio?   @relation(fields: [targetPortfolioId], references: [id])
+  tags            DemandTag[]
+
+  @@unique([organizationId, reference])
+  @@index([organizationId, deletedAt])
+  @@index([organizationId, targetPortfolioId])
+  @@map("demands")
+}
+
+model DemandTag {
+  id       String @id @default(uuid(7)) @db.Char(36)
+  demandId String @map("demand_id") @db.Char(36)
+  label    String @db.VarChar(40)
+
+  demand Demand @relation(fields: [demandId], references: [id], onDelete: Cascade)
+
+  @@unique([demandId, label])
+  @@index([demandId])
+  @@map("demand_tags")
 }

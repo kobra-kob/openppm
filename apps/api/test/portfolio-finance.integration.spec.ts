@@ -28,6 +28,9 @@ describe("Consolidation financière du portefeuille (intégration)", () => {
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.demandTag.deleteMany();
+    await prisma.demand.deleteMany();
+
     await prisma.quoteLine.deleteMany();
     await prisma.quote.deleteMany();
     await prisma.costEntry.deleteMany();

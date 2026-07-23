@@ -24,6 +24,9 @@ describe("Projects (intégration)", () => {
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.demandTag.deleteMany();
+    await prisma.demand.deleteMany();
+
     await prisma.timeEntry.deleteMany();
     await prisma.taskDependency.deleteMany();
     await prisma.checklistItem.deleteMany();

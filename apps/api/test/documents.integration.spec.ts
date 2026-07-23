@@ -25,6 +25,9 @@ describe("Documents / GED v1 + export CSV (intégration)", () => {
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.demandTag.deleteMany();
+    await prisma.demand.deleteMany();
+
     await prisma.document.deleteMany();
     await prisma.timeEntry.deleteMany();
     await prisma.taskDependency.deleteMany();

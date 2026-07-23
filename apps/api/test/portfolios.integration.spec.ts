@@ -25,6 +25,9 @@ describe("Portefeuilles (intégration)", () => {
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.demandTag.deleteMany();
+    await prisma.demand.deleteMany();
+
     await prisma.comment.deleteMany();
     await prisma.notification.deleteMany();
     await prisma.timeEntry.deleteMany();
