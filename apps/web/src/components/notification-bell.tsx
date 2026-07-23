@@ -13,6 +13,10 @@ interface NotificationPayload {
   taskTitle?: string;
   projectId?: string;
   authorName?: string;
+  demandId?: string;
+  reference?: string;
+  stateLabel?: string;
+  actorName?: string;
 }
 
 interface NotificationItem {
@@ -67,6 +71,12 @@ export function NotificationBell() {
   });
 
   const label = (item: NotificationItem): string => {
+    if (item.type === "demand.transition") {
+      return t("demandTransition", {
+        reference: item.payload.reference ?? "",
+        state: item.payload.stateLabel ?? "",
+      });
+    }
     const key = item.type.replace("task.", "");
     if (!KNOWN_TYPES.includes(item.type) || !t.has(key)) {
       return item.type;
@@ -79,7 +89,10 @@ export function NotificationBell() {
 
   const onItem = (item: NotificationItem) => {
     if (!item.readAt) markRead.mutate(item.id);
-    if (item.payload.projectId) {
+    if (item.payload.demandId) {
+      setOpen(false);
+      router.push(`/demands/${item.payload.demandId}`);
+    } else if (item.payload.projectId) {
       setOpen(false);
       router.push(`/projects/${item.payload.projectId}/tasks`);
     }

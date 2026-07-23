@@ -49,6 +49,11 @@
     "QUOTE_EMPTY": "Add at least one line before submitting.",
     "QUOTE_NOT_SUBMITTED": "The quote is not awaiting review.",
     "QUOTE_NOT_REVIEWED": "The quote must pass level-1 review first.",
+    "FORBIDDEN": "You don't have permission for this action.",
+    "DEMAND_NOT_FOUND": "Demand not found.",
+    "PORTFOLIO_NOT_FOUND": "Portfolio not found.",
+    "WORKFLOW_TRANSITION_NOT_AVAILABLE": "This action isn't available at this stage.",
+    "WORKFLOW_COMMENT_REQUIRED": "A comment is required for this action.",
     "UNKNOWN": "An unexpected error occurred. Please retry."
   },
   "auth": {
@@ -202,6 +207,7 @@
   },
   "topNav": {
     "projects": "Projects",
+    "demands": "Demands",
     "portfolios": "Portfolios"
   },
   "portfolios": {
@@ -249,6 +255,51 @@
       "detach": "Remove",
       "noProjects": "No projects attached.",
       "noUnassigned": "All projects are already attached."
+    }
+  },
+  "demands": {
+    "title": "Demands",
+    "subtitle": "The pipeline of ideas and demands before projects.",
+    "new": "New demand",
+    "mine": "My demands",
+    "all": "All",
+    "searchPlaceholder": "Search (reference, title)…",
+    "empty": "No demands yet. Create the first one!",
+    "back": "Back to demands",
+    "byRequester": "Requested by {name}",
+    "edit": "Edit",
+    "delete": "Delete",
+    "none": "—",
+    "days": "{count} d",
+    "infoTitle": "Details",
+    "actionsTitle": "Actions",
+    "noAction": "No action available at this stage.",
+    "commentPlaceholder": "Comment (required to reject or send back)",
+    "historyTitle": "History",
+    "rejectedNotice": "This demand was rejected.",
+    "urgency": {
+      "low": "Low",
+      "medium": "Medium",
+      "high": "High",
+      "critical": "Critical"
+    },
+    "form": {
+      "title": "Demand title",
+      "description": "Description",
+      "objectives": "Objectives",
+      "justification": "Justification",
+      "department": "Department",
+      "urgency": "Urgency",
+      "priority": "Priority",
+      "estimatedBudget": "Estimated budget (€)",
+      "estimatedDuration": "Estimated duration (days)",
+      "targetPortfolio": "Target portfolio",
+      "noPortfolio": "None",
+      "tags": "Tags",
+      "tagsHint": "Comma-separated",
+      "create": "Create demand",
+      "save": "Save",
+      "cancel": "Cancel"
     }
   },
   "workspace": {
@@ -446,7 +497,8 @@
     "markAllRead": "Mark all as read",
     "assigned": "{author} assigned you the task “{task}”",
     "comment": "{author} commented on “{task}”",
-    "mention": "{author} mentioned you on “{task}”"
+    "mention": "{author} mentioned you on “{task}”",
+    "demandTransition": "Your demand {reference} moved to “{state}”"
   },
   "comments": {
     "title": "Comments",

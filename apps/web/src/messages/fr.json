@@ -49,6 +49,11 @@
     "QUOTE_EMPTY": "Ajoutez au moins une ligne avant de soumettre.",
     "QUOTE_NOT_SUBMITTED": "Le devis n'est pas en attente de revue.",
     "QUOTE_NOT_REVIEWED": "Le devis doit d'abord passer la revue de niveau 1.",
+    "FORBIDDEN": "Vous n'avez pas les droits pour cette action.",
+    "DEMAND_NOT_FOUND": "Demande introuvable.",
+    "PORTFOLIO_NOT_FOUND": "Portefeuille introuvable.",
+    "WORKFLOW_TRANSITION_NOT_AVAILABLE": "Cette action n'est pas disponible à cette étape.",
+    "WORKFLOW_COMMENT_REQUIRED": "Un commentaire est requis pour cette action.",
     "UNKNOWN": "Une erreur inattendue s'est produite. Réessayez."
   },
   "auth": {
@@ -202,6 +207,7 @@
   },
   "topNav": {
     "projects": "Projets",
+    "demands": "Demandes",
     "portfolios": "Portefeuilles"
   },
   "portfolios": {
@@ -249,6 +255,51 @@
       "detach": "Retirer",
       "noProjects": "Aucun projet rattaché.",
       "noUnassigned": "Tous les projets sont déjà rattachés."
+    }
+  },
+  "demands": {
+    "title": "Demandes",
+    "subtitle": "Le pipeline d'idées et de demandes avant projet.",
+    "new": "Nouvelle demande",
+    "mine": "Mes demandes",
+    "all": "Toutes",
+    "searchPlaceholder": "Rechercher (référence, titre)…",
+    "empty": "Aucune demande. Créez la première !",
+    "back": "Retour aux demandes",
+    "byRequester": "Demandé par {name}",
+    "edit": "Modifier",
+    "delete": "Supprimer",
+    "none": "—",
+    "days": "{count} j",
+    "infoTitle": "Informations",
+    "actionsTitle": "Actions",
+    "noAction": "Aucune action disponible à cette étape.",
+    "commentPlaceholder": "Commentaire (obligatoire pour un refus ou un retour)",
+    "historyTitle": "Historique",
+    "rejectedNotice": "Cette demande a été rejetée.",
+    "urgency": {
+      "low": "Faible",
+      "medium": "Moyenne",
+      "high": "Élevée",
+      "critical": "Critique"
+    },
+    "form": {
+      "title": "Titre de la demande",
+      "description": "Description",
+      "objectives": "Objectifs",
+      "justification": "Justification",
+      "department": "Département",
+      "urgency": "Urgence",
+      "priority": "Priorité",
+      "estimatedBudget": "Budget estimé (€)",
+      "estimatedDuration": "Durée estimée (jours)",
+      "targetPortfolio": "Portefeuille cible",
+      "noPortfolio": "Aucun",
+      "tags": "Étiquettes",
+      "tagsHint": "Séparées par des virgules",
+      "create": "Créer la demande",
+      "save": "Enregistrer",
+      "cancel": "Annuler"
     }
   },
   "workspace": {
@@ -446,7 +497,8 @@
     "markAllRead": "Tout marquer comme lu",
     "assigned": "{author} vous a assigné la tâche « {task} »",
     "comment": "{author} a commenté « {task} »",
-    "mention": "{author} vous a mentionné sur « {task} »"
+    "mention": "{author} vous a mentionné sur « {task} »",
+    "demandTransition": "Votre demande {reference} est passée à « {state} »"
   },
   "comments": {
     "title": "Commentaires",

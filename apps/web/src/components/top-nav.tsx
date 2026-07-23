@@ -7,10 +7,11 @@ import { cn } from "@/components/ui";
 
 const LINKS = [
   { href: "/", key: "projects", match: (p: string) => p === "/" || p.startsWith("/projects") },
+  { href: "/demands", key: "demands", match: (p: string) => p.startsWith("/demands") },
   { href: "/portfolios", key: "portfolios", match: (p: string) => p.startsWith("/portfolios") },
 ] as const;
 
-/** Navigation principale de la topbar : Projets / Portefeuilles. */
+/** Navigation principale de la topbar : Projets / Demandes / Portefeuilles. */
 export function TopNav() {
   const t = useTranslations("topNav");
   const pathname = usePathname();
