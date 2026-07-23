@@ -262,7 +262,8 @@
     "noManager": "No project manager",
     "startDate": "Start Date",
     "endDate": "End Date",
-    "empty": "No projects in this view."
+    "empty": "No projects in this view.",
+    "emptyMine": "You are not involved in any project yet."
   },
   "projectNav": {
     "modules": "Modules",

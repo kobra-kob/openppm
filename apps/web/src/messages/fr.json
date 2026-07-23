@@ -262,7 +262,8 @@
     "noManager": "Sans chef de projet",
     "startDate": "Début",
     "endDate": "Fin",
-    "empty": "Aucun projet dans cette vue."
+    "empty": "Aucun projet dans cette vue.",
+    "emptyMine": "Vous n'êtes impliqué dans aucun projet pour l'instant."
   },
   "projectNav": {
     "modules": "Modules",

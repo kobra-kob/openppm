@@ -95,6 +95,23 @@ export default function WorkspacePage() {
     enabled: !showTrash,
   });
 
+  // Effectifs des deux périmètres : rend l'effet des onglets visible même
+  // quand ils coïncident (cas d'un utilisateur impliqué dans tous les projets).
+  const { data: counts } = useQuery({
+    queryKey: ["projects-counts", search],
+    queryFn: async () => {
+      const total = async (scope: "mine" | "all") => {
+        const params = new URLSearchParams({ scope, pageSize: "1" });
+        if (search) params.set("search", search);
+        const page = await api<ProjectListView>(`/projects?${params.toString()}`);
+        return page.total;
+      };
+      const [mine, all] = await Promise.all([total("mine"), total("all")]);
+      return { mine, all };
+    },
+    enabled: !showTrash,
+  });
+
   const { data: trash } = useQuery({
     queryKey: ["projects-trash"],
     queryFn: () => api<ProjectView[]>("/projects/trash"),
@@ -212,6 +229,16 @@ export default function WorkspacePage() {
               )}
             >
               {value === "mine" ? t("myProjects") : t("allProjects")}
+              {counts && (
+                <span
+                  className={cn(
+                    "ml-1.5 rounded-full px-1.5 py-0.5 text-xs tabular-nums",
+                    tab === value ? "bg-accent/15 text-accent" : "bg-border-subtle text-muted",
+                  )}
+                >
+                  {value === "mine" ? counts.mine : counts.all}
+                </span>
+              )}
             </button>
           ))}
         </div>
@@ -423,7 +450,18 @@ export default function WorkspacePage() {
       ) : (list?.items ?? []).length === 0 ? (
         <div className="flex flex-col items-center gap-2 p-14 text-muted">
           <FolderKanban size={32} />
-          <p className="text-sm">{t("empty")}</p>
+          {/* « Mes projets » vide alors que l'organisation en a : on oriente
+              vers l'autre onglet plutôt que d'inviter à créer un projet. */}
+          {tab === "mine" && (counts?.all ?? 0) > 0 ? (
+            <>
+              <p className="text-sm">{t("emptyMine")}</p>
+              <Button variant="ghost" onClick={() => setTab("all")}>
+                {t("allProjects")}
+              </Button>
+            </>
+          ) : (
+            <p className="text-sm">{t("empty")}</p>
+          )}
         </div>
       ) : (
         /* Grille de cartes projet façon Project Workspace */
