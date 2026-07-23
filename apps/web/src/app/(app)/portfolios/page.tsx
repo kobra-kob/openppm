@@ -6,7 +6,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
-import { Alert, Button, Card, Input, Label } from "@/components/ui";
+import { Alert, Button, Card, Input, Label, cn } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
 import {
@@ -150,7 +150,7 @@ export default function PortfoliosPage() {
             const over = envelope !== null && actual > envelope;
             return (
               <Link key={portfolio.id} href={`/portfolios/${portfolio.id}`}>
-                <Card className="h-full transition-shadow hover:shadow-md">
+                <Card className="card-hover h-full">
                   <div className="mb-2 flex items-center gap-2">
                     <Wallet size={16} className="text-accent" />
                     <h2 className="min-w-0 flex-1 truncate font-medium">{portfolio.name}</h2>
@@ -170,7 +170,7 @@ export default function PortfoliosPage() {
                     {pct !== null && (
                       <div className="mt-1.5 h-1.5 overflow-hidden rounded-full bg-border-subtle">
                         <div
-                          className={over ? "h-full bg-danger" : "h-full bg-accent"}
+                          className={cn("bar-fill h-full", over ? "bg-danger" : "bg-accent")}
                           style={{ width: `${Math.min(100, pct)}%` }}
                         />
                       </div>

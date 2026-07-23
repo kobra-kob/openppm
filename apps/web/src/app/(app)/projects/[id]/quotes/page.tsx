@@ -130,7 +130,7 @@ export default function QuotesListPage() {
         <div className="space-y-2">
           {list.map((quote) => (
             <Link key={quote.id} href={`/projects/${id}/quotes/${quote.id}`}>
-              <Card className="flex flex-wrap items-center gap-3 transition-colors hover:border-accent/40">
+              <Card className="card-hover flex flex-wrap items-center gap-3">
                 <span className="font-mono text-xs text-muted">{quote.reference}</span>
                 <div className="min-w-0 flex-1">
                   <p className="truncate font-medium">

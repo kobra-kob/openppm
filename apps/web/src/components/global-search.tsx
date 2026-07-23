@@ -86,7 +86,7 @@ export function GlobalSearch() {
       </div>
 
       {open && query.length >= 2 && (
-        <div className="glass-strong absolute left-0 right-0 top-full z-30 mt-2 max-h-96 overflow-y-auto rounded-(--radius-card) p-2 shadow-[var(--shadow-pop)]">
+        <div className="glass-strong animate-pop absolute left-0 right-0 top-full z-30 mt-2 max-h-96 origin-top overflow-y-auto rounded-(--radius-card) p-2 shadow-[var(--shadow-pop)]">
           {!hasResults && (
             <p className="px-3 py-2 text-sm text-muted">
               {isFetching ? "…" : t("empty")}

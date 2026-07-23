@@ -104,7 +104,7 @@ export function NotificationBell() {
       </button>
 
       {open && (
-        <div className="glass-strong absolute right-0 top-full z-30 mt-2 w-80 max-h-[26rem] overflow-y-auto rounded-(--radius-card) p-2 shadow-[var(--shadow-pop)]">
+        <div className="glass-strong animate-pop absolute right-0 top-full z-30 mt-2 w-80 max-h-[26rem] origin-top-right overflow-y-auto rounded-(--radius-card) p-2 shadow-[var(--shadow-pop)]">
           <div className="flex items-center justify-between px-2 py-1">
             <span className="text-sm font-semibold">{t("title")}</span>
             {unread > 0 && (

@@ -26,6 +26,8 @@
   --shadow-card: 0 0.5px 1px rgba(0, 0, 0, 0.04), 0 4px 14px rgba(0, 0, 0, 0.07);
   --shadow-pop: 0 1px 2px rgba(0, 0, 0, 0.06), 0 12px 34px rgba(0, 0, 0, 0.16);
   --shadow-btn: 0 1px 1.5px rgba(0, 0, 0, 0.16), inset 0 1px 0 rgba(255, 255, 255, 0.28);
+  /* Courbe d'accélération façon macOS/iOS (sheets, popovers) */
+  --ease-macos: cubic-bezier(0.32, 0.72, 0, 1);
   color-scheme: light;
 }
 
@@ -144,7 +146,85 @@ h1, h2, h3 {
 .btn-macos {
   background: linear-gradient(180deg, var(--accent), var(--accent-strong));
   box-shadow: var(--shadow-btn);
+  transition: filter 150ms var(--ease-macos), transform 150ms var(--ease-macos);
 }
 .btn-macos:hover {
-  filter: brightness(1.05);
+  filter: brightness(1.06);
+}
+
+/* ── Micro-animations façon macOS ───────────────────────────── */
+@keyframes macos-pop {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+@keyframes macos-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes macos-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* Popovers / menus : apparition depuis l'ancre */
+.animate-pop {
+  animation: macos-pop 180ms var(--ease-macos) both;
+}
+
+/* Contenu qui entre en scène */
+.animate-fade-up {
+  animation: macos-fade-up 280ms var(--ease-macos) both;
+}
+
+.animate-fade-in {
+  animation: macos-fade-in 200ms var(--ease-macos) both;
+}
+
+/* Carte cliquable : léger soulèvement au survol */
+.card-hover {
+  transition:
+    transform 200ms var(--ease-macos),
+    box-shadow 200ms var(--ease-macos);
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-pop);
+}
+.card-hover:active {
+  transform: translateY(0) scale(0.995);
+}
+
+/* Barres de progression : remplissage animé */
+.bar-fill {
+  transition: width 600ms var(--ease-macos);
+}
+
+/* Accessibilité : on coupe tout si l'utilisateur le demande */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

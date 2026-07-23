@@ -263,7 +263,7 @@ export default function PortfolioDetailPage() {
           {finance.envelopeConsumedPct !== null && (
             <div className="mt-4 h-2 overflow-hidden rounded-full bg-border-subtle">
               <div
-                className={envelopeOver ? "h-full bg-danger" : "h-full bg-accent"}
+                className={cn("bar-fill h-full", envelopeOver ? "bg-danger" : "bg-accent")}
                 style={{ width: `${Math.min(100, finance.envelopeConsumedPct)}%` }}
               />
             </div>

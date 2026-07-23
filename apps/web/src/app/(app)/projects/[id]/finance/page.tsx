@@ -193,7 +193,7 @@ export default function FinancePage() {
           </div>
           <div className="h-2 overflow-hidden rounded-full bg-border-subtle">
             <div
-              className={cn("h-full rounded-full", over ? "bg-danger" : "bg-accent")}
+              className={cn("bar-fill h-full rounded-full", over ? "bg-danger" : "bg-accent")}
               style={{ width: `${consumption}%` }}
             />
           </div>

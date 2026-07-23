@@ -117,7 +117,10 @@ export default function ProjectWorkspaceLayout({
             <FavoriteStar projectId={project.id} isFavorite={project.isFavorite} />
           </div>
         )}
-        {children}
+        {/* `key` sur le chemin : le fondu rejoue à chaque changement de module */}
+        <div key={pathname} className="animate-fade-up">
+          {children}
+        </div>
       </div>
     </div>
   );

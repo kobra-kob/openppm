@@ -409,7 +409,7 @@ export default function WorkspacePage() {
         <div className="grid gap-4 [grid-template-columns:repeat(auto-fill,minmax(250px,1fr))]">
           {(list?.items ?? []).map((project) => (
             <Link key={project.id} href={`/projects/${project.id}`} className="group">
-              <Card className="flex h-full flex-col gap-3 p-4 transition-all group-hover:-translate-y-0.5 group-hover:shadow-md">
+              <Card className="flex h-full flex-col gap-3 p-4 transition-[transform,box-shadow] duration-200 ease-[var(--ease-macos)] group-hover:-translate-y-0.5 group-hover:shadow-[var(--shadow-pop)] group-active:translate-y-0 group-active:scale-[0.995]">
                 <div className="flex items-start justify-between gap-2">
                   <span
                     className={cn(
