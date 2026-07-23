@@ -88,6 +88,7 @@ model User {
   costEntries      CostEntry[]       @relation("CostEntryAuthor")
   workflowActions  WorkflowTransitionLog[] @relation("WorkflowActor")
   requestedDemands Demand[]          @relation("DemandRequester")
+  businessCases    BusinessCase[]    @relation("BusinessCaseAuthor")
   createdQuotes    Quote[]           @relation("QuoteCreator")
   reviewedQuotes   Quote[]           @relation("QuoteReviewer")
   approvedQuotes   Quote[]           @relation("QuoteApprover")
@@ -985,10 +986,11 @@ model Demand {
   updatedAt      DateTime @updatedAt @map("updated_at")
   deletedAt      DateTime? @map("deleted_at")
 
-  organization    Organization @relation(fields: [organizationId], references: [id])
-  requester       User         @relation("DemandRequester", fields: [requesterId], references: [id])
-  targetPortfolio Portfolio?   @relation(fields: [targetPortfolioId], references: [id])
+  organization    Organization  @relation(fields: [organizationId], references: [id])
+  requester       User          @relation("DemandRequester", fields: [requesterId], references: [id])
+  targetPortfolio Portfolio?    @relation(fields: [targetPortfolioId], references: [id])
   tags            DemandTag[]
+  businessCase    BusinessCase?
 
   @@unique([organizationId, reference])
   @@index([organizationId, deletedAt])
@@ -1006,4 +1008,52 @@ model DemandTag {
   @@unique([demandId, label])
   @@index([demandId])
   @@map("demand_tags")
+}
+
+/// Échelle qualitative commune (probabilité / impact des risques)
+enum RiskLevel {
+  low
+  medium
+  high
+}
+
+/// Dossier de justification (Business Case) rattaché à une demande.
+/// Un seul par demande ; alimenté par le PMO / Business Analyst à l'étape dédiée.
+model BusinessCase {
+  id               String    @id @default(uuid(7)) @db.Char(36)
+  demandId         String    @unique @map("demand_id") @db.Char(36)
+  /// Retour sur investissement attendu (analyse qualitative et/ou chiffrée)
+  roi              String?   @db.Text
+  costs            String?   @db.Text
+  benefits         String?   @db.Text
+  assumptions      String?   @db.Text
+  resources        String?   @db.Text
+  dependencies     String?   @db.Text
+  plannedStartDate DateTime? @map("planned_start_date") @db.Date
+  plannedEndDate   DateTime? @map("planned_end_date") @db.Date
+  createdById      String    @map("created_by_id") @db.Char(36)
+  createdAt        DateTime  @default(now()) @map("created_at")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
+
+  demand    Demand             @relation(fields: [demandId], references: [id], onDelete: Cascade)
+  createdBy User               @relation("BusinessCaseAuthor", fields: [createdById], references: [id])
+  risks     BusinessCaseRisk[]
+
+  @@map("business_cases")
+}
+
+/// Risque identifié dans le Business Case. Repris dans le registre projet à la conversion.
+model BusinessCaseRisk {
+  id             String    @id @default(uuid(7)) @db.Char(36)
+  businessCaseId String    @map("business_case_id") @db.Char(36)
+  label          String    @db.VarChar(200)
+  probability    RiskLevel @default(medium)
+  impact         RiskLevel @default(medium)
+  mitigation     String?   @db.Text
+  createdAt      DateTime  @default(now()) @map("created_at")
+
+  businessCase BusinessCase @relation(fields: [businessCaseId], references: [id], onDelete: Cascade)
+
+  @@index([businessCaseId])
+  @@map("business_case_risks")
 }
