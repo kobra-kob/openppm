@@ -91,6 +91,8 @@ export interface DemandView {
   targetPortfolio: { id: string; name: string } | null;
   tags: string[];
   state: DemandState | null;
+  /** Projet issu de la conversion (traçabilité), sinon null. */
+  project: { id: string; code: string } | null;
   canEdit: boolean;
   createdAt: string;
   updatedAt: string;

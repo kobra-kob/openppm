@@ -277,6 +277,7 @@
     "commentPlaceholder": "Comment (required to reject or send back)",
     "historyTitle": "History",
     "rejectedNotice": "This demand was rejected.",
+    "convertedTo": "Project created: {code} — open the project",
     "tabDetail": "Details",
     "tabBusinessCase": "Business Case",
     "urgency": {

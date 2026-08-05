@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Ban, CheckCircle2, History, Lock, Pencil, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, Ban, CheckCircle2, FolderKanban, History, Lock, Pencil, Send, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -215,6 +215,16 @@ export default function DemandDetailPage() {
               />
             ))}
           </div>
+        )}
+
+        {demand.project && (
+          <Link
+            href={`/projects/${demand.project.id}`}
+            className="mt-4 flex items-center gap-2 rounded-(--radius-control) border border-accent/30 bg-accent/10 px-3 py-2 text-sm text-accent transition-colors hover:bg-accent/15"
+          >
+            <FolderKanban size={15} />
+            {t("convertedTo", { code: demand.project.code })}
+          </Link>
         )}
       </Card>
 
