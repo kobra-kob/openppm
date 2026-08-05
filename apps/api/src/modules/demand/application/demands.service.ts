@@ -19,6 +19,7 @@ import {
 } from "../domain/demand-workflow";
 import { DEMAND_REPOSITORY } from "../domain/demand.repository";
 import type { DemandRecord, DemandRepository } from "../domain/demand.repository";
+import { DemandConversionService } from "./demand-conversion.service";
 import type { CreateDemandDto, ListDemandsQuery, UpdateDemandDto } from "./dto/demand.dtos";
 
 /** Rôles transverses pouvant intervenir sur toutes les demandes (édition). */
@@ -56,6 +57,8 @@ export interface DemandView {
   targetPortfolio: { id: string; name: string } | null;
   tags: string[];
   state: DemandStateView | null;
+  /** Projet issu de la conversion (traçabilité), sinon null. */
+  project: { id: string; code: string } | null;
   canEdit: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -80,6 +83,7 @@ export class DemandsService {
     private readonly workflow: WorkflowService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
+    private readonly conversion: DemandConversionService,
   ) {}
 
   async list(payload: JwtPayload, query: ListDemandsQuery): Promise<DemandListView> {
@@ -235,18 +239,13 @@ export class DemandsService {
       });
     }
 
-    // L'automatisation `createProject` du comité sera interprétée au lot de
-    // conversion (D4). On la journalise pour l'instant afin d'en garder la trace.
+    // À l'approbation du comité, la demande est convertie en projet
+    // (budget approuvé, reprise des pièces et des risques, traçabilité).
     if (result.autoAction?.createProject) {
-      await this.audit.log({
-        action: "demand.ready_for_project",
-        entityType: "demand",
-        entityId: id,
-        organizationId: payload.org,
-        userId: payload.sub,
-        after: { reference: demand.reference },
-        ...context,
-      });
+      await this.conversion.convertFromDemand(payload, demand, context);
+      // La demande porte désormais le lien vers le projet créé.
+      const converted = await this.require(payload, id);
+      return this.toDetailView(payload, converted, result.view);
     }
 
     return this.toDetailView(payload, demand, result.view);
@@ -348,6 +347,7 @@ export class DemandsService {
             isFinal: state.kind === "final_ok" || state.kind === "final_ko",
           }
         : null,
+      project: demand.project,
       canEdit: this.canEdit(payload, demand),
       createdAt: demand.createdAt,
       updatedAt: demand.updatedAt,

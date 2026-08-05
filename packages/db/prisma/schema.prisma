@@ -21,6 +21,9 @@ model Organization {
   slug      String    @unique @db.VarChar(60)
   settings  Json?
   plan      String    @default("community") @db.VarChar(30)
+  /// Autorise la création directe d'un projet (hors conversion d'une demande).
+  /// Désactivée, seul un administrateur peut créer un projet directement.
+  allowDirectProjectCreation Boolean @default(true) @map("allow_direct_project_creation")
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
@@ -36,6 +39,7 @@ model Organization {
   portfolios        Portfolio[]
   workflowDefinitions WorkflowDefinition[]
   demands           Demand[]
+  risks             Risk[]
 
   @@map("organizations")
 }
@@ -89,6 +93,7 @@ model User {
   workflowActions  WorkflowTransitionLog[] @relation("WorkflowActor")
   requestedDemands Demand[]          @relation("DemandRequester")
   businessCases    BusinessCase[]    @relation("BusinessCaseAuthor")
+  ownedRisks       Risk[]            @relation("RiskOwner")
   createdQuotes    Quote[]           @relation("QuoteCreator")
   reviewedQuotes   Quote[]           @relation("QuoteReviewer")
   approvedQuotes   Quote[]           @relation("QuoteApprover")
@@ -296,6 +301,8 @@ model Project {
   categoryId     String?       @map("category_id") @db.Char(36)
   portfolioId    String?       @map("portfolio_id") @db.Char(36)
   managerId      String?       @map("manager_id") @db.Char(36)
+  /// Demande d'origine, lorsque le projet est issu d'une conversion (traçabilité).
+  demandId       String?       @unique @map("demand_id") @db.Char(36)
   createdById    String        @map("created_by_id") @db.Char(36)
   archivedAt     DateTime?     @map("archived_at")
   createdAt      DateTime      @default(now()) @map("created_at")
@@ -307,6 +314,7 @@ model Project {
   portfolio    Portfolio?       @relation(fields: [portfolioId], references: [id])
   manager      User?            @relation("ProjectManager", fields: [managerId], references: [id])
   createdBy    User             @relation("ProjectCreator", fields: [createdById], references: [id])
+  originDemand Demand?          @relation("DemandProject", fields: [demandId], references: [id])
   members        ProjectMember[]
   tasks          Task[]
   board          Board?
@@ -315,6 +323,7 @@ model Project {
   budgetLines    BudgetLine[]
   costEntries    CostEntry[]
   quotes         Quote[]
+  risks          Risk[]
 
   @@unique([organizationId, code])
   @@index([organizationId, portfolioId])
@@ -491,10 +500,14 @@ model TimeEntry {
 
 // ── Documents (GED v1) ─────────────────────────────────────────────────
 
+/// Pièce jointe rattachée soit à un projet, soit à une demande (parent exclusif,
+/// invariant vérifié en service). Les pièces d'une demande sont reprises par le
+/// projet lors de la conversion.
 model Document {
   id             String   @id @default(uuid(7)) @db.Char(36)
   organizationId String   @map("organization_id") @db.Char(36)
-  projectId      String   @map("project_id") @db.Char(36)
+  projectId      String?  @map("project_id") @db.Char(36)
+  demandId       String?  @map("demand_id") @db.Char(36)
   name           String   @db.VarChar(255)
   storagePath    String   @map("storage_path") @db.VarChar(500)
   mimeType       String   @map("mime_type") @db.VarChar(120)
@@ -503,10 +516,12 @@ model Document {
   uploadedById   String   @map("uploaded_by_id") @db.Char(36)
   createdAt      DateTime @default(now()) @map("created_at")
 
-  project    Project @relation(fields: [projectId], references: [id])
-  uploadedBy User    @relation(fields: [uploadedById], references: [id])
+  project    Project? @relation(fields: [projectId], references: [id])
+  demand     Demand?  @relation(fields: [demandId], references: [id])
+  uploadedBy User     @relation(fields: [uploadedById], references: [id])
 
   @@index([projectId])
+  @@index([demandId])
   @@map("documents")
 }
 
@@ -991,6 +1006,9 @@ model Demand {
   targetPortfolio Portfolio?    @relation(fields: [targetPortfolioId], references: [id])
   tags            DemandTag[]
   businessCase    BusinessCase?
+  /// Projet issu de la conversion de cette demande (traçabilité, 1-1).
+  project         Project?      @relation("DemandProject")
+  documents       Document[]
 
   @@unique([organizationId, reference])
   @@index([organizationId, deletedAt])
@@ -1056,4 +1074,38 @@ model BusinessCaseRisk {
 
   @@index([businessCaseId])
   @@map("business_case_risks")
+}
+
+enum RiskStatus {
+  open
+  mitigated
+  closed
+}
+
+/// Registre des risques d'un projet. Un risque repris d'un Business Case lors de
+/// la conversion garde le lien vers sa source (sourceBusinessCaseRiskId).
+model Risk {
+  id             String     @id @default(uuid(7)) @db.Char(36)
+  organizationId String     @map("organization_id") @db.Char(36)
+  projectId      String     @map("project_id") @db.Char(36)
+  label          String     @db.VarChar(200)
+  description    String?    @db.Text
+  probability    RiskLevel  @default(medium)
+  impact         RiskLevel  @default(medium)
+  /// Sévérité dérivée (probabilité × impact), figée à l'enregistrement.
+  severity       RiskLevel  @default(medium)
+  mitigation     String?    @db.Text
+  ownerId        String?    @map("owner_id") @db.Char(36)
+  status         RiskStatus @default(open)
+  /// Risque source dans le Business Case, si repris lors d'une conversion.
+  sourceBusinessCaseRiskId String? @map("source_business_case_risk_id") @db.Char(36)
+  createdAt      DateTime   @default(now()) @map("created_at")
+  updatedAt      DateTime   @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  project      Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner        User?        @relation("RiskOwner", fields: [ownerId], references: [id])
+
+  @@index([organizationId, projectId])
+  @@map("risks")
 }

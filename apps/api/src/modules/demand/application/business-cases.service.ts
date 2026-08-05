@@ -10,6 +10,7 @@ import type {
 } from "../domain/business-case.repository";
 import { DEMAND_REPOSITORY } from "../domain/demand.repository";
 import type { DemandRepository } from "../domain/demand.repository";
+import { computeSeverity } from "../domain/risk-severity";
 import type { UpsertBusinessCaseDto } from "./dto/business-case.dtos";
 
 /** Rôles habilités à rédiger le Business Case (qualification / instruction). */
@@ -18,12 +19,6 @@ const BUSINESS_CASE_EDITOR_ROLES: string[] = [
   RoleKey.pmo,
   RoleKey.business_analyst,
 ];
-
-const LEVEL_SCORE: Record<RiskLevel, number> = {
-  [RiskLevel.low]: 1,
-  [RiskLevel.medium]: 2,
-  [RiskLevel.high]: 3,
-};
 
 export interface BusinessCaseRiskView {
   id: string;
@@ -51,14 +46,6 @@ export interface BusinessCaseView {
   updatedAt: Date;
   risks: BusinessCaseRiskView[];
   canEdit: boolean;
-}
-
-/** Sévérité dérivée du produit probabilité × impact (1..9). */
-export function computeSeverity(probability: RiskLevel, impact: RiskLevel): RiskLevel {
-  const score = LEVEL_SCORE[probability] * LEVEL_SCORE[impact];
-  if (score <= 2) return RiskLevel.low;
-  if (score <= 4) return RiskLevel.medium;
-  return RiskLevel.high;
 }
 
 @Injectable()

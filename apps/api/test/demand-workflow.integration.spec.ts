@@ -56,6 +56,10 @@ describe("Workflow des demandes (intégration)", () => {
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.risk.deleteMany();
+    await prisma.document.deleteMany();
+    await prisma.approvalStep.deleteMany();
+    await prisma.budgetRequest.deleteMany();
     await prisma.demandTag.deleteMany();
     await prisma.demand.deleteMany();
     await prisma.workflowTransitionLog.deleteMany();
@@ -176,11 +180,16 @@ describe("Workflow des demandes (intégration)", () => {
     // Historique : draft + 7 franchissements = 8 entrées
     expect(approved.body.workflow.history).toHaveLength(8);
 
-    // L'automatisation « projet prêt » a été journalisée (conversion au lot D4)
-    const ready = await prisma.auditLog.findMany({
-      where: { action: "demand.ready_for_project", entityId: id },
+    // L'approbation du comité a converti la demande en projet (traçabilité)
+    expect(approved.body.project).not.toBeNull();
+    expect(approved.body.project.code).toMatch(/^PROJ\d{5}$/);
+    const converted = await prisma.auditLog.findMany({
+      where: { action: "demand.converted", entityId: id },
     });
-    expect(ready.length).toBe(1);
+    expect(converted.length).toBe(1);
+    // Le projet créé pointe bien vers la demande d'origine
+    const project = await prisma.project.findUnique({ where: { demandId: id } });
+    expect(project?.id).toBe(approved.body.project.id);
   });
 
   it("refuse une transition non autorisée par le rôle (403)", async () => {

@@ -18,6 +18,8 @@ export interface DemandRecord {
   estimatedDurationDays: number | null;
   targetPortfolio: { id: string; name: string } | null;
   tags: string[];
+  /** Projet issu de la conversion (traçabilité), sinon null. */
+  project: { id: string; code: string } | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;

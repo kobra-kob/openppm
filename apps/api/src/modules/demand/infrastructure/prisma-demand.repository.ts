@@ -14,6 +14,7 @@ const DEMAND_INCLUDE = {
   requester: { select: { firstName: true, lastName: true } },
   targetPortfolio: { select: { id: true, name: true } },
   tags: { orderBy: { label: "asc" } },
+  project: { select: { id: true, code: true } },
 } as const;
 
 type DemandRow = Prisma.DemandGetPayload<{ include: typeof DEMAND_INCLUDE }>;
@@ -154,6 +155,7 @@ function toRecord(row: DemandRow): DemandRecord {
       ? { id: row.targetPortfolio.id, name: row.targetPortfolio.name }
       : null,
     tags: row.tags.map((tag) => tag.label),
+    project: row.project ? { id: row.project.id, code: row.project.code } : null,
     createdAt: row.createdAt,
     updatedAt: row.updatedAt,
     deletedAt: row.deletedAt,
