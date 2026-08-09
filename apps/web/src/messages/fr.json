@@ -247,6 +247,7 @@
       "planned": "Prévu réparti",
       "actual": "Coût réel",
       "quotesApproved": "Devis approuvés",
+      "pipeline": "Pipeline (demandes)",
       "project": "Projet",
       "overCommitted": "Enveloppe dépassée",
       "projectsTitle": "Projets du portefeuille",
@@ -254,7 +255,10 @@
       "attachHint": "Choisir un projet…",
       "detach": "Retirer",
       "noProjects": "Aucun projet rattaché.",
-      "noUnassigned": "Tous les projets sont déjà rattachés."
+      "noUnassigned": "Tous les projets sont déjà rattachés.",
+      "demandsTitle": "Demandes rattachées",
+      "demandConverted": "Convertie",
+      "demandPipeline": "Pipeline"
     }
   },
   "demands": {
@@ -523,9 +527,10 @@
     "tooLarge": "Fichier trop volumineux (25 Mo max)."
   },
   "search": {
-    "placeholder": "Rechercher projets et tâches…",
+    "placeholder": "Rechercher projets, tâches, demandes…",
     "projects": "Projets",
     "tasks": "Tâches",
+    "demands": "Demandes",
     "empty": "Aucun résultat."
   },
   "notifications": {

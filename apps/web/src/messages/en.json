@@ -247,6 +247,7 @@
       "planned": "Planned",
       "actual": "Actual cost",
       "quotesApproved": "Approved quotes",
+      "pipeline": "Pipeline (demands)",
       "project": "Project",
       "overCommitted": "Envelope exceeded",
       "projectsTitle": "Portfolio projects",
@@ -254,7 +255,10 @@
       "attachHint": "Choose a project…",
       "detach": "Remove",
       "noProjects": "No projects attached.",
-      "noUnassigned": "All projects are already attached."
+      "noUnassigned": "All projects are already attached.",
+      "demandsTitle": "Attached demands",
+      "demandConverted": "Converted",
+      "demandPipeline": "Pipeline"
     }
   },
   "demands": {
@@ -523,9 +527,10 @@
     "tooLarge": "File too large (25 MB max)."
   },
   "search": {
-    "placeholder": "Search projects and tasks…",
+    "placeholder": "Search projects, tasks, demands…",
     "projects": "Projects",
     "tasks": "Tasks",
+    "demands": "Demands",
     "empty": "No results."
   },
   "notifications": {

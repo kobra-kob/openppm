@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery } from "@tanstack/react-query";
-import { FolderKanban, ListChecks, Search } from "lucide-react";
+import { FolderKanban, Inbox, ListChecks, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { useEffect, useRef, useState } from "react";
@@ -16,6 +16,7 @@ interface SearchResults {
     status: string;
     project: { id: string; name: string; code: string };
   }>;
+  demands: Array<{ id: string; reference: string; title: string; projectId: string | null }>;
 }
 
 /** Recherche globale de la topbar : projets et tâches, navigation au clic. */
@@ -57,7 +58,8 @@ export function GlobalSearch() {
     router.push(href);
   };
 
-  const hasResults = (data?.projects.length ?? 0) + (data?.tasks.length ?? 0) > 0;
+  const hasResults =
+    (data?.projects.length ?? 0) + (data?.tasks.length ?? 0) + (data?.demands.length ?? 0) > 0;
 
   return (
     <div ref={containerRef} className="relative w-full max-w-md">
@@ -135,6 +137,25 @@ export function GlobalSearch() {
                   <span className="truncate font-mono text-xs text-muted">
                     {task.project.code}
                   </span>
+                </button>
+              ))}
+            </div>
+          )}
+          {(data?.demands.length ?? 0) > 0 && (
+            <div>
+              <p className="px-3 pb-1 pt-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+                {t("demands")}
+              </p>
+              {data!.demands.map((demand) => (
+                <button
+                  key={demand.id}
+                  type="button"
+                  onClick={() => go(`/demands/${demand.id}`)}
+                  className="flex w-full items-center gap-2.5 rounded-(--radius-control) px-3 py-2 text-left text-sm transition-colors hover:bg-border-subtle"
+                >
+                  <Inbox size={14} className="shrink-0 text-muted" />
+                  <span className="min-w-0 flex-1 truncate">{demand.title}</span>
+                  <span className="font-mono text-xs text-muted">{demand.reference}</span>
                 </button>
               ))}
             </div>

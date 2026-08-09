@@ -6,9 +6,11 @@ import {
   FileText,
   FolderKanban,
   Landmark,
+  Inbox,
   PiggyBank,
   Trash2,
   TrendingDown,
+  TrendingUp,
   Wallet,
   X,
 } from "lucide-react";
@@ -234,7 +236,7 @@ export default function PortfolioDetailPage() {
             )}
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-6">
+          <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7">
             <Kpi
               icon={Wallet}
               label={t("envelope")}
@@ -257,6 +259,11 @@ export default function PortfolioDetailPage() {
               icon={FileText}
               label={t("detail.quotesApproved")}
               value={formatEuro(finance.quotes.approvedTotalHT, locale)}
+            />
+            <Kpi
+              icon={TrendingUp}
+              label={t("detail.pipeline")}
+              value={formatEuro(finance.pipeline, locale)}
             />
           </div>
 
@@ -382,6 +389,50 @@ export default function PortfolioDetailPage() {
           </div>
         )}
       </Card>
+
+      {/* Demandes rattachées (pipeline avant projet) */}
+      {portfolio.demands.length > 0 && (
+        <Card>
+          <div className="mb-3 flex items-center justify-between">
+            <div className="flex items-center gap-2 text-muted">
+              <Inbox size={16} />
+              <h2 className="text-sm font-semibold uppercase tracking-wider">
+                {t("detail.demandsTitle")}
+              </h2>
+            </div>
+            <span className="text-xs text-muted">
+              {t("detail.pipeline")} : {formatEuro(portfolio.pipelineBudget, locale)}
+            </span>
+          </div>
+          <ul className="divide-y divide-border-subtle">
+            {portfolio.demands.map((demand) => (
+              <li key={demand.id} className="flex items-center gap-3 py-2.5">
+                <Link
+                  href={`/demands/${demand.id}`}
+                  className="flex min-w-0 flex-1 items-center gap-3 hover:underline"
+                >
+                  <span className="w-24 shrink-0 font-mono text-xs text-muted">
+                    {demand.reference}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium">{demand.title}</span>
+                </Link>
+                {demand.projectId ? (
+                  <span className="rounded-full bg-emerald-500/15 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+                    {t("detail.demandConverted")}
+                  </span>
+                ) : (
+                  <span className="rounded-full bg-amber-500/15 px-2 py-0.5 text-xs font-medium text-amber-600 dark:text-amber-400">
+                    {t("detail.demandPipeline")}
+                  </span>
+                )}
+                <span className="w-28 text-right text-sm font-medium tabular-nums">
+                  {demand.estimatedBudget ? formatEuro(Number(demand.estimatedBudget), locale) : "—"}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </Card>
+      )}
     </div>
   );
 }

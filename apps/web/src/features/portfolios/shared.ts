@@ -7,6 +7,14 @@ export interface PortfolioProject {
   budget: string | null;
 }
 
+export interface PortfolioDemand {
+  id: string;
+  reference: string;
+  title: string;
+  estimatedBudget: string | null;
+  projectId: string | null;
+}
+
 export interface PortfolioView {
   id: string;
   name: string;
@@ -16,8 +24,10 @@ export interface PortfolioView {
   budgetEnvelope: string | null;
   allocatedBudget: number;
   committedBudget: number;
+  pipelineBudget: number;
   projectCount: number;
   projects: PortfolioProject[];
+  demands: PortfolioDemand[];
   createdAt: string;
 }
 
@@ -27,6 +37,7 @@ export interface PortfolioFinanceView {
   name: string;
   budgetEnvelope: number | null;
   envelopeConsumedPct: number | null;
+  pipeline: number;
   projectCount: number;
   approvedBudget: number | null;
   planned: { capex: number; opex: number; total: number };
@@ -68,6 +79,7 @@ export interface PortfolioFinanceSummaryRow {
   remaining: number | null;
   envelopeConsumedPct: number | null;
   quotesApprovedHT: number;
+  pipeline: number;
 }
 
 /** Rôles autorisés à gérer les portefeuilles. */
