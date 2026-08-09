@@ -223,7 +223,7 @@ describe("Conversion demande → projet (intégration)", () => {
     // La pièce jointe est reprise par le projet (n'est plus rattachée à la demande)
     const documents = await prisma.document.findMany({ where: { projectId } });
     expect(documents).toHaveLength(1);
-    expect(documents[0].demandId).toBeNull();
+    expect(documents[0]?.demandId).toBeNull();
 
     // Le demandeur (chef) est membre du projet
     const members = await prisma.projectMember.findMany({ where: { projectId } });

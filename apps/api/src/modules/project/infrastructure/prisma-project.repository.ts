@@ -25,6 +25,7 @@ const PROJECT_INCLUDE = {
   manager: { select: USER_SELECT },
   category: true,
   members: { include: { user: { select: USER_SELECT } }, orderBy: { createdAt: "asc" } },
+  originDemand: { select: { id: true, reference: true } },
 } satisfies Prisma.ProjectInclude;
 
 @Injectable()
@@ -218,6 +219,23 @@ export class PrismaProjectRepository implements ProjectRepository {
       select: { id: true },
     });
     return found !== null;
+  }
+
+  async directCreationAllowed(organizationId: string): Promise<boolean> {
+    const org = await this.prisma.organization.findUniqueOrThrow({
+      where: { id: organizationId },
+      select: { allowDirectProjectCreation: true },
+    });
+    return org.allowDirectProjectCreation;
+  }
+
+  async setDirectCreationAllowed(organizationId: string, allowed: boolean): Promise<boolean> {
+    const org = await this.prisma.organization.update({
+      where: { id: organizationId },
+      data: { allowDirectProjectCreation: allowed },
+      select: { allowDirectProjectCreation: true },
+    });
+    return org.allowDirectProjectCreation;
   }
 
   // ── Catégories ───────────────────────────────────────────────────────

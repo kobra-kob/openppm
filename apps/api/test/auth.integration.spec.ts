@@ -39,6 +39,18 @@ describe("Auth (intégration)", () => {
     await prisma.demand.deleteMany();
 
     // Base propre (les rôles système seedés sont conservés).
+    await prisma.businessCaseRisk.deleteMany();
+    await prisma.businessCase.deleteMany();
+    await prisma.risk.deleteMany();
+    await prisma.document.deleteMany();
+    await prisma.approvalStep.deleteMany();
+    await prisma.budgetRequest.deleteMany();
+    await prisma.quoteLine.deleteMany();
+    await prisma.quote.deleteMany();
+    await prisma.costEntry.deleteMany();
+    await prisma.budgetLine.deleteMany();
+    await prisma.demandTag.deleteMany();
+    await prisma.demand.deleteMany();
     await prisma.timeEntry.deleteMany();
     await prisma.taskDependency.deleteMany();
     await prisma.checklistItem.deleteMany();

@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional, PartialType, PickType } from "@nestjs
 import { ProjectHealth, ProjectRole, ProjectStatus } from "@openppm/db";
 import { Transform } from "class-transformer";
 import {
+  IsBoolean,
   IsDateString,
   IsIn,
   IsInt,
@@ -15,6 +16,12 @@ import {
   MaxLength,
   Min,
 } from "class-validator";
+
+export class UpdateOrganizationSettingsDto {
+  @ApiProperty({ description: "Autoriser la création directe de projet (hors conversion)" })
+  @IsBoolean()
+  allowDirectProjectCreation!: boolean;
+}
 
 export class CreateProjectDto {
   @ApiProperty({ example: "Refonte CRM", minLength: 2, maxLength: 140 })

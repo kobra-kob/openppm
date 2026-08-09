@@ -53,6 +53,8 @@ export interface ProjectView {
     role: ProjectRole;
   }>;
   allowedTransitions: readonly ProjectStatus[];
+  /** Demande d'origine si le projet est issu d'une conversion (traçabilité). */
+  origin: { demandId: string; reference: string } | null;
   archivedAt: Date | null;
   deletedAt: Date | null;
   createdAt: Date;
@@ -107,6 +109,9 @@ export class ProjectsService {
         role: member.role,
       })),
       allowedTransitions: allowedTransitions(project.status),
+      origin: project.originDemand
+        ? { demandId: project.originDemand.id, reference: project.originDemand.reference }
+        : null,
       archivedAt: project.archivedAt,
       deletedAt: project.deletedAt,
       createdAt: project.createdAt,
@@ -154,6 +159,19 @@ export class ProjectsService {
     dto: CreateProjectDto,
     context: RequestContext,
   ): Promise<ProjectView> {
+    // Création directe : gouvernée par l'organisation. Désactivée, seul un
+    // administrateur peut créer un projet hors conversion d'une demande.
+    if (
+      !payload.roles.includes(RoleKey.admin) &&
+      !(await this.repository.directCreationAllowed(payload.org))
+    ) {
+      throw new ForbiddenException({
+        code: "DIRECT_PROJECT_CREATION_DISABLED",
+        message:
+          "La création directe de projet est désactivée : passez par une demande, ou contactez un administrateur",
+      });
+    }
+
     // Le template complète les champs absents du DTO (le DTO a priorité)
     // Le budget n'est pas appliqué ici : il découle du workflow de gouvernance.
     let defaults: {
@@ -438,6 +456,38 @@ export class ProjectsService {
   async activity(payload: JwtPayload, id: string): Promise<ProjectActivityEntry[]> {
     await this.requireProject(payload.org, id);
     return this.repository.listActivity(payload.org, id, 50);
+  }
+
+  /** Paramètres projet de l'organisation (lecture pour tout membre). */
+  async getSettings(payload: JwtPayload): Promise<{ allowDirectProjectCreation: boolean }> {
+    return {
+      allowDirectProjectCreation: await this.repository.directCreationAllowed(payload.org),
+    };
+  }
+
+  /** Active/désactive la création directe de projet (administration). */
+  async setDirectCreation(
+    payload: JwtPayload,
+    allowed: boolean,
+    context: RequestContext,
+  ): Promise<{ allowDirectProjectCreation: boolean }> {
+    if (!payload.roles.includes(RoleKey.admin)) {
+      throw new ForbiddenException({
+        code: "FORBIDDEN",
+        message: "Réservé aux administrateurs",
+      });
+    }
+    const value = await this.repository.setDirectCreationAllowed(payload.org, allowed);
+    await this.audit.log({
+      action: "organization.settings_updated",
+      entityType: "organization",
+      entityId: payload.org,
+      organizationId: payload.org,
+      userId: payload.sub,
+      after: { allowDirectProjectCreation: value },
+      ...context,
+    });
+    return { allowDirectProjectCreation: value };
   }
 
   // ── Aides privées ────────────────────────────────────────────────────
