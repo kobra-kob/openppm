@@ -28,6 +28,12 @@ describe("Consolidation financière du portefeuille (intégration)", () => {
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.businessCaseRisk.deleteMany();
+    await prisma.businessCase.deleteMany();
+    await prisma.risk.deleteMany();
+    await prisma.document.deleteMany();
+    await prisma.approvalStep.deleteMany();
+    await prisma.budgetRequest.deleteMany();
     await prisma.demandTag.deleteMany();
     await prisma.demand.deleteMany();
 
@@ -235,6 +241,27 @@ describe("Consolidation financière du portefeuille (intégration)", () => {
     expect(row.remaining).toBe(259000);
     expect(row.envelopeConsumedPct).toBe(8.2);
     expect(row.quotesApprovedHT).toBe(50000);
+  });
+
+  it("le pipeline agrège les budgets estimés des demandes non converties", async () => {
+    await request(server())
+      .post("/api/v1/demands")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ title: "Initiative pipeline", estimatedBudget: 25000, targetPortfolioId: portfolioId })
+      .expect(201);
+
+    const conso = await request(server())
+      .get(`/api/v1/portfolios/${portfolioId}/finance`)
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+    expect(conso.body.pipeline).toBe(25000);
+
+    const rows = await request(server())
+      .get("/api/v1/finance/portfolios")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+    const row = rows.body.find((r: { portfolioId: string }) => r.portfolioId === portfolioId);
+    expect(row.pipeline).toBe(25000);
   });
 
   it("refuse un portefeuille inexistant (404)", async () => {

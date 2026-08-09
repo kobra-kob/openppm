@@ -9,9 +9,20 @@ export interface PortfolioProjectSummary {
   budget: string | null;
 }
 
+/** Demande rattachée à un portefeuille (pipeline avant projet). */
+export interface PortfolioDemandSummary {
+  id: string;
+  reference: string;
+  title: string;
+  estimatedBudget: string | null;
+  /** Projet issu de la conversion, sinon null (demande encore au pipeline). */
+  projectId: string | null;
+}
+
 export type PortfolioWithProjects = Portfolio & {
   owner: { id: string; firstName: string; lastName: string } | null;
   projects: PortfolioProjectSummary[];
+  demands: PortfolioDemandSummary[];
 };
 
 export interface CreatePortfolioInput {

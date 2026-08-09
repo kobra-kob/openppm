@@ -231,6 +231,41 @@ export class PrismaFinanceRepository implements FinanceRepository {
     }));
   }
 
+  async portfolioPipeline(organizationId: string, portfolioId: string): Promise<number> {
+    const aggregate = await this.prisma.demand.aggregate({
+      where: {
+        organizationId,
+        targetPortfolioId: portfolioId,
+        deletedAt: null,
+        project: null, // demandes pas encore converties
+      },
+      _sum: { estimatedBudget: true },
+    });
+    return aggregate._sum.estimatedBudget ? Number(aggregate._sum.estimatedBudget) : 0;
+  }
+
+  async orgPortfolioPipelines(organizationId: string): Promise<Record<string, number>> {
+    const grouped = await this.prisma.demand.groupBy({
+      by: ["targetPortfolioId"],
+      where: {
+        organizationId,
+        targetPortfolioId: { not: null },
+        deletedAt: null,
+        project: null,
+      },
+      _sum: { estimatedBudget: true },
+    });
+    const pipelines: Record<string, number> = {};
+    for (const row of grouped) {
+      if (row.targetPortfolioId) {
+        pipelines[row.targetPortfolioId] = row._sum.estimatedBudget
+          ? Number(row._sum.estimatedBudget)
+          : 0;
+      }
+    }
+    return pipelines;
+  }
+
   /** Assemble les bundles finance de projets en requêtes batchées (dont devis). */
   private async buildProjectBundles(
     projects: Array<{

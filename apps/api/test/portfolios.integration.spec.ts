@@ -25,6 +25,12 @@ describe("Portefeuilles (intégration)", () => {
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.businessCaseRisk.deleteMany();
+    await prisma.businessCase.deleteMany();
+    await prisma.risk.deleteMany();
+    await prisma.document.deleteMany();
+    await prisma.approvalStep.deleteMany();
+    await prisma.budgetRequest.deleteMany();
     await prisma.demandTag.deleteMany();
     await prisma.demand.deleteMany();
 
@@ -192,6 +198,32 @@ describe("Portefeuilles (intégration)", () => {
         .expect(200);
       expect(detached.body.projectCount).toBe(0);
       expect(detached.body.allocatedBudget).toBe(0);
+    });
+  });
+
+  describe("pipeline (demandes rattachées)", () => {
+    it("expose les demandes non converties et leur budget estimé (pipeline)", async () => {
+      // Une demande avec budget, rattachée au portefeuille
+      await request(server())
+        .post("/api/v1/demands")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ title: "Nouveau CRM", estimatedBudget: 40000, targetPortfolioId: portfolioId })
+        .expect(201);
+      // Une demande sans budget, également rattachée
+      await request(server())
+        .post("/api/v1/demands")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ title: "Étude d'opportunité", targetPortfolioId: portfolioId })
+        .expect(201);
+
+      const portfolio = await request(server())
+        .get(`/api/v1/portfolios/${portfolioId}`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .expect(200);
+      expect(portfolio.body.demands).toHaveLength(2);
+      // Pipeline = somme des budgets estimés des demandes non converties
+      expect(portfolio.body.pipelineBudget).toBe(40000);
+      expect(portfolio.body.demands.every((d: { projectId: string | null }) => d.projectId === null)).toBe(true);
     });
   });
 

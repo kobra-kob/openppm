@@ -113,4 +113,13 @@ export interface FinanceRepository {
 
   /** Charge les données de finance de tous les portefeuilles de l'organisation. */
   loadOrgPortfolioBundles(organizationId: string): Promise<PortfolioFinanceBundle[]>;
+
+  /**
+   * Pipeline d'un portefeuille : somme des budgets estimés des demandes qui lui
+   * sont rattachées et pas encore converties en projet.
+   */
+  portfolioPipeline(organizationId: string, portfolioId: string): Promise<number>;
+
+  /** Pipeline par portefeuille pour toute l'organisation (portfolioId → montant). */
+  orgPortfolioPipelines(organizationId: string): Promise<Record<string, number>>;
 }

@@ -91,6 +91,8 @@ export interface PortfolioFinanceSummaryRow {
   remaining: number | null;
   envelopeConsumedPct: number | null;
   quotesApprovedHT: number;
+  /** Budgets estimés des demandes non converties rattachées au portefeuille. */
+  pipeline: number;
 }
 
 /** Consolidation financière d'un portefeuille (mêmes chiffres, agrégés). */
@@ -100,6 +102,8 @@ export interface PortfolioFinanceView extends FinanceSummary {
   budgetEnvelope: number | null;
   /** Coûts réels / enveloppe (%). */
   envelopeConsumedPct: number | null;
+  /** Budgets estimés des demandes non converties rattachées au portefeuille. */
+  pipeline: number;
   projectCount: number;
   projects: Array<{
     id: string;
@@ -132,7 +136,10 @@ export class FinanceService {
 
   /** Résumés financiers de tous les portefeuilles (pour la liste). */
   async getPortfolioSummaries(payload: JwtPayload): Promise<PortfolioFinanceSummaryRow[]> {
-    const bundles = await this.repository.loadOrgPortfolioBundles(payload.org);
+    const [bundles, pipelines] = await Promise.all([
+      this.repository.loadOrgPortfolioBundles(payload.org),
+      this.repository.orgPortfolioPipelines(payload.org),
+    ]);
     return bundles.map((bundle) => {
       const summary = aggregateSummaries(bundle.projects.map((p) => computeSummary(p)));
       const envelope =
@@ -146,6 +153,7 @@ export class FinanceService {
         envelopeConsumedPct:
           envelope && envelope > 0 ? round((summary.actual.total / envelope) * 100) : null,
         quotesApprovedHT: summary.quotes.approvedTotalHT,
+        pipeline: pipelines[bundle.portfolio.id] ?? 0,
       };
     });
   }
@@ -155,7 +163,10 @@ export class FinanceService {
     payload: JwtPayload,
     portfolioId: string,
   ): Promise<PortfolioFinanceView> {
-    const bundle = await this.repository.loadPortfolioBundle(payload.org, portfolioId);
+    const [bundle, pipeline] = await Promise.all([
+      this.repository.loadPortfolioBundle(payload.org, portfolioId),
+      this.repository.portfolioPipeline(payload.org, portfolioId),
+    ]);
     if (!bundle) {
       throw new NotFoundException({
         code: "PORTFOLIO_NOT_FOUND",
@@ -176,6 +187,7 @@ export class FinanceService {
       budgetEnvelope: envelope,
       envelopeConsumedPct:
         envelope && envelope > 0 ? round((summary.actual.total / envelope) * 100) : null,
+      pipeline,
       projectCount: bundle.projects.length,
       projects: perProject.map(({ bundle: project, summary: projectSummary }) => ({
         id: project.project.id,

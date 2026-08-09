@@ -46,6 +46,8 @@ export interface PortfolioView {
   allocatedBudget: number;
   /** Somme des budgets des projets engagés (actif/pause/terminé). */
   committedBudget: number;
+  /** Somme des budgets estimés des demandes non encore converties (pipeline). */
+  pipelineBudget: number;
   projectCount: number;
   projects: Array<{
     id: string;
@@ -54,6 +56,13 @@ export interface PortfolioView {
     status: ProjectStatus;
     health: string;
     budget: string | null;
+  }>;
+  demands: Array<{
+    id: string;
+    reference: string;
+    title: string;
+    estimatedBudget: string | null;
+    projectId: string | null;
   }>;
   createdAt: Date;
 }
@@ -77,6 +86,14 @@ export class PortfoliosService {
           : sum,
       0,
     );
+    // Pipeline : budgets estimés des demandes non encore converties en projet.
+    const pipeline = portfolio.demands.reduce(
+      (sum, demand) =>
+        demand.projectId === null && demand.estimatedBudget
+          ? sum + Number(demand.estimatedBudget)
+          : sum,
+      0,
+    );
     return {
       id: portfolio.id,
       name: portfolio.name,
@@ -91,8 +108,10 @@ export class PortfoliosService {
       budgetEnvelope: portfolio.budgetEnvelope?.toString() ?? null,
       allocatedBudget: allocated,
       committedBudget: committed,
+      pipelineBudget: round(pipeline),
       projectCount: portfolio.projects.length,
       projects: portfolio.projects,
+      demands: portfolio.demands,
       createdAt: portfolio.createdAt,
     };
   }
@@ -275,4 +294,9 @@ export class PortfoliosService {
       });
     }
   }
+}
+
+/** Arrondi monétaire à 2 décimales. */
+function round(value: number): number {
+  return Math.round((value + Number.EPSILON) * 100) / 100;
 }

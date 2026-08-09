@@ -3,6 +3,7 @@ import { Prisma, ProjectStatus } from "@openppm/db";
 import { PrismaService } from "../../../core/prisma/prisma.service";
 import {
   CreatePortfolioInput,
+  PortfolioDemandSummary,
   PortfolioProjectSummary,
   PortfolioRepository,
   PortfolioWithProjects,
@@ -22,12 +23,25 @@ const PROJECT_SELECT = {
   budget: true,
 } satisfies Prisma.ProjectSelect;
 
-/** Projets rattachés, hors corbeille, triés par priorité. */
-const PROJECTS_INCLUDE = {
+const DEMAND_SELECT = {
+  id: true,
+  reference: true,
+  title: true,
+  estimatedBudget: true,
+  project: { select: { id: true } },
+} satisfies Prisma.DemandSelect;
+
+/** Projets et demandes rattachés, hors corbeille. */
+const PORTFOLIO_INCLUDE = {
   projects: {
     where: { deletedAt: null },
     select: PROJECT_SELECT,
     orderBy: [{ priority: "asc" }, { name: "asc" }],
+  },
+  demands: {
+    where: { deletedAt: null },
+    select: DEMAND_SELECT,
+    orderBy: { createdAt: "desc" },
   },
 } satisfies Prisma.PortfolioInclude;
 
@@ -49,6 +63,33 @@ function mapProject(project: {
   };
 }
 
+function mapDemand(demand: {
+  id: string;
+  reference: string;
+  title: string;
+  estimatedBudget: Prisma.Decimal | null;
+  project: { id: string } | null;
+}): PortfolioDemandSummary {
+  return {
+    id: demand.id,
+    reference: demand.reference,
+    title: demand.title,
+    estimatedBudget: demand.estimatedBudget?.toString() ?? null,
+    projectId: demand.project?.id ?? null,
+  };
+}
+
+/** Reconstitue l'agrégat portefeuille (projets + demandes) à partir d'une ligne Prisma. */
+function mapPortfolio(row: {
+  projects: Parameters<typeof mapProject>[0][];
+  demands: Parameters<typeof mapDemand>[0][];
+}): { projects: PortfolioProjectSummary[]; demands: PortfolioDemandSummary[] } {
+  return {
+    projects: row.projects.map(mapProject),
+    demands: row.demands.map(mapDemand),
+  };
+}
+
 @Injectable()
 export class PrismaPortfolioRepository implements PortfolioRepository {
   constructor(private readonly prisma: PrismaService) {}
@@ -56,10 +97,10 @@ export class PrismaPortfolioRepository implements PortfolioRepository {
   async list(organizationId: string): Promise<PortfolioWithProjects[]> {
     const rows = await this.prisma.portfolio.findMany({
       where: { organizationId, deletedAt: null },
-      include: { ...OWNER_SELECT, ...PROJECTS_INCLUDE },
+      include: { ...OWNER_SELECT, ...PORTFOLIO_INCLUDE },
       orderBy: { createdAt: "desc" },
     });
-    return rows.map((row) => ({ ...row, projects: row.projects.map(mapProject) }));
+    return rows.map((row) => ({ ...row, ...mapPortfolio(row) }));
   }
 
   async findById(
@@ -68,9 +109,9 @@ export class PrismaPortfolioRepository implements PortfolioRepository {
   ): Promise<PortfolioWithProjects | null> {
     const row = await this.prisma.portfolio.findFirst({
       where: { id, organizationId, deletedAt: null },
-      include: { ...OWNER_SELECT, ...PROJECTS_INCLUDE },
+      include: { ...OWNER_SELECT, ...PORTFOLIO_INCLUDE },
     });
-    return row ? { ...row, projects: row.projects.map(mapProject) } : null;
+    return row ? { ...row, ...mapPortfolio(row) } : null;
   }
 
   async create(input: CreatePortfolioInput): Promise<PortfolioWithProjects> {
@@ -83,9 +124,9 @@ export class PrismaPortfolioRepository implements PortfolioRepository {
         budgetEnvelope: input.budgetEnvelope ?? null,
         createdById: input.createdById,
       },
-      include: { ...OWNER_SELECT, ...PROJECTS_INCLUDE },
+      include: { ...OWNER_SELECT, ...PORTFOLIO_INCLUDE },
     });
-    return { ...row, projects: row.projects.map(mapProject) };
+    return { ...row, ...mapPortfolio(row) };
   }
 
   async update(
@@ -95,9 +136,9 @@ export class PrismaPortfolioRepository implements PortfolioRepository {
     const row = await this.prisma.portfolio.update({
       where: { id },
       data: input,
-      include: { ...OWNER_SELECT, ...PROJECTS_INCLUDE },
+      include: { ...OWNER_SELECT, ...PORTFOLIO_INCLUDE },
     });
-    return { ...row, projects: row.projects.map(mapProject) };
+    return { ...row, ...mapPortfolio(row) };
   }
 
   async softDelete(id: string): Promise<void> {

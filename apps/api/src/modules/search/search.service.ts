@@ -21,6 +21,13 @@ export interface SearchResults {
     status: TaskStatus;
     project: { id: string; name: string; code: string };
   }>;
+  demands: Array<{
+    id: string;
+    reference: string;
+    title: string;
+    /** Projet issu de la conversion, si la demande a déjà été convertie. */
+    projectId: string | null;
+  }>;
 }
 
 const LIMIT_PER_TYPE = 8;
@@ -30,7 +37,7 @@ export class SearchService {
   constructor(private readonly prisma: PrismaService) {}
 
   async global(payload: JwtPayload, query: string): Promise<SearchResults> {
-    const [projects, tasks] = await Promise.all([
+    const [projects, tasks, demands] = await Promise.all([
       this.prisma.project.findMany({
         where: {
           organizationId: payload.org,
@@ -64,7 +71,35 @@ export class SearchService {
         orderBy: { updatedAt: "desc" },
         take: LIMIT_PER_TYPE,
       }),
+      this.prisma.demand.findMany({
+        where: {
+          organizationId: payload.org,
+          deletedAt: null,
+          OR: [
+            { title: { contains: query } },
+            { reference: { contains: query } },
+            { description: { contains: query } },
+          ],
+        },
+        select: {
+          id: true,
+          reference: true,
+          title: true,
+          project: { select: { id: true } },
+        },
+        orderBy: { updatedAt: "desc" },
+        take: LIMIT_PER_TYPE,
+      }),
     ]);
-    return { projects, tasks };
+    return {
+      projects,
+      tasks,
+      demands: demands.map((demand) => ({
+        id: demand.id,
+        reference: demand.reference,
+        title: demand.title,
+        projectId: demand.project?.id ?? null,
+      })),
+    };
   }
 }

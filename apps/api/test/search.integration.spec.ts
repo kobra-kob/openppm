@@ -22,6 +22,12 @@ describe("Recherche globale (intégration)", () => {
     await app.init();
     prisma = app.get(PrismaService);
 
+    await prisma.businessCaseRisk.deleteMany();
+    await prisma.businessCase.deleteMany();
+    await prisma.risk.deleteMany();
+    await prisma.document.deleteMany();
+    await prisma.approvalStep.deleteMany();
+    await prisma.budgetRequest.deleteMany();
     await prisma.demandTag.deleteMany();
     await prisma.demand.deleteMany();
 
@@ -82,6 +88,13 @@ describe("Recherche globale (intégration)", () => {
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ title: "Cartographier Frankenstein", description: "Inventaire des modules" })
       .expect(201);
+
+    // Demande indexée par la recherche globale (D5)
+    await request(server())
+      .post("/api/v1/demands")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ title: "Chantier Frankenstein v2" })
+      .expect(201);
   });
 
   afterAll(async () => {
@@ -97,6 +110,10 @@ describe("Recherche globale (intégration)", () => {
     expect(byName.body.projects[0].name).toBe("Migration Frankenstein");
     expect(byName.body.tasks).toHaveLength(1);
     expect(byName.body.tasks[0].project.code).toBeDefined();
+    // La recherche indexe aussi les demandes (référence DEMDxxxxx)
+    expect(byName.body.demands).toHaveLength(1);
+    expect(byName.body.demands[0].reference).toMatch(/^DEMD\d{5}$/);
+    expect(byName.body.demands[0].projectId).toBeNull();
 
     const byDescription = await request(server())
       .get("/api/v1/search?q=monolithe")
@@ -144,5 +161,6 @@ describe("Recherche globale (intégration)", () => {
       .expect(200);
     expect(response.body.projects).toHaveLength(0);
     expect(response.body.tasks).toHaveLength(0);
+    expect(response.body.demands).toHaveLength(0);
   });
 });
