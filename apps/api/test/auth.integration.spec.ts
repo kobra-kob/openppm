@@ -5,6 +5,7 @@ import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { configureApp } from "../src/app.setup";
 import { PrismaService } from "../src/core/prisma/prisma.service";
+import { resetDatabase } from "./reset-db";
 
 /**
  * Tests d'intégration : app Nest complète (mêmes pipes/guards que la prod)
@@ -34,6 +35,8 @@ describe("Auth (intégration)", () => {
     configureApp(app);
     await app.init();
     prisma = app.get(PrismaService);
+
+    await resetDatabase(prisma);
 
     await prisma.demandTag.deleteMany();
     await prisma.demand.deleteMany();

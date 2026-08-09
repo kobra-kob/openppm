@@ -5,6 +5,7 @@ import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { configureApp } from "../src/app.setup";
 import { PrismaService } from "../src/core/prisma/prisma.service";
+import { resetDatabase } from "./reset-db";
 import type { JwtPayload } from "../src/modules/auth/application/jwt-payload";
 import {
   WorkflowService,
@@ -66,6 +67,8 @@ describe("Moteur de workflow (intégration)", () => {
     configureApp(app);
     await app.init();
     prisma = app.get(PrismaService);
+
+    await resetDatabase(prisma);
 
     workflow = app.get(WorkflowService);
 

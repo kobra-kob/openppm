@@ -4,6 +4,7 @@ import request from "supertest";
 import { AppModule } from "../src/app.module";
 import { configureApp } from "../src/app.setup";
 import { PrismaService } from "../src/core/prisma/prisma.service";
+import { resetDatabase } from "./reset-db";
 
 /**
  * Demand Management, lot D7 : la création directe de projet est gouvernée par
@@ -48,47 +49,7 @@ describe("Paramètres organisation — création directe de projet (intégration
     await app.init();
     prisma = app.get(PrismaService);
 
-    await prisma.businessCaseRisk.deleteMany();
-    await prisma.businessCase.deleteMany();
-    await prisma.risk.deleteMany();
-    await prisma.document.deleteMany();
-    await prisma.approvalStep.deleteMany();
-    await prisma.budgetRequest.deleteMany();
-    await prisma.workflowTransitionLog.deleteMany();
-    await prisma.workflowInstance.deleteMany();
-    await prisma.workflowTransition.deleteMany();
-    await prisma.workflowState.deleteMany();
-    await prisma.workflowDefinition.deleteMany();
-    await prisma.demandTag.deleteMany();
-    await prisma.demand.deleteMany();
-    await prisma.quoteLine.deleteMany();
-    await prisma.quote.deleteMany();
-    await prisma.costEntry.deleteMany();
-    await prisma.budgetLine.deleteMany();
-    await prisma.comment.deleteMany();
-    await prisma.notification.deleteMany();
-    await prisma.timeEntry.deleteMany();
-    await prisma.taskDependency.deleteMany();
-    await prisma.checklistItem.deleteMany();
-    await prisma.taskAssignee.deleteMany();
-    await prisma.task.deleteMany();
-    await prisma.boardColumn.deleteMany();
-    await prisma.board.deleteMany();
-    await prisma.favorite.deleteMany();
-    await prisma.projectMember.deleteMany();
-    await prisma.project.deleteMany();
-    await prisma.portfolio.deleteMany();
-    await prisma.projectTemplate.deleteMany();
-    await prisma.projectCategory.deleteMany();
-    await prisma.refreshToken.deleteMany();
-    await prisma.passwordReset.deleteMany();
-    await prisma.auditLog.deleteMany();
-    await prisma.invitation.deleteMany();
-    await prisma.userRole.deleteMany();
-    await prisma.groupMember.deleteMany();
-    await prisma.group.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.organization.deleteMany();
+    await resetDatabase(prisma);
 
     const admin = await request(server()).post("/api/v1/auth/register").send({
       organizationName: "Gov Corp",
