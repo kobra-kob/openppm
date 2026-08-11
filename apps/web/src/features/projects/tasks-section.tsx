@@ -21,7 +21,8 @@ import { api, ApiError } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
 import type { ProjectMemberView } from "./shared";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+// Vide par défaut → appels relatifs (même origine, proxifiés vers l'API par Next).
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 type TaskStatus = "todo" | "in_progress" | "done" | "cancelled";
 

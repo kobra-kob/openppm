@@ -10,7 +10,8 @@ import { api, ApiError, refreshSession } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
 import { ORG_WIDE_ROLES, ProjectView } from "@/features/projects/shared";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+// Vide par défaut → appels relatifs (même origine, proxifiés vers l'API par Next).
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 const MAX_SIZE = 25 * 1024 * 1024;
 
 interface DocumentView {

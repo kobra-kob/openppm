@@ -1,0 +1,14 @@
+# Contexte de build Docker : on n'embarque jamais les dépendances installées, les
+# artefacts de build, ni les fichiers d'environnement LOCAUX (qui figeraient des
+# valeurs de dev — ex. NEXT_PUBLIC_API_URL=localhost — dans l'image).
+**/node_modules
+**/.next
+**/dist
+**/.turbo
+**/generated
+.git
+.github
+**/.env.local
+**/.env.*.local
+**/*.log
+**/coverage
