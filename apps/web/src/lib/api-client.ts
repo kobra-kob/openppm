@@ -1,6 +1,10 @@
 import { SessionPayload, useAuthStore } from "./auth-store";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000";
+// Par défaut vide → appels relatifs (même origine que le front), proxifiés vers
+// l'API par les rewrites Next (voir next.config.ts). Aucune dépendance à une URL
+// d'API absolue → fonctionne quel que soit l'hôte (localhost, 127.0.0.1, IP…).
+// Un NEXT_PUBLIC_API_URL explicite reste possible pour un déploiement séparé.
+const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
 
 /** Routes auth pour lesquelles un 401 est une réponse métier, pas une session expirée. */
 const NO_RETRY_PATHS = ["/auth/login", "/auth/register", "/auth/refresh", "/auth/logout"];

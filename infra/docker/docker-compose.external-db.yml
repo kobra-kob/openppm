@@ -28,9 +28,11 @@ services:
       context: ../..
       dockerfile: infra/docker/Dockerfile.web
       args:
-        NEXT_PUBLIC_API_URL: ${API_PUBLIC_URL:-http://localhost:4000}
+        # L'API est jointe en même origine via le proxy Next (nom de service compose).
+        API_PROXY_TARGET: http://api:4000
     restart: unless-stopped
     depends_on:
-      - api
+      api:
+        condition: service_healthy
     ports:
       - "${WEB_PORT:-3000}:3000"

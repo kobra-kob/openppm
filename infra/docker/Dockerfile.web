@@ -6,9 +6,10 @@ COPY pnpm-workspace.yaml package.json pnpm-lock.yaml turbo.json ./
 COPY packages ./packages
 COPY apps/web ./apps/web
 RUN pnpm install --frozen-lockfile --filter "@openppm/web..."
-# URL publique de l'API, figée au build (variable NEXT_PUBLIC_*)
-ARG NEXT_PUBLIC_API_URL=http://localhost:4000
-ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+# Le navigateur appelle l'API en même origine (/api/v1/*) ; Next proxifie vers
+# ce service côté serveur. Nom de service compose par défaut.
+ARG API_PROXY_TARGET=http://api:4000
+ENV API_PROXY_TARGET=$API_PROXY_TARGET
 RUN pnpm --filter @openppm/web build
 
 FROM node:22-alpine AS runtime
