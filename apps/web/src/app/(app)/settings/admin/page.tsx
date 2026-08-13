@@ -7,6 +7,7 @@ import { FormEvent, useState } from "react";
 import { Alert, Button, Card, Input, Label } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
+import { RolesAdmin } from "@/features/settings/roles-admin";
 
 interface Member {
   id: string;
@@ -38,6 +39,8 @@ const INVITABLE_ROLES = [
   "project_manager",
   "pmo",
   "finance",
+  "business_analyst",
+  "executive",
   "employee",
   "observer",
   "guest",
@@ -262,6 +265,9 @@ export default function AdminSettingsPage() {
           </ul>
         )}
       </Card>
+
+      {/* Rôles et permissions */}
+      <RolesAdmin />
 
       {/* Catégories de projets */}
       <Card>

@@ -686,10 +686,59 @@
     "manager": "Manager",
     "project_manager": "Project manager",
     "pmo": "PMO",
-    "finance": "Finance",
-    "employee": "Employee",
+    "finance": "Finance lead",
+    "employee": "Collaborator",
     "observer": "Observer",
-    "guest": "Guest"
+    "guest": "Guest",
+    "business_analyst": "Business analyst",
+    "executive": "Executive / Committee"
+  },
+  "rolesAdmin": {
+    "title": "Roles and permissions",
+    "new": "New role",
+    "system": "System",
+    "inactive": "Disabled",
+    "permCount": "{n} permission(s)",
+    "userCount": "{n} user(s)",
+    "name": "Role name",
+    "description": "Description",
+    "activeLabel": "Active",
+    "permissions": "Permissions",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "adminImmutable": "The Administrator role holds all permissions and cannot be edited."
+  },
+  "permissions": {
+    "subject": {
+      "demand": "Demands",
+      "business_case": "Business Case",
+      "budget": "Budget",
+      "project": "Projects",
+      "portfolio": "Portfolios",
+      "risk": "Risks",
+      "role": "Roles",
+      "member": "Members",
+      "workflow": "Workflows",
+      "organization": "Organization"
+    },
+    "action": {
+      "create": "Create",
+      "read": "Read",
+      "update": "Update",
+      "delete": "Delete",
+      "submit": "Submit",
+      "approve": "Approve",
+      "reject": "Reject",
+      "qualify": "Qualify",
+      "validate": "Validate",
+      "assign_manager": "Assign manager",
+      "create_via_workflow": "Create via workflow",
+      "plan": "Plan",
+      "execute": "Execute",
+      "close": "Close",
+      "manage": "Manage"
+    }
   },
   "dashboard": {
     "welcome": "Hello {name}",

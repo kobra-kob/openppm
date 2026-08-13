@@ -127,6 +127,9 @@ model Role {
   name           String   @db.VarChar(80)
   key            RoleKey? @unique
   isSystem       Boolean  @default(false) @map("is_system")
+  /// Rôle désactivé : conservé mais non attribuable / ignoré dans les droits.
+  active         Boolean  @default(true)
+  description    String?  @db.VarChar(255)
   createdAt      DateTime @default(now()) @map("created_at")
   updatedAt      DateTime @updatedAt @map("updated_at")
 

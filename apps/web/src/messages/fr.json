@@ -686,10 +686,59 @@
     "manager": "Manager",
     "project_manager": "Chef de projet",
     "pmo": "PMO",
-    "finance": "Finance",
-    "employee": "Employé",
+    "finance": "Responsable financier",
+    "employee": "Collaborateur",
     "observer": "Observateur",
-    "guest": "Invité"
+    "guest": "Invité",
+    "business_analyst": "Analyste métier",
+    "executive": "Direction / Comité"
+  },
+  "rolesAdmin": {
+    "title": "Rôles et permissions",
+    "new": "Nouveau rôle",
+    "system": "Système",
+    "inactive": "Désactivé",
+    "permCount": "{n} permission(s)",
+    "userCount": "{n} utilisateur(s)",
+    "name": "Nom du rôle",
+    "description": "Description",
+    "activeLabel": "Actif",
+    "permissions": "Permissions",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "adminImmutable": "Le rôle Administrateur détient toutes les permissions et n'est pas modifiable."
+  },
+  "permissions": {
+    "subject": {
+      "demand": "Demandes",
+      "business_case": "Business Case",
+      "budget": "Budget",
+      "project": "Projets",
+      "portfolio": "Portefeuilles",
+      "risk": "Risques",
+      "role": "Rôles",
+      "member": "Membres",
+      "workflow": "Workflows",
+      "organization": "Organisation"
+    },
+    "action": {
+      "create": "Créer",
+      "read": "Consulter",
+      "update": "Modifier",
+      "delete": "Supprimer",
+      "submit": "Soumettre",
+      "approve": "Approuver",
+      "reject": "Refuser",
+      "qualify": "Qualifier",
+      "validate": "Valider",
+      "assign_manager": "Affecter le chef",
+      "create_via_workflow": "Créer via workflow",
+      "plan": "Planifier",
+      "execute": "Exécuter",
+      "close": "Clôturer",
+      "manage": "Administrer"
+    }
   },
   "dashboard": {
     "welcome": "Bonjour {name}",
