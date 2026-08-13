@@ -26,6 +26,7 @@ import { RefreshDto } from "../application/dto/refresh.dto";
 import { RegisterDto } from "../application/dto/register.dto";
 import { ResetPasswordDto } from "../application/dto/reset-password.dto";
 import { MfaService, MfaSetup } from "../application/mfa.service";
+import { PermissionsService } from "../application/permissions.service";
 import type { JwtPayload } from "../application/jwt-payload";
 import type { RequestContext } from "../application/token.service";
 import { CurrentUser } from "../infrastructure/decorators/current-user.decorator";
@@ -53,6 +54,7 @@ export class AuthController {
     private readonly auth: AuthService,
     private readonly mfa: MfaService,
     private readonly config: ConfigService,
+    private readonly permissions: PermissionsService,
   ) {}
 
   @Public()
@@ -183,9 +185,15 @@ export class AuthController {
 
   @Get("me")
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Profil de l'utilisateur connecté" })
-  me(@CurrentUser() payload: JwtPayload): Promise<PublicUser> {
-    return this.auth.me(payload.sub);
+  @ApiOperation({ summary: "Profil de l'utilisateur connecté (rôles + permissions effectives)" })
+  async me(
+    @CurrentUser() payload: JwtPayload,
+  ): Promise<PublicUser & { permissions: string[] }> {
+    const [user, permissions] = await Promise.all([
+      this.auth.me(payload.sub),
+      this.permissions.getEffectivePermissions(payload.sub),
+    ]);
+    return { ...user, permissions: [...permissions].sort() };
   }
 
   @Post("change-password")

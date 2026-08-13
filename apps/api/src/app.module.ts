@@ -26,6 +26,7 @@ import { SearchModule } from "./modules/search/search.module";
 import { BoardModule } from "./modules/board/board.module";
 import { TaskModule } from "./modules/task/task.module";
 import { JwtAuthGuard } from "./modules/auth/infrastructure/guards/jwt-auth.guard";
+import { PermissionsGuard } from "./modules/auth/infrastructure/guards/permissions.guard";
 import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
 
 @Module({
@@ -92,6 +93,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
+    { provide: APP_GUARD, useClass: PermissionsGuard },
   ],
 })
 export class AppModule {}

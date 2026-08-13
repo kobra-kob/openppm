@@ -1,0 +1,54 @@
+/**
+ * Clé canonique d'une permission : `${SUBJECT}_${ACTION}` en MAJUSCULES.
+ * Miroir applicatif du catalogue seedé (packages/db/prisma/seed.ts).
+ * Le catalogue en base reste la source de vérité ; ces constantes évitent les
+ * fautes de frappe dans les décorateurs `@RequirePermissions(...)`.
+ */
+export const permKey = (subject: string, action: string): string =>
+  `${subject}_${action}`.toUpperCase();
+
+/** Constantes de permissions utilisées côté code (autocomplétion / typo-safe). */
+export const P = {
+  DEMAND_CREATE: "DEMAND_CREATE",
+  DEMAND_READ: "DEMAND_READ",
+  DEMAND_UPDATE: "DEMAND_UPDATE",
+  DEMAND_SUBMIT: "DEMAND_SUBMIT",
+  DEMAND_APPROVE: "DEMAND_APPROVE",
+  DEMAND_REJECT: "DEMAND_REJECT",
+  DEMAND_QUALIFY: "DEMAND_QUALIFY",
+
+  BUSINESS_CASE_READ: "BUSINESS_CASE_READ",
+  BUSINESS_CASE_CREATE: "BUSINESS_CASE_CREATE",
+  BUSINESS_CASE_UPDATE: "BUSINESS_CASE_UPDATE",
+  BUSINESS_CASE_VALIDATE: "BUSINESS_CASE_VALIDATE",
+
+  BUDGET_READ: "BUDGET_READ",
+  BUDGET_CREATE: "BUDGET_CREATE",
+  BUDGET_UPDATE: "BUDGET_UPDATE",
+  BUDGET_APPROVE: "BUDGET_APPROVE",
+
+  PROJECT_READ: "PROJECT_READ",
+  PROJECT_CREATE: "PROJECT_CREATE",
+  PROJECT_UPDATE: "PROJECT_UPDATE",
+  PROJECT_DELETE: "PROJECT_DELETE",
+  PROJECT_ASSIGN_MANAGER: "PROJECT_ASSIGN_MANAGER",
+  PROJECT_CREATE_VIA_WORKFLOW: "PROJECT_CREATE_VIA_WORKFLOW",
+  PROJECT_PLAN: "PROJECT_PLAN",
+  PROJECT_EXECUTE: "PROJECT_EXECUTE",
+  PROJECT_CLOSE: "PROJECT_CLOSE",
+
+  PORTFOLIO_READ: "PORTFOLIO_READ",
+  PORTFOLIO_UPDATE: "PORTFOLIO_UPDATE",
+
+  RISK_READ: "RISK_READ",
+  RISK_CREATE: "RISK_CREATE",
+  RISK_UPDATE: "RISK_UPDATE",
+  RISK_APPROVE: "RISK_APPROVE",
+
+  ROLE_MANAGE: "ROLE_MANAGE",
+  MEMBER_MANAGE: "MEMBER_MANAGE",
+  WORKFLOW_MANAGE: "WORKFLOW_MANAGE",
+  ORGANIZATION_MANAGE: "ORGANIZATION_MANAGE",
+} as const;
+
+export type PermissionKey = (typeof P)[keyof typeof P];
