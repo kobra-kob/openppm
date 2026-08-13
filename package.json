@@ -17,7 +17,12 @@
     "test:integration": "turbo run test:integration",
     "db:generate": "pnpm --filter @openppm/db generate",
     "db:migrate": "pnpm --filter @openppm/db migrate:dev",
-    "db:seed": "pnpm --filter @openppm/db seed"
+    "db:seed": "pnpm --filter @openppm/db seed",
+    "app:up": "docker compose up -d",
+    "app:down": "docker compose down",
+    "app:restart": "docker compose up -d --force-recreate",
+    "app:rebuild": "docker compose up -d --build",
+    "app:logs": "docker compose logs -f"
   },
   "devDependencies": {
     "turbo": "^2.5.0"

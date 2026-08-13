@@ -5,7 +5,7 @@ name: openppm
 services:
   mysql:
     image: mysql:8.4
-    restart: unless-stopped
+    restart: always
     environment:
       MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:?definir MYSQL_ROOT_PASSWORD dans .env}
       MYSQL_DATABASE: ${MYSQL_DATABASE:-openppm}
@@ -19,7 +19,7 @@ services:
 
   mailpit:
     image: axllent/mailpit:latest
-    restart: unless-stopped
+    restart: always
     ports:
       - "${MAILPIT_UI_PORT:-8025}:8025"
 
@@ -27,7 +27,7 @@ services:
     build:
       context: .
       dockerfile: infra/docker/Dockerfile.api
-    restart: unless-stopped
+    restart: always
     depends_on:
       mysql:
         condition: service_healthy
@@ -55,7 +55,7 @@ services:
       args:
         # L'API est jointe en même origine via le proxy Next (nom de service compose).
         API_PROXY_TARGET: http://api:4000
-    restart: unless-stopped
+    restart: always
     depends_on:
       api:
         condition: service_healthy
