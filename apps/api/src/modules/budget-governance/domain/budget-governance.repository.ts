@@ -5,6 +5,7 @@ import type {
   ProjectStatus,
   RoleKey,
 } from "@openppm/db";
+import type { BudgetApprovalTierSpec } from "./budget-approval-policy";
 
 export interface ProjectGovernanceContext {
   id: string;
@@ -38,6 +39,8 @@ export interface BudgetGovernanceRepository {
     organizationId: string,
     projectId: string,
   ): Promise<ProjectGovernanceContext | null>;
+  /** Paliers d'approbation budgétaire de l'organisation (ordonnés). Vide si non configurés. */
+  loadApprovalTiers(organizationId: string): Promise<BudgetApprovalTierSpec[]>;
   /** Dernière demande de budget d'un projet (toutes statuts). */
   findLatestRequest(projectId: string): Promise<BudgetRequestWithSteps | null>;
   hasPendingRequest(projectId: string): Promise<boolean>;

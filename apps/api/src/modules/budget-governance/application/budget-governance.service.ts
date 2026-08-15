@@ -17,6 +17,7 @@ import { AuditService } from "../../../core/audit/audit.service";
 import { NotificationsService } from "../../../core/notifications/notifications.service";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
+import { resolveApproverRoles } from "../domain/budget-approval-policy";
 import { BUDGET_GOVERNANCE_REPOSITORY } from "../domain/budget-governance.repository";
 import type {
   BudgetGovernanceRepository,
@@ -28,11 +29,6 @@ import type {
   DecideStepDto,
 } from "./dto/budget-governance.dtos";
 
-/** Circuit d'approbation figé : revue Finance, puis validation Direction. */
-const APPROVAL_CHAIN: Array<{ stepOrder: number; approverRole: RoleKey }> = [
-  { stepOrder: 0, approverRole: RoleKey.finance },
-  { stepOrder: 1, approverRole: RoleKey.admin },
-];
 const ORG_WIDE_ROLES: string[] = [RoleKey.admin, RoleKey.manager, RoleKey.pmo];
 
 export interface GovernanceView {
@@ -124,6 +120,15 @@ export class BudgetGovernanceService {
       });
     }
 
+    // La chaîne d'approbateurs dépend du montant (seuils configurables par org,
+    // sinon barème par défaut : <10k Manager, 10-100k Finance, ≥100k Finance+Direction).
+    const tiers = await this.repository.loadApprovalTiers(payload.org);
+    const approverRoles = resolveApproverRoles(amount, tiers);
+    const steps = approverRoles.map((approverRole, stepOrder) => ({
+      stepOrder,
+      approverRole,
+    }));
+
     const request = await this.repository.create({
       organizationId: payload.org,
       projectId,
@@ -132,7 +137,7 @@ export class BudgetGovernanceService {
       opexAmount: dto.opexAmount,
       justification: dto.justification,
       requestedById: payload.sub,
-      steps: APPROVAL_CHAIN,
+      steps,
     });
     await this.audit.log({
       action: "budget_request.created",
@@ -179,6 +184,14 @@ export class BudgetGovernanceService {
       throw new BadRequestException({
         code: "STEP_NOT_CURRENT",
         message: "Ce n'est pas l'étape en attente de décision",
+      });
+    }
+    // Séparation des responsabilités : nul ne valide son propre budget,
+    // pas même un administrateur.
+    if (request.requestedById === payload.sub) {
+      throw new ForbiddenException({
+        code: "SELF_APPROVAL_FORBIDDEN",
+        message: "Vous ne pouvez pas valider votre propre demande de budget",
       });
     }
     if (!this.canDecideStep(payload, step.approverRole)) {
@@ -302,6 +315,7 @@ export class BudgetGovernanceService {
         canDecide:
           request.status === BudgetRequestStatus.pending &&
           step.stepOrder === request.currentStep &&
+          request.requestedById !== payload.sub &&
           this.canDecideStep(payload, step.approverRole),
       })),
     };

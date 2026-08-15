@@ -40,6 +40,7 @@ model Organization {
   workflowDefinitions WorkflowDefinition[]
   demands           Demand[]
   risks             Risk[]
+  budgetApprovalTiers BudgetApprovalTier[]
 
   @@map("organizations")
 }
@@ -668,6 +669,28 @@ model ApprovalStep {
 
   @@index([budgetRequestId, stepOrder])
   @@map("approval_steps")
+}
+
+/// Palier de validation budgétaire configurable : un montant dans [minAmount,
+/// maxAmount[ impose la chaîne d'approbateurs `approverRoles` (ordonnée).
+/// En l'absence de paliers pour une org, une chaîne par défaut s'applique.
+model BudgetApprovalTier {
+  id             String   @id @default(uuid(7)) @db.Char(36)
+  organizationId String   @map("organization_id") @db.Char(36)
+  /// Borne basse incluse.
+  minAmount      Decimal  @map("min_amount") @db.Decimal(14, 2)
+  /// Borne haute exclue (null = pas de plafond).
+  maxAmount      Decimal? @map("max_amount") @db.Decimal(14, 2)
+  /// Rôles approbateurs ordonnés (JSON de RoleKey), ex. ["finance","executive"].
+  approverRoles  Json     @map("approver_roles")
+  position       Int      @default(0)
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, position])
+  @@map("budget_approval_tiers")
 }
 
 // ── Finances détaillées ────────────────────────────────────────────────

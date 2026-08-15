@@ -11,6 +11,7 @@ describe("Gouvernance budgétaire (intégration)", () => {
   let prisma: PrismaService;
   let adminToken: string; // Alice — Direction (admin)
   let financeToken: string; // Fred — Finance
+  let managerToken: string; // Mona — Manager
   let pmToken: string; // Paula — chef de projet
   let pmId: string;
   let portfolioId: string;
@@ -73,6 +74,8 @@ describe("Gouvernance budgétaire (intégration)", () => {
     const alice = await prisma.user.findUniqueOrThrow({ where: { email: "alice@gov.test" } });
     const fred = await createUser(org, "fred@gov.test", "Fred", "finance", alice.passwordHash);
     financeToken = fred.token;
+    const mona = await createUser(org, "mona@gov.test", "Mona", "manager", alice.passwordHash);
+    managerToken = mona.token;
     const paula = await createUser(org, "paula@gov.test", "Paula", "project_manager", alice.passwordHash);
     pmId = paula.id;
     pmToken = paula.token;
@@ -118,9 +121,10 @@ describe("Gouvernance budgétaire (intégration)", () => {
     expect(response.body.amount).toBe(100000);
     expect(response.body.status).toBe("pending");
     expect(response.body.currentStep).toBe(0);
+    // Montant ≥ 100 000 → chaîne Finance puis Direction (barème par défaut)
     expect(response.body.steps).toHaveLength(2);
     expect(response.body.steps[0].approverRole).toBe("finance");
-    expect(response.body.steps[1].approverRole).toBe("admin");
+    expect(response.body.steps[1].approverRole).toBe("executive");
   });
 
   it("refuse une seconde demande tant qu'une est en cours (409)", async () => {
@@ -237,5 +241,86 @@ describe("Gouvernance budgétaire (intégration)", () => {
       .set("Authorization", `Bearer ${adminToken}`)
       .expect(200);
     expect(gov.body.canRequest).toBe(true);
+  });
+
+  it("seuil < 10 000 : chaîne à une seule étape Manager, qui active le projet", async () => {
+    const project3 = await request(server())
+      .post("/api/v1/projects")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Petit budget" })
+      .expect(201);
+    await attachToPortfolio(project3.body.id);
+
+    // Demande de 5 000 créée par l'admin (rôle transverse)
+    const req = await request(server())
+      .post(`/api/v1/projects/${project3.body.id}/budget/requests`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ capexAmount: 3000, opexAmount: 2000 })
+      .expect(201);
+    expect(req.body.steps).toHaveLength(1);
+    expect(req.body.steps[0].approverRole).toBe("manager");
+
+    // Ni Finance ni chef de projet ne peuvent valider une étape Manager
+    await request(server())
+      .post(
+        `/api/v1/projects/${project3.body.id}/budget/requests/${req.body.id}/steps/${req.body.steps[0].id}/decide`,
+      )
+      .set("Authorization", `Bearer ${financeToken}`)
+      .send({ approve: true })
+      .expect(403);
+
+    // Mona (Manager) approuve → budget fixé, projet actif
+    const approved = await request(server())
+      .post(
+        `/api/v1/projects/${project3.body.id}/budget/requests/${req.body.id}/steps/${req.body.steps[0].id}/decide`,
+      )
+      .set("Authorization", `Bearer ${managerToken}`)
+      .send({ approve: true })
+      .expect(201);
+    expect(approved.body.status).toBe("approved");
+
+    const active = await request(server())
+      .get(`/api/v1/projects/${project3.body.id}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .expect(200);
+    expect(active.body.status).toBe("active");
+    expect(Number(active.body.budget)).toBe(5000);
+  });
+
+  it("séparation des responsabilités : nul ne valide sa propre demande, même admin", async () => {
+    const project4 = await request(server())
+      .post("/api/v1/projects")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Conflit d'intérêt" })
+      .expect(201);
+    await attachToPortfolio(project4.body.id);
+
+    // Alice (admin) demande un budget…
+    const req = await request(server())
+      .post(`/api/v1/projects/${project4.body.id}/budget/requests`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ capexAmount: 4000, opexAmount: 0 })
+      .expect(201);
+    // …le champ canDecide est faux pour elle sur sa propre étape
+    expect(req.body.steps[0].canDecide).toBe(false);
+
+    // …et l'API refuse qu'elle la valide (bypass admin exclu)
+    const forbidden = await request(server())
+      .post(
+        `/api/v1/projects/${project4.body.id}/budget/requests/${req.body.id}/steps/${req.body.steps[0].id}/decide`,
+      )
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ approve: true })
+      .expect(403);
+    expect(forbidden.body.code).toBe("SELF_APPROVAL_FORBIDDEN");
+
+    // Un Manager tiers peut, lui, valider
+    await request(server())
+      .post(
+        `/api/v1/projects/${project4.body.id}/budget/requests/${req.body.id}/steps/${req.body.steps[0].id}/decide`,
+      )
+      .set("Authorization", `Bearer ${managerToken}`)
+      .send({ approve: true })
+      .expect(201);
   });
 });

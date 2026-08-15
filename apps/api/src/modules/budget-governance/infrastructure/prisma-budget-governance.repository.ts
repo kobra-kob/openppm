@@ -4,14 +4,18 @@ import {
   BudgetRequestStatus,
   Prisma,
   ProjectStatus,
+  RoleKey,
 } from "@openppm/db";
 import { PrismaService } from "../../../core/prisma/prisma.service";
+import type { BudgetApprovalTierSpec } from "../domain/budget-approval-policy";
 import {
   BudgetGovernanceRepository,
   BudgetRequestWithSteps,
   CreateBudgetRequestInput,
   ProjectGovernanceContext,
 } from "../domain/budget-governance.repository";
+
+const KNOWN_ROLE_KEYS = new Set<string>(Object.values(RoleKey));
 
 const REQUEST_INCLUDE = {
   requestedBy: { select: { firstName: true, lastName: true } },
@@ -42,6 +46,21 @@ export class PrismaBudgetGovernanceRepository
         members: { select: { userId: true, role: true } },
       },
     });
+  }
+
+  async loadApprovalTiers(organizationId: string): Promise<BudgetApprovalTierSpec[]> {
+    const tiers = await this.prisma.budgetApprovalTier.findMany({
+      where: { organizationId },
+      orderBy: { position: "asc" },
+    });
+    return tiers.map((tier) => ({
+      minAmount: Number(tier.minAmount),
+      maxAmount: tier.maxAmount === null ? null : Number(tier.maxAmount),
+      // Ne conserve que des RoleKey connus (résilience aux données legacy).
+      approverRoles: (Array.isArray(tier.approverRoles) ? tier.approverRoles : [])
+        .filter((r): r is string => typeof r === "string" && KNOWN_ROLE_KEYS.has(r))
+        .map((r) => r as RoleKey),
+    }));
   }
 
   findLatestRequest(projectId: string): Promise<BudgetRequestWithSteps | null> {
