@@ -4,6 +4,8 @@ import type { Request } from "express";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
 import { CurrentUser } from "../../auth/infrastructure/decorators/current-user.decorator";
+import { P } from "../../auth/domain/permissions";
+import { RequirePermissions } from "../../auth/infrastructure/decorators/require-permissions.decorator";
 import {
   BusinessCasesService,
   BusinessCaseView,
@@ -26,6 +28,7 @@ export class BusinessCasesController {
   }
 
   @Put()
+  @RequirePermissions(P.BUSINESS_CASE_UPDATE)
   @ApiOperation({ summary: "Créer ou mettre à jour le Business Case (PMO / Business Analyst)" })
   upsert(
     @CurrentUser() user: JwtPayload,

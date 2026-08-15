@@ -16,6 +16,8 @@ import type { Request } from "express";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
 import { CurrentUser } from "../../auth/infrastructure/decorators/current-user.decorator";
+import { P } from "../../auth/domain/permissions";
+import { RequirePermissions } from "../../auth/infrastructure/decorators/require-permissions.decorator";
 import {
   DemandDetailView,
   DemandListView,
@@ -44,6 +46,7 @@ export class DemandsController {
   }
 
   @Post()
+  @RequirePermissions(P.DEMAND_CREATE)
   @ApiOperation({ summary: "Créer une demande (numéro DEMDxxxxx attribué automatiquement)" })
   create(
     @CurrentUser() user: JwtPayload,
