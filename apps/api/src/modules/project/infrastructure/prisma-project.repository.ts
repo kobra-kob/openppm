@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Prisma, ProjectCategory, ProjectRole, ProjectStatus } from "@openppm/db";
+import { Prisma, ProjectCategory, ProjectRole, ProjectStatus, RoleKey } from "@openppm/db";
 import { PrismaService } from "../../../core/prisma/prisma.service";
 import { PROJECT_CODE_PREFIX } from "../domain/project-code";
 import {
@@ -216,6 +216,23 @@ export class PrismaProjectRepository implements ProjectRepository {
   async userInOrganization(organizationId: string, userId: string): Promise<boolean> {
     const found = await this.prisma.user.findFirst({
       where: { id: userId, organizationId, deletedAt: null, isActive: true },
+      select: { id: true },
+    });
+    return found !== null;
+  }
+
+  async userHasRoleKey(
+    organizationId: string,
+    userId: string,
+    roleKey: RoleKey,
+  ): Promise<boolean> {
+    const found = await this.prisma.user.findFirst({
+      where: {
+        id: userId,
+        organizationId,
+        deletedAt: null,
+        userRoles: { some: { role: { key: roleKey } } },
+      },
       select: { id: true },
     });
     return found !== null;

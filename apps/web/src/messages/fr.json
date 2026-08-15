@@ -20,6 +20,7 @@
     "INVALID_DATE_RANGE": "La date de fin doit être postérieure à la date de début.",
     "INVALID_STATUS_TRANSITION": "Cette transition d'état n'est pas autorisée.",
     "MANAGER_NOT_IN_ORG": "Le chef de projet doit appartenir à l'organisation.",
+    "MANAGER_MISSING_ROLE": "L'utilisateur choisi doit posséder le rôle « Chef de projet ».",
     "USER_NOT_IN_ORG": "L'utilisateur doit appartenir à l'organisation.",
     "MEMBER_ALREADY_EXISTS": "Cette personne est déjà membre du projet.",
     "PROJECT_NOT_FOUND": "Projet introuvable.",

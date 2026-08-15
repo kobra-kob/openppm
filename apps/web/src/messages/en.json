@@ -20,6 +20,7 @@
     "INVALID_DATE_RANGE": "End date must be after start date.",
     "INVALID_STATUS_TRANSITION": "This status transition is not allowed.",
     "MANAGER_NOT_IN_ORG": "The project manager must belong to the organization.",
+    "MANAGER_MISSING_ROLE": "The selected user must have the \"Project manager\" role.",
     "USER_NOT_IN_ORG": "The user must belong to the organization.",
     "MEMBER_ALREADY_EXISTS": "This person is already a project member.",
     "PROJECT_NOT_FOUND": "Project not found.",

@@ -44,6 +44,7 @@ interface OrgMember {
   id: string;
   firstName: string;
   lastName: string;
+  roles: string[];
 }
 
 const HEALTH_PILL: Record<ProjectHealth, string> = {
@@ -345,11 +346,14 @@ export default function WorkspacePage() {
                   className="w-full rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm focus:border-accent focus:outline-none"
                 >
                   <option value="">{tProjects("form.noManager")}</option>
-                  {(orgMembers ?? []).map((member) => (
-                    <option key={member.id} value={member.id}>
-                      {member.firstName} {member.lastName}
-                    </option>
-                  ))}
+                  {/* Seuls les membres possédant le rôle « Chef de projet » sont éligibles */}
+                  {(orgMembers ?? [])
+                    .filter((member) => member.roles.includes("project_manager"))
+                    .map((member) => (
+                      <option key={member.id} value={member.id}>
+                        {member.firstName} {member.lastName}
+                      </option>
+                    ))}
                 </select>
               </div>
               <div>

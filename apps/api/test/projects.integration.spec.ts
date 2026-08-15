@@ -12,6 +12,7 @@ describe("Projects (intégration)", () => {
   let adminToken: string; // admin org Alpha
   let employeeToken: string; // employé org Alpha
   let employeeId: string;
+  let pmId: string;
   let otherOrgToken: string; // admin org Beta
 
   const server = () => app.getHttpServer();
@@ -70,6 +71,20 @@ describe("Projects (intégration)", () => {
       .send({ email: "emma@projets.test", password: "SuperSecret123" })
       .expect(200);
     employeeToken = login.body.accessToken;
+
+    // Un chef de projet éligible (rôle project_manager) pour l'affectation
+    const pmRole = await prisma.role.findUniqueOrThrow({ where: { key: "project_manager" } });
+    const pm = await prisma.user.create({
+      data: {
+        organizationId: org.id,
+        email: "paul@projets.test",
+        passwordHash: employee.passwordHash,
+        firstName: "Paul",
+        lastName: "ChefDeProjet",
+        userRoles: { create: { roleId: pmRole.id } },
+      },
+    });
+    pmId = pm.id;
   });
 
   afterAll(async () => {
@@ -120,15 +135,15 @@ describe("Projects (intégration)", () => {
     });
 
     it("définit le chef de projet à la création, puis le change et le retire", async () => {
-      // À la création : le chef de projet rejoint l'équipe comme manager
+      // À la création : le chef de projet (rôle project_manager) rejoint l'équipe
       const created = await request(server())
         .post("/api/v1/projects")
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ name: "Projet avec chef", managerId: employeeId })
+        .send({ name: "Projet avec chef", managerId: pmId })
         .expect(201);
-      expect(created.body.manager.id).toBe(employeeId);
+      expect(created.body.manager.id).toBe(pmId);
       expect(
-        created.body.members.find((m: { userId: string }) => m.userId === employeeId).role,
+        created.body.members.find((m: { userId: string }) => m.userId === pmId).role,
       ).toBe("manager");
 
       // Modification depuis la fiche : on retire le chef de projet
@@ -143,16 +158,23 @@ describe("Projects (intégration)", () => {
       const restored = await request(server())
         .patch(`/api/v1/projects/${created.body.id}`)
         .set("Authorization", `Bearer ${adminToken}`)
-        .send({ managerId: employeeId })
+        .send({ managerId: pmId })
         .expect(200);
-      expect(restored.body.manager.id).toBe(employeeId);
+      expect(restored.body.manager.id).toBe(pmId);
 
-      // Nettoyage : ce projet rend l'employé membre, ce qui fausserait les
-      // tests de périmètre (scope=mine) qui le supposent sans projet.
       await request(server())
         .delete(`/api/v1/projects/${created.body.id}`)
         .set("Authorization", `Bearer ${adminToken}`)
         .expect(204);
+    });
+
+    it("refuse un chef de projet sans le rôle « Chef de projet » (400)", async () => {
+      const response = await request(server())
+        .post("/api/v1/projects")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ name: "Chef sans rôle", managerId: employeeId })
+        .expect(400);
+      expect(response.body.code).toBe("MANAGER_MISSING_ROLE");
     });
 
     it("refuse un chef de projet hors de l'organisation (400)", async () => {

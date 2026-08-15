@@ -7,6 +7,7 @@ import type {
   ProjectRole,
   ProjectStatus,
   ProjectTemplate,
+  RoleKey,
 } from "@openppm/db";
 
 export interface MemberUser {
@@ -124,6 +125,8 @@ export interface ProjectRepository {
   updateMemberRole(projectId: string, userId: string, role: ProjectRole): Promise<void>;
   removeMember(projectId: string, userId: string): Promise<void>;
   userInOrganization(organizationId: string, userId: string): Promise<boolean>;
+  /** Vrai si l'utilisateur (dans l'org) possède le rôle système donné. */
+  userHasRoleKey(organizationId: string, userId: string, roleKey: RoleKey): Promise<boolean>;
   /** L'organisation autorise-t-elle la création directe d'un projet (hors conversion) ? */
   directCreationAllowed(organizationId: string): Promise<boolean>;
   /** Bascule le drapeau de création directe (réservé à l'administration). */

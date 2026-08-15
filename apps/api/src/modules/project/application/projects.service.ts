@@ -204,11 +204,8 @@ export class ProjectsService {
     }
     const { startDate, endDate } = this.parseDates(dto.startDate, computedEndDate);
 
-    if (dto.managerId && !(await this.repository.userInOrganization(payload.org, dto.managerId))) {
-      throw new BadRequestException({
-        code: "MANAGER_NOT_IN_ORG",
-        message: "Le chef de projet doit appartenir à l'organisation",
-      });
+    if (dto.managerId) {
+      await this.assertManagerEligible(payload.org, dto.managerId);
     }
     const categoryId = dto.categoryId ?? defaults.categoryId;
     if (categoryId && !(await this.repository.findCategory(payload.org, categoryId))) {
@@ -277,11 +274,8 @@ export class ProjectsService {
       if (dto.endDate !== undefined) input.endDate = endDate ?? null;
     }
     if (dto.managerId !== undefined) {
-      if (dto.managerId && !(await this.repository.userInOrganization(payload.org, dto.managerId))) {
-        throw new BadRequestException({
-          code: "MANAGER_NOT_IN_ORG",
-          message: "Le chef de projet doit appartenir à l'organisation",
-        });
+      if (dto.managerId) {
+        await this.assertManagerEligible(payload.org, dto.managerId);
       }
       input.managerId = dto.managerId || null;
     }
@@ -538,6 +532,26 @@ export class ProjectsService {
       throw new NotFoundException({
         code: "MEMBER_NOT_FOUND",
         message: "Cet utilisateur n'est pas membre du projet",
+      });
+    }
+  }
+
+  /**
+   * Un chef de projet doit appartenir à l'org ET posséder le rôle « Chef de
+   * projet » (project_manager). Un utilisateur sans ce rôle ne peut pas être
+   * affecté (§ affectation du chef de projet).
+   */
+  private async assertManagerEligible(organizationId: string, managerId: string): Promise<void> {
+    if (!(await this.repository.userInOrganization(organizationId, managerId))) {
+      throw new BadRequestException({
+        code: "MANAGER_NOT_IN_ORG",
+        message: "Le chef de projet doit appartenir à l'organisation",
+      });
+    }
+    if (!(await this.repository.userHasRoleKey(organizationId, managerId, RoleKey.project_manager))) {
+      throw new BadRequestException({
+        code: "MANAGER_MISSING_ROLE",
+        message: "Le chef de projet doit posséder le rôle « Chef de projet »",
       });
     }
   }
