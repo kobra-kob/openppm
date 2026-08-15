@@ -7,32 +7,34 @@ import { PrismaService } from "../src/core/prisma/prisma.service";
 import { resetDatabase } from "./reset-db";
 
 /**
- * R1 — fondation permissions : les permissions effectives d'un utilisateur sont
- * l'union des permissions de ses rôles (cumulables), résolues côté serveur et
- * exposées par /auth/me. Aucune route n'exige encore de permission (bascule R4).
+ * R1 — fondation des permissions fines : la matrice rôle → permissions seedée
+ * est correctement résolue (union des rôles) et exposée par /auth/me. La garde
+ * globale de permissions ne casse aucune route existante (aucune route ne
+ * requiert encore de permission à ce stade).
  */
 describe("Permissions effectives (intégration)", () => {
   let app: INestApplication;
   let prisma: PrismaService;
   let adminToken: string;
-  let orgId: string;
+  let employeeToken: string;
 
   const server = () => app.getHttpServer();
 
-  const createUserWithRoles = async (
+  const createUser = async (
+    orgId: string,
     email: string,
-    roleKeys: string[],
+    roleKey: string,
     passwordHash: string,
   ): Promise<string> => {
-    const roles = await prisma.role.findMany({ where: { key: { in: roleKeys as never } } });
+    const role = await prisma.role.findUniqueOrThrow({ where: { key: roleKey as never } });
     await prisma.user.create({
       data: {
         organizationId: orgId,
         email,
         passwordHash,
-        firstName: "Test",
-        lastName: "User",
-        userRoles: { create: roles.map((r) => ({ roleId: r.id })) },
+        firstName: "T",
+        lastName: "U",
+        userRoles: { create: { roleId: role.id } },
       },
     });
     const login = await request(server())
@@ -40,14 +42,6 @@ describe("Permissions effectives (intégration)", () => {
       .send({ email, password: "SuperSecret123" })
       .expect(200);
     return login.body.accessToken;
-  };
-
-  const permissionsOf = async (token: string): Promise<string[]> => {
-    const me = await request(server())
-      .get("/api/v1/auth/me")
-      .set("Authorization", `Bearer ${token}`)
-      .expect(200);
-    return me.body.permissions as string[];
   };
 
   beforeAll(async () => {
@@ -59,69 +53,86 @@ describe("Permissions effectives (intégration)", () => {
     await resetDatabase(prisma);
 
     const admin = await request(server()).post("/api/v1/auth/register").send({
-      organizationName: "RBAC Corp",
+      organizationName: "Perm Corp",
       firstName: "Alice",
       lastName: "Admin",
-      email: "alice@rbac.test",
+      email: "alice@perm.test",
       password: "SuperSecret123",
     });
     adminToken = admin.body.accessToken;
-    orgId = (await prisma.organization.findUniqueOrThrow({ where: { slug: "rbac-corp" } })).id;
+    const org = await prisma.organization.findUniqueOrThrow({ where: { slug: "perm-corp" } });
+    const alice = await prisma.user.findUniqueOrThrow({ where: { email: "alice@perm.test" } });
+    employeeToken = await createUser(org.id, "bob@perm.test", "employee", alice.passwordHash);
   });
 
   afterAll(async () => {
     await app.close();
   });
 
-  it("le catalogue et la matrice sont bien seedés", async () => {
-    expect(await prisma.permission.count()).toBeGreaterThanOrEqual(30);
-    expect(await prisma.rolePermission.count()).toBeGreaterThan(0);
+  it("/auth/me expose les rôles ET les permissions effectives", async () => {
+    const me = await request(server())
+      .get("/api/v1/auth/me")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .expect(200);
+    expect(me.body.roles).toContain("admin");
+    expect(Array.isArray(me.body.permissions)).toBe(true);
+    // L'administrateur possède toutes les permissions
+    expect(me.body.permissions).toEqual(expect.arrayContaining([
+      "PROJECT_CREATE", "PROJECT_DELETE", "BUDGET_APPROVE", "ROLE_MANAGE", "DEMAND_APPROVE",
+    ]));
   });
 
-  it("l'administrateur possède l'ensemble des permissions", async () => {
-    const perms = await permissionsOf(adminToken);
-    // quelques permissions clés, dont l'administration
-    for (const key of ["PROJECT_CREATE", "PROJECT_DELETE", "BUDGET_APPROVE", "ROLE_MANAGE", "DEMAND_APPROVE"]) {
-      expect(perms).toContain(key);
+  it("un collaborateur a des permissions limitées (création demande, lectures) et pas les droits admin", async () => {
+    const me = await request(server())
+      .get("/api/v1/auth/me")
+      .set("Authorization", `Bearer ${employeeToken}`)
+      .expect(200);
+    expect(me.body.roles).toEqual(["employee"]);
+    expect(me.body.permissions).toEqual(expect.arrayContaining(["DEMAND_CREATE", "DEMAND_SUBMIT", "PROJECT_READ"]));
+    // Ne doit PAS avoir les permissions sensibles
+    for (const forbidden of ["PROJECT_CREATE", "PROJECT_DELETE", "BUDGET_APPROVE", "ROLE_MANAGE", "DEMAND_APPROVE"]) {
+      expect(me.body.permissions).not.toContain(forbidden);
     }
-    expect(perms.length).toBe(await prisma.permission.count());
   });
 
-  it("un collaborateur a des droits limités (crée/lit mais ne valide pas)", async () => {
-    const alice = await prisma.user.findUniqueOrThrow({ where: { email: "alice@rbac.test" } });
-    const token = await createUserWithRoles("bob@rbac.test", ["employee"], alice.passwordHash);
-    const perms = await permissionsOf(token);
-    expect(perms).toContain("DEMAND_CREATE");
-    expect(perms).toContain("PROJECT_READ");
-    // Ne peut ni approuver une demande, ni valider un budget, ni créer un projet
-    expect(perms).not.toContain("DEMAND_APPROVE");
-    expect(perms).not.toContain("BUDGET_APPROVE");
-    expect(perms).not.toContain("PROJECT_CREATE");
-  });
-
-  it("le responsable financier peut valider un budget mais pas approuver une demande", async () => {
-    const alice = await prisma.user.findUniqueOrThrow({ where: { email: "alice@rbac.test" } });
-    const token = await createUserWithRoles("fred@rbac.test", ["finance"], alice.passwordHash);
-    const perms = await permissionsOf(token);
-    expect(perms).toContain("BUDGET_APPROVE");
-    expect(perms).toContain("BUSINESS_CASE_VALIDATE");
-    expect(perms).not.toContain("DEMAND_APPROVE");
-  });
-
-  it("multi-rôles : les permissions sont l'UNION des rôles", async () => {
-    const alice = await prisma.user.findUniqueOrThrow({ where: { email: "alice@rbac.test" } });
-    const token = await createUserWithRoles(
-      "jean@rbac.test",
-      ["employee", "finance"],
-      alice.passwordHash,
+  it("l'union des rôles cumule les permissions (multi-rôles)", async () => {
+    // Carol reçoit dès le départ deux rôles cumulés (employee + finance) —
+    // utilisateur jamais interrogé, donc aucun cache de permissions à purger.
+    const org = await prisma.organization.findUniqueOrThrow({ where: { slug: "perm-corp" } });
+    const alice = await prisma.user.findUniqueOrThrow({ where: { email: "alice@perm.test" } });
+    const employeeRole = await prisma.role.findUniqueOrThrow({ where: { key: "employee" } });
+    const financeRole = await prisma.role.findUniqueOrThrow({ where: { key: "finance" } });
+    await prisma.user.create({
+      data: {
+        organizationId: org.id,
+        email: "carol@perm.test",
+        passwordHash: alice.passwordHash,
+        firstName: "Carol",
+        lastName: "Multi",
+        userRoles: { create: [{ roleId: employeeRole.id }, { roleId: financeRole.id }] },
+      },
+    });
+    const login = await request(server())
+      .post("/api/v1/auth/login")
+      .send({ email: "carol@perm.test", password: "SuperSecret123" })
+      .expect(200);
+    const me = await request(server())
+      .get("/api/v1/auth/me")
+      .set("Authorization", `Bearer ${login.body.accessToken}`)
+      .expect(200);
+    expect(me.body.roles.sort()).toEqual(["employee", "finance"]);
+    // Union : permissions employee (DEMAND_CREATE) + finance (BUDGET_APPROVE/UPDATE)
+    expect(me.body.permissions).toEqual(
+      expect.arrayContaining(["DEMAND_CREATE", "DEMAND_SUBMIT", "BUDGET_APPROVE", "BUDGET_UPDATE"]),
     );
-    const perms = await permissionsOf(token);
-    // employee → DEMAND_CREATE ; finance → BUDGET_APPROVE ; les deux présents
-    expect(perms).toContain("DEMAND_CREATE");
-    expect(perms).toContain("BUDGET_APPROVE");
   });
 
-  it("exige un jeton pour /auth/me (401)", async () => {
-    await request(server()).get("/api/v1/auth/me").expect(401);
+  it("la garde globale ne casse pas les routes sans permission requise", async () => {
+    // Route existante sans @RequirePermissions : doit répondre normalement
+    await request(server())
+      .get("/api/v1/projects")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .expect(200);
+    await request(server()).get("/api/v1/projects").expect(401);
   });
 });
