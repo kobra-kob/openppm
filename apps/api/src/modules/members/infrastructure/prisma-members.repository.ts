@@ -28,6 +28,7 @@ export class PrismaMembersRepository implements MembersRepository {
       roles: user.userRoles
         .map((userRole) => userRole.role.key)
         .filter((key): key is RoleKey => key !== null),
+      roleIds: user.userRoles.map((userRole) => userRole.roleId),
     }));
   }
 
@@ -89,5 +90,50 @@ export class PrismaMembersRepository implements MembersRepository {
 
   async deleteInvitation(id: string): Promise<void> {
     await this.prisma.invitation.delete({ where: { id } });
+  }
+
+  async userInOrganization(organizationId: string, userId: string): Promise<boolean> {
+    const found = await this.prisma.user.findFirst({
+      where: { id: userId, organizationId, deletedAt: null },
+      select: { id: true },
+    });
+    return found !== null;
+  }
+
+  async assignableRoleIds(organizationId: string): Promise<Set<string>> {
+    const roles = await this.prisma.role.findMany({
+      // Rôles système (organizationId null) OU rôles perso de l'org, actifs.
+      where: { active: true, OR: [{ organizationId: null }, { organizationId }] },
+      select: { id: true },
+    });
+    return new Set(roles.map((r) => r.id));
+  }
+
+  async adminRoleId(): Promise<string> {
+    const role = await this.prisma.role.findUniqueOrThrow({
+      where: { key: RoleKey.admin },
+      select: { id: true },
+    });
+    return role.id;
+  }
+
+  async countOrgAdmins(organizationId: string, excludeUserId: string): Promise<number> {
+    return this.prisma.user.count({
+      where: {
+        organizationId,
+        deletedAt: null,
+        id: { not: excludeUserId },
+        userRoles: { some: { role: { key: RoleKey.admin } } },
+      },
+    });
+  }
+
+  async setUserRoles(userId: string, roleIds: string[]): Promise<void> {
+    await this.prisma.$transaction([
+      this.prisma.userRole.deleteMany({ where: { userId } }),
+      this.prisma.userRole.createMany({
+        data: roleIds.map((roleId) => ({ userId, roleId })),
+      }),
+    ]);
   }
 }

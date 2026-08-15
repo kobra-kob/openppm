@@ -54,6 +54,8 @@
     "PORTFOLIO_NOT_FOUND": "Portefeuille introuvable.",
     "WORKFLOW_TRANSITION_NOT_AVAILABLE": "Cette action n'est pas disponible à cette étape.",
     "WORKFLOW_COMMENT_REQUIRED": "Un commentaire est requis pour cette action.",
+    "ROLE_NOT_ASSIGNABLE": "Un ou plusieurs rôles ne sont pas attribuables dans cette organisation.",
+    "LAST_ADMIN": "Impossible de retirer le rôle Administrateur au dernier administrateur.",
     "UNKNOWN": "Une erreur inattendue s'est produite. Réessayez."
   },
   "auth": {
@@ -632,6 +634,11 @@
     "title": "Membres",
     "subtitle": "Les personnes de votre organisation et leurs rôles.",
     "you": "vous",
+    "roleEditor": {
+      "manage": "Gérer les rôles",
+      "save": "Enregistrer les rôles",
+      "cancel": "Annuler"
+    },
     "invite": {
       "title": "Inviter un collaborateur",
       "email": "Email",

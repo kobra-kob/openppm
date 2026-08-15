@@ -54,6 +54,8 @@
     "PORTFOLIO_NOT_FOUND": "Portfolio not found.",
     "WORKFLOW_TRANSITION_NOT_AVAILABLE": "This action isn't available at this stage.",
     "WORKFLOW_COMMENT_REQUIRED": "A comment is required for this action.",
+    "ROLE_NOT_ASSIGNABLE": "One or more roles cannot be assigned in this organization.",
+    "LAST_ADMIN": "You cannot remove the Administrator role from the last administrator.",
     "UNKNOWN": "An unexpected error occurred. Please retry."
   },
   "auth": {
@@ -632,6 +634,11 @@
     "title": "Members",
     "subtitle": "People in your organization and their roles.",
     "you": "you",
+    "roleEditor": {
+      "manage": "Manage roles",
+      "save": "Save roles",
+      "cancel": "Cancel"
+    },
     "invite": {
       "title": "Invite a teammate",
       "email": "Email",

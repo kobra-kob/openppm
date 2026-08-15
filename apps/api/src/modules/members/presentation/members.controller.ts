@@ -8,6 +8,7 @@ import {
   Param,
   ParseUUIDPipe,
   Post,
+  Put,
   Req,
 } from "@nestjs/common";
 import { ApiBearerAuth, ApiOperation, ApiTags } from "@nestjs/swagger";
@@ -16,9 +17,12 @@ import type { Request } from "express";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
 import { CurrentUser } from "../../auth/infrastructure/decorators/current-user.decorator";
+import { P } from "../../auth/domain/permissions";
+import { RequirePermissions } from "../../auth/infrastructure/decorators/require-permissions.decorator";
 import { Roles } from "../../auth/infrastructure/decorators/roles.decorator";
 import type { MemberSummary } from "../domain/members.repository";
 import { InviteMemberDto } from "../application/dto/invite-member.dto";
+import { SetMemberRolesDto } from "../application/dto/set-member-roles.dto";
 import {
   MembersService,
   PendingInvitationView,
@@ -34,6 +38,18 @@ export class MembersController {
   @ApiOperation({ summary: "Membres de l'organisation courante" })
   list(@CurrentUser() user: JwtPayload): Promise<MemberSummary[]> {
     return this.members.listMembers(user.org);
+  }
+
+  @Put(":userId/roles")
+  @RequirePermissions(P.MEMBER_MANAGE)
+  @ApiOperation({ summary: "Définir les rôles d'un membre (rôles cumulables)" })
+  setRoles(
+    @CurrentUser() user: JwtPayload,
+    @Param("userId", ParseUUIDPipe) userId: string,
+    @Body() dto: SetMemberRolesDto,
+    @Req() request: Request,
+  ): Promise<MemberSummary> {
+    return this.members.setRoles(user, userId, dto.roleIds, this.context(request));
   }
 
   @Get("invitations")

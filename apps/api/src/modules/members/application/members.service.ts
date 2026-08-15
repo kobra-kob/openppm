@@ -1,5 +1,6 @@
 import { createHash, randomBytes } from "node:crypto";
 import {
+  BadRequestException,
   ConflictException,
   Inject,
   Injectable,
@@ -8,6 +9,8 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { AuditService } from "../../../core/audit/audit.service";
 import { MailerService } from "../../../core/mailer/mailer.service";
+import { PermissionsService } from "../../auth/application/permissions.service";
+import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
 import { MEMBERS_REPOSITORY } from "../domain/members.repository";
 import type {
@@ -35,7 +38,58 @@ export class MembersService {
     private readonly mailer: MailerService,
     private readonly audit: AuditService,
     private readonly config: ConfigService,
+    private readonly permissions: PermissionsService,
   ) {}
+
+  /**
+   * Remplace les rôles d'un membre (rôles cumulables). Garantit qu'au moins un
+   * administrateur subsiste dans l'organisation. Invalide le cache de permissions
+   * du membre pour une prise en compte immédiate.
+   */
+  async setRoles(
+    payload: JwtPayload,
+    userId: string,
+    roleIds: string[],
+    context: RequestContext,
+  ): Promise<MemberSummary> {
+    if (!(await this.repository.userInOrganization(payload.org, userId))) {
+      throw new NotFoundException({ code: "USER_NOT_IN_ORG", message: "Membre introuvable" });
+    }
+    const unique = [...new Set(roleIds)];
+    const assignable = await this.repository.assignableRoleIds(payload.org);
+    const invalid = unique.filter((id) => !assignable.has(id));
+    if (invalid.length > 0) {
+      throw new BadRequestException({
+        code: "ROLE_NOT_ASSIGNABLE",
+        message: "Un ou plusieurs rôles ne sont pas attribuables dans cette organisation",
+      });
+    }
+    // Filet de sécurité : ne jamais retirer le dernier administrateur.
+    const adminRoleId = await this.repository.adminRoleId();
+    if (!unique.includes(adminRoleId)) {
+      const otherAdmins = await this.repository.countOrgAdmins(payload.org, userId);
+      if (otherAdmins === 0) {
+        throw new BadRequestException({
+          code: "LAST_ADMIN",
+          message: "Impossible de retirer le rôle Administrateur au dernier administrateur",
+        });
+      }
+    }
+
+    await this.repository.setUserRoles(userId, unique);
+    this.permissions.invalidate(userId);
+    await this.audit.log({
+      action: "member.roles_updated",
+      entityType: "user",
+      entityId: userId,
+      organizationId: payload.org,
+      userId: payload.sub,
+      after: { roleIds: unique },
+      ...context,
+    });
+    const members = await this.repository.listMembers(payload.org);
+    return members.find((m) => m.id === userId)!;
+  }
 
   listMembers(organizationId: string): Promise<MemberSummary[]> {
     return this.repository.listMembers(organizationId);

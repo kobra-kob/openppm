@@ -1,12 +1,13 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MailPlus, Tags, Trash2, UsersRound } from "lucide-react";
+import { MailPlus, ShieldCheck, Tags, Trash2, UsersRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { Alert, Button, Card, Input, Label } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
+import { MemberRolesEditor } from "@/features/settings/member-roles-editor";
 import { RolesAdmin } from "@/features/settings/roles-admin";
 
 interface Member {
@@ -16,6 +17,7 @@ interface Member {
   lastName: string;
   isActive: boolean;
   roles: string[];
+  roleIds: string[];
 }
 
 interface PendingInvitation {
@@ -57,6 +59,7 @@ export default function AdminSettingsPage() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
   const isAdmin = currentUser?.roles.includes("admin") ?? false;
+  const [editingMemberId, setEditingMemberId] = useState<string | null>(null);
 
   const [email, setEmail] = useState("");
   const [roleKey, setRoleKey] = useState("employee");
@@ -198,30 +201,51 @@ export default function AdminSettingsPage() {
         </div>
         <ul className="divide-y divide-border-subtle">
           {(members ?? []).map((member) => (
-            <li key={member.id} className="flex items-center gap-3 py-3">
-              <div className="flex size-9 items-center justify-center rounded-full bg-accent/15 text-xs font-semibold text-accent">
-                {member.firstName.charAt(0)}
-                {member.lastName.charAt(0)}
-              </div>
-              <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">
-                  {member.firstName} {member.lastName}
-                  {member.id === currentUser?.id && (
-                    <span className="ml-2 text-xs text-muted">({t("you")})</span>
-                  )}
-                </p>
-                <p className="truncate text-xs text-muted">{member.email}</p>
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {member.roles.map((role) => (
-                  <span
-                    key={role}
-                    className="rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent"
+            <li key={member.id} className="py-3">
+              <div className="flex items-center gap-3">
+                <div className="flex size-9 items-center justify-center rounded-full bg-accent/15 text-xs font-semibold text-accent">
+                  {member.firstName.charAt(0)}
+                  {member.lastName.charAt(0)}
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium">
+                    {member.firstName} {member.lastName}
+                    {member.id === currentUser?.id && (
+                      <span className="ml-2 text-xs text-muted">({t("you")})</span>
+                    )}
+                  </p>
+                  <p className="truncate text-xs text-muted">{member.email}</p>
+                </div>
+                <div className="flex flex-wrap justify-end gap-1.5">
+                  {member.roles.map((role) => (
+                    <span
+                      key={role}
+                      className="rounded-full bg-accent/15 px-2.5 py-0.5 text-xs font-medium text-accent"
+                    >
+                      {tRoles.has(role) ? tRoles(role) : role}
+                    </span>
+                  ))}
+                </div>
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setEditingMemberId((id) => (id === member.id ? null : member.id))
+                    }
+                    className="shrink-0 rounded-full p-1.5 text-muted transition-colors hover:bg-border-subtle hover:text-foreground"
+                    aria-label={t("roleEditor.manage")}
                   >
-                    {tRoles.has(role) ? tRoles(role) : role}
-                  </span>
-                ))}
+                    <ShieldCheck size={16} />
+                  </button>
+                )}
               </div>
+              {isAdmin && editingMemberId === member.id && (
+                <MemberRolesEditor
+                  memberId={member.id}
+                  currentRoleIds={member.roleIds}
+                  onClose={() => setEditingMemberId(null)}
+                />
+              )}
             </li>
           ))}
         </ul>

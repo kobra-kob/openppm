@@ -7,7 +7,10 @@ export interface MemberSummary {
   lastName: string;
   isActive: boolean;
   lastLoginAt: Date | null;
+  /** Clés des rôles système (les rôles personnalisés n'ont pas de clé). */
   roles: RoleKey[];
+  /** Identifiants de TOUS les rôles (système + personnalisés) — pour l'édition. */
+  roleIds: string[];
 }
 
 export type InvitationWithRelations = Invitation & {
@@ -36,6 +39,18 @@ export interface MembersRepository {
     organizationId: string,
   ): Promise<Invitation | null>;
   deleteInvitation(id: string): Promise<void>;
+
+  // ── Gestion des rôles d'un membre (multi-rôles) ──────────────────────
+  /** Vrai si l'utilisateur appartient à l'organisation (non supprimé). */
+  userInOrganization(organizationId: string, userId: string): Promise<boolean>;
+  /** Ids des rôles attribuables dans l'org : rôles système + rôles perso actifs de l'org. */
+  assignableRoleIds(organizationId: string): Promise<Set<string>>;
+  /** Id du rôle système Administrateur. */
+  adminRoleId(): Promise<string>;
+  /** Nombre d'utilisateurs actifs de l'org ayant le rôle admin, hors utilisateur donné. */
+  countOrgAdmins(organizationId: string, excludeUserId: string): Promise<number>;
+  /** Remplace intégralement les rôles d'un utilisateur. */
+  setUserRoles(userId: string, roleIds: string[]): Promise<void>;
 }
 
 export const MEMBERS_REPOSITORY = Symbol("MEMBERS_REPOSITORY");
