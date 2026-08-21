@@ -733,6 +733,11 @@
     "delete": "Supprimer",
     "adminImmutable": "Le rôle Administrateur détient toutes les permissions et n'est pas modifiable."
   },
+  "permissionsMatrix": {
+    "title": "Matrice des responsabilités",
+    "subtitle": "Vue d'ensemble des permissions accordées à chaque rôle (lecture seule).",
+    "permission": "Permission"
+  },
   "permissions": {
     "subject": {
       "demand": "Demandes",

@@ -8,6 +8,7 @@ import { Alert, Button, Card, Input, Label } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
 import { MemberRolesEditor } from "@/features/settings/member-roles-editor";
+import { PermissionsMatrix } from "@/features/settings/permissions-matrix";
 import { RolesAdmin } from "@/features/settings/roles-admin";
 
 interface Member {
@@ -292,6 +293,9 @@ export default function AdminSettingsPage() {
 
       {/* Rôles et permissions */}
       <RolesAdmin />
+
+      {/* Matrice des responsabilités (lecture) */}
+      <PermissionsMatrix />
 
       {/* Catégories de projets */}
       <Card>

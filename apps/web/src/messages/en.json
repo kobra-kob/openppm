@@ -733,6 +733,11 @@
     "delete": "Delete",
     "adminImmutable": "The Administrator role holds all permissions and cannot be edited."
   },
+  "permissionsMatrix": {
+    "title": "Responsibility matrix",
+    "subtitle": "Overview of the permissions granted to each role (read-only).",
+    "permission": "Permission"
+  },
   "permissions": {
     "subject": {
       "demand": "Demands",
