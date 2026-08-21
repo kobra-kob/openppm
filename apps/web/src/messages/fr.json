@@ -211,7 +211,23 @@
   "topNav": {
     "projects": "Projets",
     "demands": "Demandes",
-    "portfolios": "Portefeuilles"
+    "portfolios": "Portefeuilles",
+    "validations": "Mes validations"
+  },
+  "validations": {
+    "title": "Mes validations",
+    "subtitle": "Les décisions qui attendent votre arbitrage",
+    "empty": "Aucune validation en attente. Tout est à jour.",
+    "budgetSection": "Budgets à valider",
+    "demandSection": "Demandes à traiter",
+    "awaitingRole": "En attente de votre validation ({role})",
+    "roles": {
+      "manager": "Manager",
+      "finance": "Finance",
+      "executive": "Direction",
+      "pmo": "PMO",
+      "admin": "Administrateur"
+    }
   },
   "portfolios": {
     "title": "Portefeuilles",

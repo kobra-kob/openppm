@@ -67,9 +67,18 @@ export interface DemandListFilters {
   pageSize: number;
 }
 
+export interface DemandSummary {
+  id: string;
+  reference: string;
+  title: string;
+  requesterId: string;
+}
+
 export interface DemandRepository {
   list(filters: DemandListFilters): Promise<{ items: DemandRecord[]; total: number }>;
   findById(organizationId: string, id: string): Promise<DemandRecord | null>;
+  /** Résumés des demandes actives correspondant aux identifiants (files de validation). */
+  findSummariesByIds(organizationId: string, ids: string[]): Promise<DemandSummary[]>;
   create(input: CreateDemandInput): Promise<DemandRecord>;
   update(id: string, input: UpdateDemandInput): Promise<DemandRecord>;
   softDelete(id: string): Promise<void>;

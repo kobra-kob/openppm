@@ -175,6 +175,20 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return found ? toInstance(found) : null;
   }
 
+  async listOpenInstanceStates(
+    organizationId: string,
+    entityType: string,
+  ): Promise<Array<{ entityId: string; currentStateKey: string }>> {
+    const rows = await this.prisma.workflowInstance.findMany({
+      where: { organizationId, entityType, closedAt: null },
+      select: { entityId: true, currentState: { select: { key: true } } },
+    });
+    return rows.map((row) => ({
+      entityId: row.entityId,
+      currentStateKey: row.currentState.key,
+    }));
+  }
+
   async findInstanceStates(
     entityType: string,
     entityIds: string[],

@@ -211,7 +211,23 @@
   "topNav": {
     "projects": "Projects",
     "demands": "Demands",
-    "portfolios": "Portfolios"
+    "portfolios": "Portfolios",
+    "validations": "My approvals"
+  },
+  "validations": {
+    "title": "My approvals",
+    "subtitle": "Decisions awaiting your call",
+    "empty": "No pending approvals. You're all caught up.",
+    "budgetSection": "Budgets to approve",
+    "demandSection": "Demands to review",
+    "awaitingRole": "Awaiting your approval ({role})",
+    "roles": {
+      "manager": "Manager",
+      "finance": "Finance",
+      "executive": "Executive",
+      "pmo": "PMO",
+      "admin": "Administrator"
+    }
   },
   "portfolios": {
     "title": "Portfolios",

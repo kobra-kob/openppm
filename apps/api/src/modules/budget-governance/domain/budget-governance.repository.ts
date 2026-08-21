@@ -23,6 +23,17 @@ export type BudgetRequestWithSteps = BudgetRequest & {
   >;
 };
 
+export interface PendingBudgetApproval {
+  requestId: string;
+  projectId: string;
+  projectName: string;
+  amount: number;
+  requestedById: string;
+  currentStepId: string;
+  currentApproverRole: RoleKey;
+  createdAt: Date;
+}
+
 export interface CreateBudgetRequestInput {
   organizationId: string;
   projectId: string;
@@ -41,6 +52,8 @@ export interface BudgetGovernanceRepository {
   ): Promise<ProjectGovernanceContext | null>;
   /** Paliers d'approbation budgétaire de l'organisation (ordonnés). Vide si non configurés. */
   loadApprovalTiers(organizationId: string): Promise<BudgetApprovalTierSpec[]>;
+  /** Demandes de budget en attente et leur étape courante (file « Mes validations »). */
+  listPendingApprovals(organizationId: string): Promise<PendingBudgetApproval[]>;
   /** Dernière demande de budget d'un projet (toutes statuts). */
   findLatestRequest(projectId: string): Promise<BudgetRequestWithSteps | null>;
   hasPendingRequest(projectId: string): Promise<boolean>;

@@ -13,6 +13,7 @@ import { NotificationsModule } from "./core/notifications/notifications.module";
 import { PrismaModule } from "./core/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { BudgetGovernanceModule } from "./modules/budget-governance/budget-governance.module";
+import { ValidationsModule } from "./modules/validations/validations.module";
 import { CommentModule } from "./modules/comment/comment.module";
 import { DemandModule } from "./modules/demand/demand.module";
 import { FinanceModule } from "./modules/finance/finance.module";
@@ -82,6 +83,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     PortfolioModule,
     ProjectModule,
     BudgetGovernanceModule,
+    ValidationsModule,
     FinanceModule,
     QuoteModule,
     TaskModule,

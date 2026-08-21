@@ -62,6 +62,17 @@ export class PrismaDemandRepository implements DemandRepository {
     return found ? toRecord(found) : null;
   }
 
+  async findSummariesByIds(organizationId: string, ids: string[]) {
+    if (ids.length === 0) {
+      return [];
+    }
+    const rows = await this.prisma.demand.findMany({
+      where: { organizationId, id: { in: ids }, deletedAt: null },
+      select: { id: true, reference: true, title: true, requesterId: true },
+    });
+    return rows;
+  }
+
   async create(input: CreateDemandInput): Promise<DemandRecord> {
     const created = await this.prisma.demand.create({
       data: {

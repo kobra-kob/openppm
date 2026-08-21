@@ -97,6 +97,11 @@ export interface WorkflowRepository {
   ): Promise<WorkflowDefinitionRecord>;
 
   findInstance(entityType: string, entityId: string): Promise<WorkflowInstanceRecord | null>;
+  /** Entités ouvertes (non clôturées) d'un type et leur état courant (files de validation). */
+  listOpenInstanceStates(
+    organizationId: string,
+    entityType: string,
+  ): Promise<Array<{ entityId: string; currentStateKey: string }>>;
   /** État courant de plusieurs entités, en une requête (listes). */
   findInstanceStates(
     entityType: string,

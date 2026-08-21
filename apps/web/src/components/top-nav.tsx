@@ -9,6 +9,7 @@ const LINKS = [
   { href: "/demands", key: "demands", match: (p: string) => p.startsWith("/demands") },
   { href: "/", key: "projects", match: (p: string) => p === "/" || p.startsWith("/projects") },
   { href: "/portfolios", key: "portfolios", match: (p: string) => p.startsWith("/portfolios") },
+  { href: "/validations", key: "validations", match: (p: string) => p.startsWith("/validations") },
 ] as const;
 
 /** Navigation principale de la topbar : Demandes / Projets / Portefeuilles. */

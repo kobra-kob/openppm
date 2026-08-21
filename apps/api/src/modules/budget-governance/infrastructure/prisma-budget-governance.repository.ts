@@ -63,6 +63,35 @@ export class PrismaBudgetGovernanceRepository
     }));
   }
 
+  async listPendingApprovals(organizationId: string) {
+    const requests = await this.prisma.budgetRequest.findMany({
+      where: { organizationId, status: BudgetRequestStatus.pending },
+      include: {
+        project: { select: { name: true } },
+        steps: { orderBy: { stepOrder: "asc" } },
+      },
+      orderBy: { createdAt: "asc" },
+    });
+    return requests.flatMap((req) => {
+      const step = req.steps.find((s) => s.stepOrder === req.currentStep);
+      if (!step) {
+        return [];
+      }
+      return [
+        {
+          requestId: req.id,
+          projectId: req.projectId,
+          projectName: req.project.name,
+          amount: Number(req.amount),
+          requestedById: req.requestedById,
+          currentStepId: step.id,
+          currentApproverRole: step.approverRole,
+          createdAt: req.createdAt,
+        },
+      ];
+    });
+  }
+
   findLatestRequest(projectId: string): Promise<BudgetRequestWithSteps | null> {
     return this.prisma.budgetRequest.findFirst({
       where: { projectId },
