@@ -92,6 +92,28 @@ describe("Conversion demande → projet (intégration)", () => {
       "finance_validate",
       "submit_to_committee",
     ]) {
+      // La validation Finance exige un Business Case complet : on complète
+      // le dossier seulement s'il ne l'est pas déjà (sans écraser les risques).
+      if (key === "finance_validate") {
+        const existing = await request(server())
+          .get(`/api/v1/demands/${id}/business-case`)
+          .set("Authorization", `Bearer ${adminToken}`)
+          .expect(200);
+        const complete = Boolean(
+          existing.body?.roi && existing.body?.costs && existing.body?.benefits,
+        );
+        if (!complete) {
+          await request(server())
+            .put(`/api/v1/demands/${id}/business-case`)
+            .set("Authorization", `Bearer ${adminToken}`)
+            .send({
+              roi: "Retour sur investissement en 18 mois",
+              costs: "Licences + intégration",
+              benefits: "Gain de productivité",
+            })
+            .expect(200);
+        }
+      }
       await request(server())
         .post(tr(id, key))
         .set("Authorization", `Bearer ${adminToken}`)
@@ -121,6 +143,8 @@ describe("Conversion demande → projet (intégration)", () => {
       .set("Authorization", `Bearer ${adminToken}`)
       .send({
         roi: "ROI 24 mois",
+        costs: "Développement + hébergement",
+        benefits: "Hausse du chiffre d'affaires en ligne",
         risks: [
           { label: "Délai fournisseur", probability: "high", impact: "high" },
           { label: "Montée en charge", probability: "low", impact: "medium" },

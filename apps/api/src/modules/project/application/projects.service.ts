@@ -160,15 +160,23 @@ export class ProjectsService {
     context: RequestContext,
   ): Promise<ProjectView> {
     // Création directe : gouvernée par l'organisation. Désactivée, seul un
-    // administrateur peut créer un projet hors conversion d'une demande.
-    if (
-      !payload.roles.includes(RoleKey.admin) &&
-      !(await this.repository.directCreationAllowed(payload.org))
-    ) {
+    // administrateur peut créer un projet hors conversion d'une demande, et
+    // uniquement en justifiant ce contournement (tracé dans l'audit).
+    const isAdmin = payload.roles.includes(RoleKey.admin);
+    const directAllowed = await this.repository.directCreationAllowed(payload.org);
+    if (!isAdmin && !directAllowed) {
       throw new ForbiddenException({
         code: "DIRECT_PROJECT_CREATION_DISABLED",
         message:
           "La création directe de projet est désactivée : passez par une demande, ou contactez un administrateur",
+      });
+    }
+    const isBypass = isAdmin && !directAllowed;
+    if (isBypass && !dto.bypassReason?.trim()) {
+      throw new BadRequestException({
+        code: "BYPASS_REASON_REQUIRED",
+        message:
+          "Un motif est obligatoire pour créer un projet en contournant la gouvernance des demandes",
       });
     }
 
@@ -240,12 +248,16 @@ export class ProjectsService {
       })),
     });
     await this.audit.log({
-      action: "project.created",
+      action: isBypass ? "project.created_bypass" : "project.created",
       entityType: "project",
       entityId: project.id,
       organizationId: payload.org,
       userId: payload.sub,
-      after: { code: project.code, name: project.name },
+      after: {
+        code: project.code,
+        name: project.name,
+        ...(isBypass ? { bypass: true, bypassReason: dto.bypassReason?.trim() } : {}),
+      },
       ...context,
     });
     return this.toView(project);
@@ -317,16 +329,45 @@ export class ProjectsService {
         allowed: allowedTransitions(project.status),
       });
     }
+
+    // Garde « budget validé avant projet » : un projet sous gouvernance
+    // (rattaché à un portefeuille) ne peut passer à l'état actif tant qu'aucun
+    // budget n'a été validé. Seul un administrateur peut forcer, en justifiant.
+    const activatingUnbudgeted =
+      dto.status === ProjectStatus.active &&
+      project.status !== ProjectStatus.active &&
+      project.portfolioId !== null &&
+      project.budget === null;
+    let isBypass = false;
+    if (activatingUnbudgeted) {
+      if (!payload.roles.includes(RoleKey.admin)) {
+        throw new ForbiddenException({
+          code: "BUDGET_NOT_APPROVED",
+          message: "Le budget doit être validé avant d'activer le projet",
+        });
+      }
+      if (!dto.bypassReason?.trim()) {
+        throw new BadRequestException({
+          code: "BYPASS_REASON_REQUIRED",
+          message: "Un motif est obligatoire pour activer un projet sans budget validé",
+        });
+      }
+      isBypass = true;
+    }
+
     const archivedAt = dto.status === ProjectStatus.archived ? new Date() : null;
     const updated = await this.repository.setStatus(project.id, dto.status, archivedAt);
     await this.audit.log({
-      action: "project.status_changed",
+      action: isBypass ? "project.status_changed_bypass" : "project.status_changed",
       entityType: "project",
       entityId: project.id,
       organizationId: payload.org,
       userId: payload.sub,
       before: { status: project.status },
-      after: { status: dto.status },
+      after: {
+        status: dto.status,
+        ...(isBypass ? { bypass: true, bypassReason: dto.bypassReason?.trim() } : {}),
+      },
       ...context,
     });
     return this.toView(updated);

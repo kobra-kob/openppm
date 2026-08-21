@@ -55,3 +55,16 @@ export interface BusinessCaseRepository {
   /** Crée ou met à jour le Business Case de la demande (les risques sont remplacés). */
   upsert(input: UpsertBusinessCaseInput): Promise<BusinessCaseRecord>;
 }
+
+/**
+ * Un Business Case est « complet » lorsqu'il porte les éléments financiers
+ * minimaux exigés avant la validation Finance : coûts, bénéfices et ROI
+ * renseignés. Sert de garde avant de quitter l'étape Business Case du workflow.
+ */
+export function isBusinessCaseComplete(bc: BusinessCaseRecord | null): boolean {
+  if (!bc) {
+    return false;
+  }
+  const filled = (value: string | null): boolean => value !== null && value.trim().length > 0;
+  return filled(bc.costs) && filled(bc.benefits) && filled(bc.roi);
+}

@@ -420,4 +420,83 @@ describe("Projects (intégration)", () => {
         .expect(403);
     });
   });
+
+  describe("gouvernance : contournement administrateur", () => {
+    const auth = () => `Bearer ${adminToken}`;
+
+    it("création directe désactivée : motif obligatoire et tracé en audit", async () => {
+      await request(server())
+        .patch("/api/v1/organization/settings")
+        .set("Authorization", auth())
+        .send({ allowDirectProjectCreation: false })
+        .expect(200);
+
+      // Sans motif → refus
+      const noReason = await request(server())
+        .post("/api/v1/projects")
+        .set("Authorization", auth())
+        .send({ name: "Hors gouvernance" })
+        .expect(400);
+      expect(noReason.body.code).toBe("BYPASS_REASON_REQUIRED");
+
+      // Avec motif → créé et audité comme contournement
+      const created = await request(server())
+        .post("/api/v1/projects")
+        .set("Authorization", auth())
+        .send({ name: "Hors gouvernance", bypassReason: "Projet urgent Direction" })
+        .expect(201);
+      const audits = await prisma.auditLog.findMany({
+        where: { action: "project.created_bypass", entityId: created.body.id },
+      });
+      expect(audits).toHaveLength(1);
+      expect((audits[0]!.after as { bypassReason?: string }).bypassReason).toBe(
+        "Projet urgent Direction",
+      );
+
+      // Réactive la création directe pour les autres scénarios
+      await request(server())
+        .patch("/api/v1/organization/settings")
+        .set("Authorization", auth())
+        .send({ allowDirectProjectCreation: true })
+        .expect(200);
+    });
+
+    it("active un projet sous gouvernance sans budget uniquement avec motif (admin)", async () => {
+      const portfolio = await request(server())
+        .post("/api/v1/portfolios")
+        .set("Authorization", auth())
+        .send({ name: "Gouvernance", budgetEnvelope: 100000 })
+        .expect(201);
+      const project = await request(server())
+        .post("/api/v1/projects")
+        .set("Authorization", auth())
+        .send({ name: "Sans budget validé" })
+        .expect(201);
+      await request(server())
+        .post(`/api/v1/portfolios/${portfolio.body.id}/projects`)
+        .set("Authorization", auth())
+        .send({ projectId: project.body.id })
+        .expect(201);
+
+      // draft → active sans budget validé, sans motif → refus
+      const blocked = await request(server())
+        .patch(`/api/v1/projects/${project.body.id}/status`)
+        .set("Authorization", auth())
+        .send({ status: "active" })
+        .expect(400);
+      expect(blocked.body.code).toBe("BYPASS_REASON_REQUIRED");
+
+      // Avec motif → activé et tracé comme contournement
+      const forced = await request(server())
+        .patch(`/api/v1/projects/${project.body.id}/status`)
+        .set("Authorization", auth())
+        .send({ status: "active", bypassReason: "Démarrage anticipé validé en COMEX" })
+        .expect(200);
+      expect(forced.body.status).toBe("active");
+      const audits = await prisma.auditLog.findMany({
+        where: { action: "project.status_changed_bypass", entityId: project.body.id },
+      });
+      expect(audits).toHaveLength(1);
+    });
+  });
 });

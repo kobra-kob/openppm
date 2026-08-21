@@ -110,12 +110,26 @@ describe("Paramètres organisation — création directe de projet (intégration
     expect(response.body.code).toBe("DIRECT_PROJECT_CREATION_DISABLED");
   });
 
-  it("désactivée, un administrateur peut toujours créer un projet directement", async () => {
-    await request(server())
+  it("désactivée, un administrateur doit motiver le contournement (400 sans motif)", async () => {
+    const response = await request(server())
       .post("/api/v1/projects")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ name: "Projet admin" })
+      .expect(400);
+    expect(response.body.code).toBe("BYPASS_REASON_REQUIRED");
+  });
+
+  it("désactivée, un administrateur crée avec motif, tracé comme contournement", async () => {
+    const created = await request(server())
+      .post("/api/v1/projects")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Projet admin", bypassReason: "Décision Direction hors circuit" })
       .expect(201);
+    const audits = await prisma.auditLog.findMany({
+      where: { action: "project.created_bypass", entityId: created.body.id },
+    });
+    expect(audits).toHaveLength(1);
+    expect((audits[0]!.after as { bypass?: boolean }).bypass).toBe(true);
   });
 
   it("exige un jeton (401)", async () => {

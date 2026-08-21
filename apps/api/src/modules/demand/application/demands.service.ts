@@ -12,6 +12,11 @@ import { NotificationsService } from "../../../core/notifications/notifications.
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
 import { WorkflowService, WorkflowView } from "../../workflow/application/workflow.service";
+import {
+  BUSINESS_CASE_REPOSITORY,
+  isBusinessCaseComplete,
+} from "../domain/business-case.repository";
+import type { BusinessCaseRepository } from "../domain/business-case.repository";
 import { formatDemandCode } from "../domain/demand-code";
 import {
   DEFAULT_DEMAND_WORKFLOW,
@@ -80,6 +85,8 @@ export interface DemandListView {
 export class DemandsService {
   constructor(
     @Inject(DEMAND_REPOSITORY) private readonly repository: DemandRepository,
+    @Inject(BUSINESS_CASE_REPOSITORY)
+    private readonly businessCases: BusinessCaseRepository,
     private readonly workflow: WorkflowService,
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
@@ -213,6 +220,24 @@ export class DemandsService {
         code: "FORBIDDEN",
         message: "Vous ne pouvez agir que sur vos propres demandes",
       });
+    }
+
+    // Garde « Business Case complet » : on ne peut quitter l'étape Business
+    // Case vers la validation Finance sans un dossier financier complet
+    // (coûts, bénéfices, ROI). La seule transition avançant depuis cet état est
+    // `finance_validate` ; les compléments/rejets ne sont pas concernés.
+    const currentState = (
+      await this.workflow.currentStates(DEMAND_ENTITY_TYPE, [id])
+    ).get(id);
+    if (currentState?.stateKey === "business_case" && transitionKey === "finance_validate") {
+      const businessCase = await this.businessCases.findByDemandId(id);
+      if (!isBusinessCaseComplete(businessCase)) {
+        throw new BadRequestException({
+          code: "BUSINESS_CASE_INCOMPLETE",
+          message:
+            "Le Business Case doit être complété (coûts, bénéfices et ROI) avant la validation Finance",
+        });
+      }
     }
 
     const result = await this.workflow.fire(

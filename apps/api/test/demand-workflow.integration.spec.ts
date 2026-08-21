@@ -129,6 +129,18 @@ describe("Workflow des demandes (intégration)", () => {
     await request(server()).post(tr(id, "manager_approve")).set("Authorization", `Bearer ${managerToken}`).send({}).expect(201);
     await request(server()).post(tr(id, "pmo_qualify")).set("Authorization", `Bearer ${pmoToken}`).send({}).expect(201);
     await request(server()).post(tr(id, "prepare_business_case")).set("Authorization", `Bearer ${pmoToken}`).send({}).expect(201);
+
+    // La validation Finance exige un Business Case complet (coûts, bénéfices, ROI)
+    await request(server())
+      .put(`/api/v1/demands/${id}/business-case`)
+      .set("Authorization", `Bearer ${pmoToken}`)
+      .send({
+        roi: "Retour sur investissement en 18 mois",
+        costs: "Licences + intégration",
+        benefits: "Gain de productivité",
+      })
+      .expect(200);
+
     await request(server()).post(tr(id, "finance_validate")).set("Authorization", `Bearer ${financeToken}`).send({}).expect(201);
     await request(server()).post(tr(id, "submit_to_committee")).set("Authorization", `Bearer ${financeToken}`).send({}).expect(201);
 
@@ -153,6 +165,46 @@ describe("Workflow des demandes (intégration)", () => {
     // Le projet créé pointe bien vers la demande d'origine
     const project = await prisma.project.findUnique({ where: { demandId: id } });
     expect(project?.id).toBe(approved.body.project.id);
+  });
+
+  it("refuse la validation Finance tant que le Business Case est incomplet (400)", async () => {
+    const id = await newDemand();
+    await request(server()).post(tr(id, "submit")).set("Authorization", `Bearer ${bobToken}`).send({}).expect(201);
+    await request(server()).post(tr(id, "manager_approve")).set("Authorization", `Bearer ${managerToken}`).send({}).expect(201);
+    await request(server()).post(tr(id, "pmo_qualify")).set("Authorization", `Bearer ${pmoToken}`).send({}).expect(201);
+    await request(server()).post(tr(id, "prepare_business_case")).set("Authorization", `Bearer ${pmoToken}`).send({}).expect(201);
+
+    // Aucun Business Case : la validation Finance est bloquée
+    const blocked = await request(server())
+      .post(tr(id, "finance_validate"))
+      .set("Authorization", `Bearer ${financeToken}`)
+      .send({})
+      .expect(400);
+    expect(blocked.body.code).toBe("BUSINESS_CASE_INCOMPLETE");
+
+    // Business Case partiel (ROI seul) : toujours bloqué
+    await request(server())
+      .put(`/api/v1/demands/${id}/business-case`)
+      .set("Authorization", `Bearer ${pmoToken}`)
+      .send({ roi: "ROI 12 mois" })
+      .expect(200);
+    await request(server())
+      .post(tr(id, "finance_validate"))
+      .set("Authorization", `Bearer ${financeToken}`)
+      .send({})
+      .expect(400);
+
+    // Business Case complet : la validation passe
+    await request(server())
+      .put(`/api/v1/demands/${id}/business-case`)
+      .set("Authorization", `Bearer ${pmoToken}`)
+      .send({ roi: "ROI 12 mois", costs: "Dév", benefits: "Productivité" })
+      .expect(200);
+    await request(server())
+      .post(tr(id, "finance_validate"))
+      .set("Authorization", `Bearer ${financeToken}`)
+      .send({})
+      .expect(201);
   });
 
   it("refuse une transition non autorisée par le rôle (403)", async () => {

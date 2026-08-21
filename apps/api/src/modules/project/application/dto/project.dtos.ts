@@ -73,6 +73,16 @@ export class CreateProjectDto {
   @IsOptional()
   @IsUUID()
   templateId?: string;
+
+  @ApiPropertyOptional({
+    description:
+      "Motif de contournement : obligatoire lorsqu'un administrateur crée un projet " +
+      "alors que la création directe est désactivée (tracé dans l'audit).",
+  })
+  @IsOptional()
+  @IsString()
+  @Length(3, 500)
+  bypassReason?: string;
 }
 
 export class UpdateProjectDto extends PartialType(
@@ -96,6 +106,16 @@ export class ChangeStatusDto {
   @ApiProperty({ enum: Object.values(ProjectStatus) })
   @IsIn(Object.values(ProjectStatus))
   status!: ProjectStatus;
+
+  @ApiPropertyOptional({
+    description:
+      "Motif de contournement : obligatoire lorsqu'un administrateur active un projet " +
+      "sous gouvernance dont le budget n'a pas encore été validé (tracé dans l'audit).",
+  })
+  @IsOptional()
+  @IsString()
+  @Length(3, 500)
+  bypassReason?: string;
 }
 
 export class AddProjectMemberDto {
