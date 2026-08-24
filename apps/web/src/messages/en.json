@@ -738,6 +738,14 @@
     "subtitle": "Overview of the permissions granted to each role (read-only).",
     "permission": "Permission"
   },
+  "workflowAdmin": {
+    "title": "Workflow administration",
+    "subtitle": "Set who approves each step and whether a comment is required. The step structure cannot be changed here.",
+    "requiresComment": "Comment required",
+    "automated": "Automated",
+    "anyRole": "No role checked: step open to everyone.",
+    "save": "Save"
+  },
   "permissions": {
     "subject": {
       "demand": "Demands",

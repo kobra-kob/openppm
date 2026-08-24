@@ -164,6 +164,32 @@ export class PrismaWorkflowRepository implements WorkflowRepository {
     return saved;
   }
 
+  async updateTransitionGovernance(
+    organizationId: string,
+    definitionKey: string,
+    transitionKey: string,
+    data: { allowedRoles: string[]; requiresComment: boolean },
+  ): Promise<WorkflowDefinitionRecord | null> {
+    const definition = await this.prisma.workflowDefinition.findUnique({
+      where: { organizationId_key: { organizationId, key: definitionKey } },
+      select: { id: true },
+    });
+    if (!definition) {
+      return null;
+    }
+    const result = await this.prisma.workflowTransition.updateMany({
+      where: { definitionId: definition.id, key: transitionKey },
+      data: {
+        allowedRoles: data.allowedRoles as Prisma.InputJsonValue,
+        requiresComment: data.requiresComment,
+      },
+    });
+    if (result.count === 0) {
+      return null;
+    }
+    return this.findDefinitionById(definition.id);
+  }
+
   async findInstance(
     entityType: string,
     entityId: string,

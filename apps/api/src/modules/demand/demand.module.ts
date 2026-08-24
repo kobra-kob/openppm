@@ -11,6 +11,7 @@ import { PrismaDemandConversionRepository } from "./infrastructure/prisma-demand
 import { PrismaDemandRepository } from "./infrastructure/prisma-demand.repository";
 import { BusinessCasesController } from "./presentation/business-cases.controller";
 import { DemandsController } from "./presentation/demands.controller";
+import { WorkflowAdminController } from "./presentation/workflow-admin.controller";
 
 /**
  * Demand Management : point d'entrée du cycle de vie, en amont du projet.
@@ -19,7 +20,7 @@ import { DemandsController } from "./presentation/demands.controller";
  */
 @Module({
   imports: [WorkflowModule],
-  controllers: [DemandsController, BusinessCasesController],
+  controllers: [DemandsController, BusinessCasesController, WorkflowAdminController],
   providers: [
     DemandsService,
     BusinessCasesService,

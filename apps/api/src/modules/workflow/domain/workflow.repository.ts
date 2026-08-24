@@ -95,6 +95,17 @@ export interface WorkflowRepository {
     organizationId: string,
     input: WorkflowDefinitionInput,
   ): Promise<WorkflowDefinitionRecord>;
+  /**
+   * Met à jour la gouvernance d'une transition (rôles autorisés + commentaire
+   * requis) sans toucher au graphe d'états : les instances en cours ne sont pas
+   * impactées. Retourne null si la définition ou la transition est introuvable.
+   */
+  updateTransitionGovernance(
+    organizationId: string,
+    definitionKey: string,
+    transitionKey: string,
+    data: { allowedRoles: string[]; requiresComment: boolean },
+  ): Promise<WorkflowDefinitionRecord | null>;
 
   findInstance(entityType: string, entityId: string): Promise<WorkflowInstanceRecord | null>;
   /** Entités ouvertes (non clôturées) d'un type et leur état courant (files de validation). */

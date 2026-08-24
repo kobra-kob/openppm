@@ -106,6 +106,52 @@ export class WorkflowService {
   }
 
   /**
+   * Reconfigure la gouvernance d'une transition : rôles habilités à la franchir
+   * et obligation de commentaire. Ne modifie pas le graphe d'états ni les
+   * automatisations : les instances en cours restent valides.
+   */
+  async updateTransition(
+    payload: JwtPayload,
+    definitionKey: string,
+    transitionKey: string,
+    data: { allowedRoles: string[]; requiresComment: boolean },
+    context: RequestContext,
+  ): Promise<WorkflowDefinitionRecord> {
+    const known = new Set<string>(Object.values(RoleKey));
+    const invalid = data.allowedRoles.filter((role) => !known.has(role));
+    if (invalid.length > 0) {
+      throw new BadRequestException({
+        code: "WORKFLOW_UNKNOWN_ROLE",
+        message: `Rôle inconnu : ${invalid.join(", ")}`,
+      });
+    }
+    // Déduplication en préservant l'ordre.
+    const allowedRoles = [...new Set(data.allowedRoles)];
+    const updated = await this.repository.updateTransitionGovernance(
+      payload.org,
+      definitionKey,
+      transitionKey,
+      { allowedRoles, requiresComment: data.requiresComment },
+    );
+    if (!updated) {
+      throw new NotFoundException({
+        code: "WORKFLOW_TRANSITION_NOT_FOUND",
+        message: "Transition de workflow introuvable",
+      });
+    }
+    await this.audit.log({
+      action: "workflow.transition_updated",
+      entityType: "workflow_definition",
+      entityId: updated.id,
+      organizationId: payload.org,
+      userId: payload.sub,
+      after: { transitionKey, allowedRoles, requiresComment: data.requiresComment },
+      ...context,
+    });
+    return updated;
+  }
+
+  /**
    * Garantit qu'une définition par défaut existe pour ce type d'entité, en la
    * créant depuis un gabarit si besoin. Idempotent : les organisations déjà
    * configurées ne sont pas touchées (compatibilité production).

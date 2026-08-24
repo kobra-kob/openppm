@@ -738,6 +738,14 @@
     "subtitle": "Vue d'ensemble des permissions accordées à chaque rôle (lecture seule).",
     "permission": "Permission"
   },
+  "workflowAdmin": {
+    "title": "Administration des workflows",
+    "subtitle": "Réglez qui valide chaque étape et l'obligation de commentaire. La structure des étapes n'est pas modifiable ici.",
+    "requiresComment": "Commentaire obligatoire",
+    "automated": "Automatisé",
+    "anyRole": "Aucun rôle coché : étape ouverte à tous.",
+    "save": "Enregistrer"
+  },
   "permissions": {
     "subject": {
       "demand": "Demandes",

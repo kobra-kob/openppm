@@ -10,6 +10,7 @@ import { useAuthStore } from "@/lib/auth-store";
 import { MemberRolesEditor } from "@/features/settings/member-roles-editor";
 import { PermissionsMatrix } from "@/features/settings/permissions-matrix";
 import { RolesAdmin } from "@/features/settings/roles-admin";
+import { WorkflowAdmin } from "@/features/settings/workflow-admin";
 
 interface Member {
   id: string;
@@ -296,6 +297,9 @@ export default function AdminSettingsPage() {
 
       {/* Matrice des responsabilités (lecture) */}
       <PermissionsMatrix />
+
+      {/* Administration des workflows */}
+      <WorkflowAdmin />
 
       {/* Catégories de projets */}
       <Card>
