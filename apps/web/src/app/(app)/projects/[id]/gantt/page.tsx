@@ -120,17 +120,25 @@ export default function GanttPage() {
   const dated = ordered.filter((task) => task.startDate && task.dueDate);
   const critical = useMemo(() => new Set(data?.criticalPath ?? []), [data]);
 
-  // Plage temporelle : min(début) − 3 j → max(fin) + 7 j
+  // Plage temporelle calée sur des mois entiers, pour un tracé net des deux
+  // côtés : début = 1er du mois de la première tâche ; fin = dernier jour du
+  // 2e mois suivant la dernière tâche (les mois à venir restent visibles même
+  // sans tâche, la ligne ne coupe pas net).
   const rangeStart = useMemo(() => {
-    if (dated.length === 0) return now;
-    const min = Math.min(...dated.map((task) => new Date(task.startDate!).getTime()));
-    return min - 3 * DAY_MS;
+    const anchor =
+      dated.length === 0
+        ? new Date(now)
+        : new Date(Math.min(...dated.map((task) => new Date(task.startDate!).getTime())));
+    return new Date(anchor.getFullYear(), anchor.getMonth(), 1).getTime();
   }, [dated, now]);
   const totalDays = useMemo(() => {
-    if (dated.length === 0) return 30;
-    const max = Math.max(...dated.map((task) => new Date(task.dueDate!).getTime()));
-    return Math.round((max - rangeStart) / DAY_MS) + 8;
-  }, [dated, rangeStart]);
+    const anchor =
+      dated.length === 0
+        ? new Date(now)
+        : new Date(Math.max(...dated.map((task) => new Date(task.dueDate!).getTime())));
+    const end = new Date(anchor.getFullYear(), anchor.getMonth() + 3, 0).getTime();
+    return Math.max(30, Math.round((end - rangeStart) / DAY_MS) + 1);
+  }, [dated, rangeStart, now]);
 
   const px = PX[zoom];
   const chartW = totalDays * px;
