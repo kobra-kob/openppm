@@ -40,27 +40,36 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="glass-strong sticky top-0 z-10 flex h-14 shrink-0 items-center justify-between border-b border-border-subtle px-4">
-        <Link href="/" className="flex shrink-0 items-center gap-2">
-          <div className="btn-macos flex size-8 items-center justify-center rounded-[9px] text-accent-foreground">
-            <Command size={18} />
+      <div className="glass-strong sticky top-0 z-10 border-b border-border-subtle">
+        <header className="flex h-14 items-center gap-2 px-3 sm:px-4">
+          <Link href="/" className="flex shrink-0 items-center gap-2">
+            <div className="btn-macos flex size-8 items-center justify-center rounded-[9px] text-accent-foreground">
+              <Command size={18} />
+            </div>
+            <span className="hidden font-semibold tracking-tight sm:block">
+              {t("appName")}
+            </span>
+          </Link>
+          <span className="mx-2 hidden h-6 w-px shrink-0 bg-border-subtle md:block lg:mx-4" />
+          {/* Onglets en ligne sur desktop, repliés en 2e rangée sur mobile */}
+          <TopNav className="hidden md:flex" />
+          <div className="flex min-w-0 flex-1 justify-center">
+            <div className="hidden w-full max-w-md lg:block">
+              <GlobalSearch />
+            </div>
           </div>
-          <span className="hidden font-semibold tracking-tight sm:block">
-            {t("appName")}
-          </span>
-        </Link>
-        <span className="mx-3 hidden h-6 w-px shrink-0 bg-border-subtle sm:block lg:mx-5" />
-        <TopNav />
-        <div className="mx-2 hidden min-w-0 flex-1 justify-center sm:flex">
-          <GlobalSearch />
+          <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+            <NotificationBell />
+            <LocaleSwitch />
+            <ThemeToggle />
+            <ProfileMenu />
+          </div>
+        </header>
+        {/* Navigation mobile : rangée dédiée, défilement horizontal */}
+        <div className="flex overflow-x-auto border-t border-border-subtle px-2 py-1 md:hidden">
+          <TopNav />
         </div>
-        <div className="flex shrink-0 items-center gap-2">
-          <NotificationBell />
-          <LocaleSwitch />
-          <ThemeToggle />
-          <ProfileMenu />
-        </div>
-      </header>
+      </div>
       <main className="flex min-h-0 flex-1 flex-col">{children}</main>
     </div>
   );

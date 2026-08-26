@@ -23,15 +23,15 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
   ];
 
   return (
-    <div className="flex min-h-0 flex-1">
-      <aside className="glass sticky top-14 flex h-[calc(100vh-3.5rem)] w-56 shrink-0 flex-col border-r border-border-subtle px-3 py-4">
-        <Link
-          href="/"
-          className="mb-4 inline-flex items-center gap-1.5 px-2 text-sm text-muted transition-colors hover:text-foreground"
-        >
-          <ArrowLeft size={14} /> {t("workspace.title")}
-        </Link>
-        <nav className="flex-1 space-y-0.5">
+    <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+      <aside className="glass shrink-0 border-b border-border-subtle md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] md:w-56 md:border-b-0 md:border-r">
+        <div className="flex items-center gap-1 overflow-x-auto px-2 py-2 md:h-full md:flex-col md:items-stretch md:gap-0.5 md:overflow-visible md:px-3 md:py-4">
+          <Link
+            href="/"
+            className="mb-0 mr-1 hidden shrink-0 items-center gap-1.5 px-2 text-sm text-muted transition-colors hover:text-foreground md:mb-4 md:mr-0 md:inline-flex"
+          >
+            <ArrowLeft size={14} /> {t("workspace.title")}
+          </Link>
           {entries
             .filter((entry) => entry.show)
             .map(({ href, key, icon: Icon }) => (
@@ -39,7 +39,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                 key={href}
                 href={href}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-(--radius-control) px-2 py-1.5 text-sm transition-colors",
+                  "flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-(--radius-control) px-3 py-1.5 text-sm transition-colors md:px-2",
                   pathname.startsWith(href)
                     ? "bg-accent/15 font-medium text-accent"
                     : "text-foreground hover:bg-border-subtle",
@@ -49,9 +49,9 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
                 {t(key)}
               </Link>
             ))}
-        </nav>
+        </div>
       </aside>
-      <div className="min-w-0 flex-1 p-6">{children}</div>
+      <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">{children}</div>
     </div>
   );
 }

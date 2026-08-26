@@ -114,7 +114,7 @@ export default function DemandsPage() {
   const items = data?.items ?? [];
 
   return (
-    <div className="mx-auto w-full max-w-6xl space-y-5 p-6">
+    <div className="w-full space-y-5 px-4 py-5 sm:px-6 lg:px-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
@@ -286,7 +286,7 @@ export default function DemandsPage() {
           </div>
         </Card>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {items.map((demand) => (
             <Link key={demand.id} href={`/demands/${demand.id}`}>
               <Card className="card-hover h-full">

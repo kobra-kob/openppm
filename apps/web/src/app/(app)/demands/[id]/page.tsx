@@ -155,7 +155,7 @@ export default function DemandDetailPage() {
   const money = (v: number) => formatEuro(v, locale);
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-4 p-6">
+    <div className="mx-auto w-full max-w-[1600px] space-y-4 px-4 py-5 sm:px-6 lg:px-8">
       <Link
         href="/demands"
         className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"

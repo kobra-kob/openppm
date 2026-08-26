@@ -139,7 +139,7 @@ export default function BudgetGovernancePage() {
   const total = Number(form.capexAmount || 0) + Number(form.opexAmount || 0);
 
   return (
-    <div className="max-w-3xl space-y-4">
+    <div className="w-full max-w-4xl space-y-4">
       {error && <Alert tone="error">{error}</Alert>}
 
       {/* Rappel du principe : le budget est piloté par la gouvernance */}

@@ -60,7 +60,7 @@ export default function QuotesListPage() {
   const list = quotes ?? [];
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="w-full space-y-4">
       {error && <Alert tone="error">{error}</Alert>}
 
       <div className="flex items-center justify-between">

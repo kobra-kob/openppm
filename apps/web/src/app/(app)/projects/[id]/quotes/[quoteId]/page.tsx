@@ -118,7 +118,7 @@ export default function QuoteDetailPage() {
   const isEditor = quote.can.edit;
 
   return (
-    <div className="max-w-3xl space-y-4">
+    <div className="w-full max-w-4xl space-y-4">
       <Link
         href={`/projects/${projectId}/quotes`}
         className="inline-flex items-center gap-1.5 text-sm text-muted transition-colors hover:text-foreground"

@@ -164,7 +164,7 @@ export default function FinancePage() {
   const over = data.remaining !== null && data.remaining < 0;
 
   return (
-    <div className="max-w-4xl space-y-4">
+    <div className="w-full space-y-4">
       {error && <Alert tone="error">{error}</Alert>}
 
       {data.approvedBudget === null && (

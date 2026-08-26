@@ -138,7 +138,7 @@ export default function PortfolioDetailPage() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl space-y-5 p-6">
+    <div className="w-full space-y-5 px-4 py-5 sm:px-6 lg:px-8">
       <Link
         href="/portfolios"
         className="inline-flex items-center gap-1.5 text-sm text-muted hover:text-foreground"

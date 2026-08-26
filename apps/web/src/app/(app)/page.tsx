@@ -190,7 +190,7 @@ export default function WorkspacePage() {
     value ? new Date(value).toLocaleDateString(locale) : "—";
 
   return (
-    <div className="mx-auto w-full max-w-7xl space-y-5 p-6">
+    <div className="w-full space-y-5 px-4 py-5 sm:px-6 lg:px-8">
       {/* En-tête façon SPM */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>

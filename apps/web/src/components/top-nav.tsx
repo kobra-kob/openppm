@@ -13,11 +13,11 @@ const LINKS = [
 ] as const;
 
 /** Navigation principale de la topbar : onglets soulignés, sobres et sans cadre. */
-export function TopNav() {
+export function TopNav({ className }: { className?: string }) {
   const t = useTranslations("topNav");
   const pathname = usePathname();
   return (
-    <nav className="flex shrink-0 items-center gap-1">
+    <nav className={cn("flex shrink-0 items-center gap-1", className)}>
       {LINKS.map((link) => {
         const active = link.match(pathname);
         return (

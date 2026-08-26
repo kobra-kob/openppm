@@ -49,7 +49,7 @@ export default function ValidationsPage() {
   const empty = !isLoading && data?.total === 0;
 
   return (
-    <div className="mx-auto w-full max-w-4xl space-y-6 p-6">
+    <div className="mx-auto w-full max-w-[1600px] space-y-6 px-4 py-5 sm:px-6 lg:px-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight">{t("title")}</h1>
         <p className="text-sm text-muted">{t("subtitle")}</p>

@@ -60,23 +60,26 @@ export default function ProjectWorkspaceLayout({
   ] as const;
 
   return (
-    <div className="flex min-h-0 flex-1">
-      {/* Sidebar des modules — visible uniquement dans un projet */}
-      <aside className="glass-strong sticky top-14 flex h-[calc(100vh-3.5rem)] w-56 shrink-0 flex-col border-r border-border-subtle px-3 py-4">
-        <Link
-          href="/"
-          className="mb-4 inline-flex items-center gap-1.5 px-2 text-sm text-muted transition-colors hover:text-foreground"
-        >
-          <ArrowLeft size={14} /> {tWorkspace("title")}
-        </Link>
-        <div className="mb-4 border-b border-border-subtle px-2 pb-3">
-          <p className="truncate text-sm font-semibold">{project?.name ?? "…"}</p>
-          <p className="font-mono text-xs text-muted">{project?.code ?? ""}</p>
+    <div className="flex min-h-0 flex-1 flex-col md:flex-row">
+      {/* Sidebar des modules — colonne sur desktop, barre défilante sur mobile */}
+      <aside className="glass-strong shrink-0 border-b border-border-subtle md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] md:w-56 md:overflow-y-auto md:border-b-0 md:border-r md:px-3 md:py-4">
+        {/* En-tête projet — desktop uniquement (le nom figure déjà dans le contenu) */}
+        <div className="hidden md:block">
+          <Link
+            href="/"
+            className="mb-4 inline-flex items-center gap-1.5 px-2 text-sm text-muted transition-colors hover:text-foreground"
+          >
+            <ArrowLeft size={14} /> {tWorkspace("title")}
+          </Link>
+          <div className="mb-4 border-b border-border-subtle px-2 pb-3">
+            <p className="truncate text-sm font-semibold">{project?.name ?? "…"}</p>
+            <p className="font-mono text-xs text-muted">{project?.code ?? ""}</p>
+          </div>
+          <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
+            {t("modules")}
+          </p>
         </div>
-        <p className="mb-1 px-2 text-[11px] font-semibold uppercase tracking-wider text-muted">
-          {t("modules")}
-        </p>
-        <nav className="flex-1 space-y-0.5">
+        <nav className="flex items-center gap-1 overflow-x-auto px-2 py-2 md:flex-col md:items-stretch md:gap-0.5 md:overflow-visible md:px-0 md:py-0">
           {modules.map(({ href, key, icon: Icon, exact }) => {
             const active = exact ? pathname === href : pathname.startsWith(href);
             return (
@@ -84,7 +87,7 @@ export default function ProjectWorkspaceLayout({
                 key={key}
                 href={href}
                 className={cn(
-                  "flex items-center gap-2.5 rounded-(--radius-control) px-2 py-1.5 text-sm transition-colors",
+                  "flex shrink-0 items-center gap-2.5 whitespace-nowrap rounded-(--radius-control) px-3 py-1.5 text-sm transition-colors md:px-2",
                   active
                     ? "bg-accent/15 font-medium text-accent"
                     : "text-foreground hover:bg-border-subtle",
@@ -98,7 +101,7 @@ export default function ProjectWorkspaceLayout({
         </nav>
       </aside>
 
-      <div className="min-w-0 flex-1 p-6">
+      <div className="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
         {/* Fil d'ariane + en-tête projet */}
         <div className="mb-1 flex items-center gap-1.5 text-xs text-muted">
           <House size={12} />
