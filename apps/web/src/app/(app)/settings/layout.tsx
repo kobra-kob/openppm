@@ -1,13 +1,13 @@
 "use client";
 
-import { ArrowLeft, Settings2, UserRound } from "lucide-react";
+import { ArrowLeft, GitBranch, Shield, Tags, UserRound, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
 import { cn } from "@/components/ui";
 import { useAuthStore } from "@/lib/auth-store";
 
-/** Paramètres : Compte (tous) + Administration (rôle admin uniquement). */
+/** Paramètres : Compte (tous) + pages d'administration (rôle admin uniquement). */
 export default function SettingsLayout({ children }: { children: React.ReactNode }) {
   const t = useTranslations();
   const pathname = usePathname();
@@ -16,7 +16,10 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   const entries = [
     { href: "/settings/account", key: "settings.account", icon: UserRound, show: true },
-    { href: "/settings/admin", key: "settings.admin", icon: Settings2, show: isAdmin },
+    { href: "/settings/members", key: "settings.members", icon: UsersRound, show: isAdmin },
+    { href: "/settings/roles", key: "settings.roles", icon: Shield, show: isAdmin },
+    { href: "/settings/workflows", key: "settings.workflows", icon: GitBranch, show: isAdmin },
+    { href: "/settings/categories", key: "settings.categories", icon: Tags, show: isAdmin },
   ];
 
   return (
