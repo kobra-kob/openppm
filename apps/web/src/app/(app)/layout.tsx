@@ -49,6 +49,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             {t("appName")}
           </span>
         </Link>
+        <span className="mx-3 hidden h-6 w-px shrink-0 bg-border-subtle sm:block lg:mx-5" />
         <TopNav />
         <div className="mx-2 hidden min-w-0 flex-1 justify-center sm:flex">
           <GlobalSearch />
