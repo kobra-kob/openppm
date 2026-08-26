@@ -12,26 +12,31 @@ const LINKS = [
   { href: "/validations", key: "validations", match: (p: string) => p.startsWith("/validations") },
 ] as const;
 
-/** Navigation principale de la topbar : Demandes / Projets / Portefeuilles. */
+/** Navigation principale de la topbar : onglets soulignés, sobres et sans cadre. */
 export function TopNav() {
   const t = useTranslations("topNav");
   const pathname = usePathname();
   return (
-    <nav className="flex shrink-0 items-center gap-0.5 rounded-[10px] bg-[color-mix(in_srgb,var(--foreground)_7%,transparent)] p-[3px]">
+    <nav className="flex shrink-0 items-center gap-1">
       {LINKS.map((link) => {
         const active = link.match(pathname);
         return (
           <Link
             key={link.key}
             href={link.href}
+            aria-current={active ? "page" : undefined}
             className={cn(
-              "whitespace-nowrap rounded-[7px] px-3 py-1 text-[13px] font-medium transition-all",
-              active
-                ? "bg-surface-solid text-foreground shadow-[0_1px_2px_rgba(0,0,0,0.14)]"
-                : "text-muted hover:text-foreground",
+              "relative whitespace-nowrap px-2.5 py-1.5 text-[13px] font-medium transition-colors",
+              active ? "text-foreground" : "text-muted hover:text-foreground",
             )}
           >
             {t(link.key)}
+            <span
+              className={cn(
+                "pointer-events-none absolute inset-x-2.5 -bottom-0.5 h-0.5 rounded-full bg-accent transition-opacity",
+                active ? "opacity-100" : "opacity-0",
+              )}
+            />
           </Link>
         );
       })}
