@@ -1,19 +1,17 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+// Police auto-hébergée (paquet `geist` : fichiers woff2 embarqués). Contrairement
+// à next/font/google, aucun accès réseau n'est requis au build → le conteneur se
+// construit même sans joindre fonts.googleapis.com. Variables CSS identiques
+// (--font-geist-sans / --font-geist-mono), aucun changement de rendu.
+import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const geistSans = GeistSans;
+const geistMono = GeistMono;
 
 export const metadata: Metadata = {
   title: "OpenPPM",
