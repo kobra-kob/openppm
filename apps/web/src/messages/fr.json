@@ -659,7 +659,8 @@
     "roleEditor": {
       "manage": "Gérer les rôles",
       "save": "Enregistrer les rôles",
-      "cancel": "Annuler"
+      "cancel": "Annuler",
+      "hint": "Rôles cumulables. Cochez ou décochez, y compris Administrateur. Seul le retrait du tout dernier administrateur est impossible."
     },
     "invite": {
       "title": "Inviter un collaborateur",

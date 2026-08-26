@@ -659,7 +659,8 @@
     "roleEditor": {
       "manage": "Manage roles",
       "save": "Save roles",
-      "cancel": "Cancel"
+      "cancel": "Cancel",
+      "hint": "Roles are cumulative. Tick or untick any role, including Administrator. Only removing the very last administrator is blocked."
     },
     "invite": {
       "title": "Invite a teammate",

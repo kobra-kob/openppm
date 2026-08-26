@@ -65,6 +65,7 @@ export function MemberRolesEditor({
   return (
     <div className="mt-2 rounded-(--radius-control) border border-border-subtle bg-surface-solid p-3">
       {error && <Alert tone="error" className="mb-2">{error}</Alert>}
+      <p className="mb-2 text-xs text-muted">{t("roleEditor.hint")}</p>
       <div className="grid gap-1.5 sm:grid-cols-2">
         {assignable.map((role) => {
           const checked = selected.has(role.id);

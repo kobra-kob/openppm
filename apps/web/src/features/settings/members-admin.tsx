@@ -146,7 +146,7 @@ export function MembersAdmin() {
         <ul className="divide-y divide-border-subtle">
           {(members ?? []).map((member) => (
             <li key={member.id} className="py-3">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <div className="flex size-9 items-center justify-center rounded-full bg-accent/15 text-xs font-semibold text-accent">
                   {member.firstName.charAt(0)}
                   {member.lastName.charAt(0)}
@@ -170,16 +170,17 @@ export function MembersAdmin() {
                     </span>
                   ))}
                 </div>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
                   onClick={() =>
                     setEditingMemberId((id) => (id === member.id ? null : member.id))
                   }
-                  className="shrink-0 rounded-full p-1.5 text-muted transition-colors hover:bg-border-subtle hover:text-foreground"
-                  aria-label={t("roleEditor.manage")}
+                  className="shrink-0 gap-1.5 px-2.5 py-1.5 text-xs"
                 >
-                  <ShieldCheck size={16} />
-                </button>
+                  <ShieldCheck size={14} />
+                  <span className="hidden sm:inline">{t("roleEditor.manage")}</span>
+                </Button>
               </div>
               {editingMemberId === member.id && (
                 <MemberRolesEditor
