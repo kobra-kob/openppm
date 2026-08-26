@@ -29,24 +29,37 @@ interface GanttData {
 }
 
 const DAY_MS = 86_400_000;
-const PX: Record<Zoom, number> = { day: 28, week: 12, month: 4 };
-const ROW_H = 34;
-const HEADER_H = 40;
-const LABEL_W = 240;
+const PX: Record<Zoom, number> = { day: 30, week: 13, month: 4.4 };
+const ROW_H = 40;
+const HEADER_H = 56;
+const HEADER_TOP = 26; // bandeau des mois
+const LABEL_W = 268;
+const BAR_H = 22;
+const BAR_Y = (ROW_H - BAR_H) / 2;
 
 const dayIndex = (iso: string, rangeStart: number) =>
   Math.round((new Date(iso).getTime() - rangeStart) / DAY_MS);
+
+/** Couleur de barre par statut (variables de thème, clair/sombre). */
+const STATUS_COLOR: Record<TaskStatus, string> = {
+  done: "var(--success)",
+  in_progress: "var(--accent)",
+  todo: "var(--accent)",
+  cancelled: "var(--muted)",
+};
 
 export default function GanttPage() {
   const params = useParams<{ id: string }>();
   const projectId = params.id;
   const t = useTranslations("gantt");
+  const tTasks = useTranslations("tasks");
   const locale = useLocale();
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((state) => state.user);
 
   const [zoom, setZoom] = useState<Zoom>("week");
   const [now] = useState(() => Date.now());
+  const [hoveredId, setHoveredId] = useState<string | null>(null);
   const [drag, setDrag] = useState<{
     taskId: string;
     mode: "move" | "resize";
@@ -123,6 +136,29 @@ export default function GanttPage() {
   const chartW = totalDays * px;
   const chartH = ordered.length * ROW_H;
 
+  // Bandeaux mensuels : fond alterné + libellé, pour situer la timeline
+  const monthBands = useMemo(() => {
+    const bands: Array<{ x: number; w: number; label: string; even: boolean }> = [];
+    const first = new Date(rangeStart);
+    let cursor = new Date(first.getFullYear(), first.getMonth(), 1);
+    const end = rangeStart + totalDays * DAY_MS;
+    let i = 0;
+    while (cursor.getTime() < end) {
+      const next = new Date(cursor.getFullYear(), cursor.getMonth() + 1, 1);
+      const x = Math.max(0, ((cursor.getTime() - rangeStart) / DAY_MS) * px);
+      const xEnd = Math.min(chartW, ((next.getTime() - rangeStart) / DAY_MS) * px);
+      bands.push({
+        x,
+        w: Math.max(0, xEnd - x),
+        label: cursor.toLocaleDateString(locale, { month: "long", year: "numeric" }),
+        even: i % 2 === 0,
+      });
+      cursor = next;
+      i += 1;
+    }
+    return bands;
+  }, [rangeStart, totalDays, px, chartW, locale]);
+
   // Drag global : suivre la souris hors du SVG
   useEffect(() => {
     if (!drag) return;
@@ -156,7 +192,11 @@ export default function GanttPage() {
     return null;
   }
   if (dated.length === 0) {
-    return <p className="text-sm text-muted">{t("empty")}</p>;
+    return (
+      <div className="glass flex flex-col items-center justify-center gap-2 rounded-(--radius-card) p-12 text-center">
+        <p className="max-w-sm text-sm text-muted">{t("empty")}</p>
+      </div>
+    );
   }
 
   const barGeometry = (task: GanttTask) => {
@@ -187,26 +227,25 @@ export default function GanttPage() {
       ticks.push({
         x: day * px,
         label:
-          zoom === "month" || isFirst
-            ? date.toLocaleDateString(locale, { month: "short", year: "2-digit" })
+          zoom === "month"
+            ? ""
             : date.toLocaleDateString(locale, { day: "2-digit", month: "2-digit" }),
         major: isFirst,
       });
     }
   }
 
-  const statusFill = (task: GanttTask) =>
-    task.status === "done"
-      ? "var(--success)"
-      : task.status === "cancelled"
-        ? "var(--muted)"
-        : "var(--accent)";
-
   const undatedCount = ordered.length - dated.length;
+  const legend: Array<{ key: string; color: string }> = [
+    { key: "legendTodo", color: "var(--accent)" },
+    { key: "legendActive", color: "var(--accent)" },
+    { key: "legendDone", color: "var(--success)" },
+  ];
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
+      {/* Barre d'outils */}
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
         <div className="glass flex rounded-(--radius-control) p-0.5">
           {(["day", "week", "month"] as const).map((value) => (
             <button
@@ -215,18 +254,37 @@ export default function GanttPage() {
               onClick={() => setZoom(value)}
               className={cn(
                 "rounded-(--radius-control) px-3 py-1 text-xs font-medium transition-colors",
-                zoom === value ? "bg-accent text-accent-foreground" : "text-muted hover:text-foreground",
+                zoom === value
+                  ? "bg-accent text-accent-foreground shadow-sm"
+                  : "text-muted hover:text-foreground",
               )}
             >
               {t(`zoom${value.charAt(0).toUpperCase()}${value.slice(1)}` as "zoomDay")}
             </button>
           ))}
         </div>
-        <span className="inline-flex items-center gap-1.5 text-xs text-muted">
-          <span className="h-2 w-6 rounded-full border-2 border-danger" /> {t("criticalLegend")}
-        </span>
+
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted">
+          {legend.map((item) => (
+            <span key={item.key} className="inline-flex items-center gap-1.5">
+              <span
+                className="h-2.5 w-4 rounded-full"
+                style={{
+                  backgroundColor: item.color,
+                  opacity: item.key === "legendTodo" ? 0.4 : 1,
+                }}
+              />
+              {t(item.key)}
+            </span>
+          ))}
+          <span className="inline-flex items-center gap-1.5">
+            <span className="h-2.5 w-4 rounded-full ring-2 ring-danger ring-inset" />
+            {t("criticalLegend")}
+          </span>
+        </div>
+
         {undatedCount > 0 && (
-          <span className="text-xs text-muted">{t("undated", { count: undatedCount })}</span>
+          <span className="ml-auto text-xs text-muted">{t("undated", { count: undatedCount })}</span>
         )}
       </div>
 
@@ -235,31 +293,64 @@ export default function GanttPage() {
           {/* Colonne des tâches */}
           <div className="shrink-0 border-r border-border-subtle" style={{ width: LABEL_W }}>
             <div
-              className="flex items-end border-b border-border-subtle px-3 pb-1 text-[11px] font-semibold uppercase tracking-wider text-muted"
+              className="flex items-end border-b border-border-subtle px-3 pb-1.5 text-[11px] font-semibold uppercase tracking-wider text-muted"
               style={{ height: HEADER_H }}
             >
-              {t("today")} : {new Date(now).toLocaleDateString(locale)}
+              {tTasks("title")}
             </div>
-            {ordered.map((task) => (
-              <div
-                key={task.id}
-                className="flex items-center border-b border-border-subtle/50 px-3 text-sm"
-                style={{ height: ROW_H, paddingLeft: 12 + task.depth * 16 }}
-              >
-                {critical.has(task.id) && (
-                  <span className="mr-1.5 size-1.5 shrink-0 rounded-full bg-danger" />
-                )}
-                <span
+            {ordered.map((task) => {
+              const isDated = task.startDate && task.dueDate;
+              return (
+                <div
+                  key={task.id}
+                  onMouseEnter={() => setHoveredId(task.id)}
+                  onMouseLeave={() => setHoveredId(null)}
                   className={cn(
-                    "truncate",
-                    task.status === "done" && "text-muted line-through",
-                    task.status === "cancelled" && "text-muted line-through opacity-60",
+                    "flex flex-col justify-center gap-0.5 border-b border-border-subtle/50 pr-3 transition-colors",
+                    hoveredId === task.id && "bg-accent/5",
                   )}
+                  style={{ height: ROW_H, paddingLeft: 12 + task.depth * 16 }}
                 >
-                  {task.title}
-                </span>
-              </div>
-            ))}
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className="size-2 shrink-0 rounded-full"
+                      style={{
+                        backgroundColor: STATUS_COLOR[task.status],
+                        opacity: task.status === "todo" ? 0.45 : 1,
+                      }}
+                    />
+                    <span
+                      className={cn(
+                        "truncate text-sm",
+                        (task.status === "done" || task.status === "cancelled") &&
+                          "text-muted line-through",
+                      )}
+                      title={task.title}
+                    >
+                      {task.title}
+                    </span>
+                    {critical.has(task.id) && (
+                      <span className="shrink-0 rounded-full bg-danger/15 px-1.5 text-[9px] font-semibold uppercase tracking-wide text-danger">
+                        !
+                      </span>
+                    )}
+                  </div>
+                  {isDated && (
+                    <span className="truncate pl-3.5 text-[10px] tabular-nums text-muted">
+                      {new Date(task.startDate!).toLocaleDateString(locale, {
+                        day: "2-digit",
+                        month: "short",
+                      })}
+                      {" → "}
+                      {new Date(task.dueDate!).toLocaleDateString(locale, {
+                        day: "2-digit",
+                        month: "short",
+                      })}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
 
           {/* Timeline SVG */}
@@ -281,7 +372,60 @@ export default function GanttPage() {
                 >
                   <path d="M 0 0 L 8 4 L 0 8 z" fill="var(--muted)" />
                 </marker>
+                <filter id="bar-shadow" x="-2%" y="-20%" width="104%" height="140%">
+                  <feDropShadow
+                    dx="0"
+                    dy="1"
+                    stdDeviation="1.2"
+                    floodColor="#000"
+                    floodOpacity="0.18"
+                  />
+                </filter>
               </defs>
+
+              {/* Bandeaux mensuels (fond + libellé) */}
+              {monthBands.map((band, index) => (
+                <g key={index}>
+                  {band.even && (
+                    <rect
+                      x={band.x}
+                      y={HEADER_H}
+                      width={band.w}
+                      height={chartH}
+                      fill="var(--foreground)"
+                      opacity={0.025}
+                    />
+                  )}
+                  <rect
+                    x={band.x}
+                    y={0}
+                    width={band.w}
+                    height={HEADER_TOP}
+                    fill="var(--foreground)"
+                    opacity={band.even ? 0.03 : 0.05}
+                  />
+                  {band.w > 42 && (
+                    <text
+                      x={band.x + 8}
+                      y={17}
+                      fontSize={11}
+                      fontWeight={600}
+                      fill="var(--muted)"
+                      className="capitalize"
+                    >
+                      {band.label}
+                    </text>
+                  )}
+                  <line
+                    x1={band.x}
+                    y1={0}
+                    x2={band.x}
+                    y2={HEADER_H + chartH}
+                    stroke="var(--border-subtle)"
+                    strokeWidth={1}
+                  />
+                </g>
+              ))}
 
               {/* Week-ends (zoom jour) */}
               {zoom === "day" &&
@@ -294,46 +438,58 @@ export default function GanttPage() {
                       y={HEADER_H}
                       width={px}
                       height={chartH}
-                      fill="var(--border-subtle)"
-                      opacity={0.35}
+                      fill="var(--foreground)"
+                      opacity={0.04}
                     />
                   ) : null;
                 })}
 
-              {/* Graduations */}
-              {ticks.map((tick) => (
-                <g key={tick.x}>
+              {/* Séparateur bas d'en-tête */}
+              <line
+                x1={0}
+                y1={HEADER_H}
+                x2={chartW}
+                y2={HEADER_H}
+                stroke="var(--border-subtle)"
+                strokeWidth={1}
+              />
+
+              {/* Graduations semaines/jours */}
+              {ticks.map((tick, index) => (
+                <g key={index}>
                   <line
                     x1={tick.x}
                     y1={HEADER_H}
                     x2={tick.x}
                     y2={HEADER_H + chartH}
                     stroke="var(--border-subtle)"
-                    strokeWidth={tick.major ? 1.5 : 1}
+                    strokeWidth={0.75}
+                    opacity={0.6}
                   />
-                  <text
-                    x={tick.x + 4}
-                    y={HEADER_H - 8}
-                    fontSize={10}
-                    fill="var(--muted)"
-                  >
-                    {tick.label}
-                  </text>
+                  {tick.label && (
+                    <text x={tick.x + 4} y={HEADER_H - 7} fontSize={9.5} fill="var(--muted)">
+                      {tick.label}
+                    </text>
+                  )}
                 </g>
               ))}
 
-              {/* Lignes de rangées */}
-              {ordered.map((_, index) => (
-                <line
-                  key={index}
-                  x1={0}
-                  y1={HEADER_H + (index + 1) * ROW_H}
-                  x2={chartW}
-                  y2={HEADER_H + (index + 1) * ROW_H}
-                  stroke="var(--border-subtle)"
-                  opacity={0.5}
-                />
-              ))}
+              {/* Survol de rangée */}
+              {hoveredId &&
+                rowIndexById.has(hoveredId) &&
+                (() => {
+                  const index = rowIndexById.get(hoveredId)!;
+                  return (
+                    <rect
+                      x={0}
+                      y={HEADER_H + index * ROW_H}
+                      width={chartW}
+                      height={ROW_H}
+                      fill="var(--accent)"
+                      opacity={0.05}
+                    />
+                  );
+                })()}
 
               {/* Dépendances */}
               {data.dependencies.map((edge) => {
@@ -348,82 +504,108 @@ export default function GanttPage() {
                 const y2 = HEADER_H + rowIndexById.get(succ.id)! * ROW_H + ROW_H / 2;
                 const x1 = predGeo.x + predGeo.w;
                 const x2 = succGeo.x;
-                const elbow = Math.max(x1 + 10, x2 - 10);
+                const elbow = Math.max(x1 + 12, x2 - 12);
+                const onPath = critical.has(pred.id) && critical.has(succ.id);
                 return (
                   <path
                     key={`${edge.predecessorId}-${edge.successorId}`}
                     d={`M ${x1} ${y1} H ${elbow} V ${y2} H ${x2 - 2}`}
                     fill="none"
-                    stroke="var(--muted)"
+                    stroke={onPath ? "var(--danger)" : "var(--muted)"}
                     strokeWidth={1.5}
+                    strokeLinejoin="round"
                     markerEnd="url(#dep-arrow)"
-                    opacity={0.8}
+                    opacity={onPath ? 0.7 : 0.5}
                   />
                 );
               })}
-
-              {/* Aujourd'hui */}
-              {todayX >= 0 && todayX <= chartW && (
-                <line
-                  x1={todayX}
-                  y1={HEADER_H - 4}
-                  x2={todayX}
-                  y2={HEADER_H + chartH}
-                  stroke="var(--danger)"
-                  strokeWidth={1.5}
-                  strokeDasharray="4 3"
-                />
-              )}
 
               {/* Barres */}
               {ordered.map((task, index) => {
                 if (!task.startDate || !task.dueDate) return null;
                 const geo = barGeometry(task);
-                const y = HEADER_H + index * ROW_H + 7;
+                const y = HEADER_H + index * ROW_H + BAR_Y;
                 const isCritical = critical.has(task.id);
+                const color = STATUS_COLOR[task.status];
+                const isTodo = task.status === "todo";
+                const isCancelled = task.status === "cancelled";
+                const labelChars = Math.floor((geo.w - 16) / 6.5);
                 return (
                   <g key={task.id}>
+                    {/* Barre pleine (statut) */}
                     <rect
                       x={geo.x}
                       y={y}
                       width={geo.w}
-                      height={ROW_H - 14}
-                      rx={6}
-                      fill={statusFill(task)}
-                      opacity={task.status === "cancelled" ? 0.35 : 0.85}
-                      stroke={isCritical ? "var(--danger)" : "none"}
-                      strokeWidth={isCritical ? 2 : 0}
+                      height={BAR_H}
+                      rx={7}
+                      fill={color}
+                      fillOpacity={isCancelled ? 0.3 : isTodo ? 0.4 : 0.95}
+                      stroke={isTodo ? color : "none"}
+                      strokeOpacity={isTodo ? 0.9 : 0}
+                      strokeWidth={isTodo ? 1.5 : 0}
+                      strokeDasharray={isCancelled ? "3 3" : undefined}
+                      filter={isCancelled ? undefined : "url(#bar-shadow)"}
                       className={cn(canWork && "cursor-grab")}
+                      onMouseEnter={() => setHoveredId(task.id)}
+                      onMouseLeave={() => setHoveredId(null)}
                       onMouseDown={(event) => {
                         if (!canWork) return;
                         event.preventDefault();
-                        setDrag({
-                          taskId: task.id,
-                          mode: "move",
-                          startX: event.clientX,
-                          deltaDays: 0,
-                        });
+                        setDrag({ taskId: task.id, mode: "move", startX: event.clientX, deltaDays: 0 });
                       }}
                     >
                       <title>{task.title}</title>
                     </rect>
-                    {geo.w > 60 && (
+                    {/* Liseré brillant en haut de barre */}
+                    {!isCancelled && !isTodo && (
+                      <rect
+                        x={geo.x + 2}
+                        y={y + 2}
+                        width={Math.max(0, geo.w - 4)}
+                        height={2}
+                        rx={1}
+                        fill="#fff"
+                        opacity={0.25}
+                        pointerEvents="none"
+                      />
+                    )}
+                    {/* Contour chemin critique */}
+                    {isCritical && (
+                      <rect
+                        x={geo.x}
+                        y={y}
+                        width={geo.w}
+                        height={BAR_H}
+                        rx={7}
+                        fill="none"
+                        stroke="var(--danger)"
+                        strokeWidth={2}
+                        pointerEvents="none"
+                      />
+                    )}
+                    {/* Libellé dans la barre */}
+                    {labelChars > 3 && (
                       <text
-                        x={geo.x + 8}
-                        y={y + (ROW_H - 14) / 2 + 3.5}
-                        fontSize={10.5}
-                        fill="var(--accent-foreground)"
+                        x={geo.x + 9}
+                        y={y + BAR_H / 2 + 3.5}
+                        fontSize={11}
+                        fontWeight={500}
+                        fill={isTodo ? "var(--foreground)" : "var(--accent-foreground)"}
                         pointerEvents="none"
                       >
-                        {task.title.slice(0, Math.floor(geo.w / 7))}
+                        {task.title.length > labelChars
+                          ? `${task.title.slice(0, labelChars)}…`
+                          : task.title}
                       </text>
                     )}
+                    {/* Poignée de redimensionnement */}
                     {canWork && (
                       <rect
                         x={geo.x + geo.w - 6}
                         y={y}
-                        width={8}
-                        height={ROW_H - 14}
+                        width={9}
+                        height={BAR_H}
                         fill="transparent"
                         className="cursor-ew-resize"
                         onMouseDown={(event) => {
@@ -441,6 +623,22 @@ export default function GanttPage() {
                   </g>
                 );
               })}
+
+              {/* Aujourd'hui */}
+              {todayX >= 0 && todayX <= chartW && (
+                <g pointerEvents="none">
+                  <line
+                    x1={todayX}
+                    y1={HEADER_H - 2}
+                    x2={todayX}
+                    y2={HEADER_H + chartH}
+                    stroke="var(--danger)"
+                    strokeWidth={1.5}
+                    strokeDasharray="4 3"
+                  />
+                  <circle cx={todayX} cy={HEADER_H - 2} r={3} fill="var(--danger)" />
+                </g>
+              )}
             </svg>
           </div>
         </div>

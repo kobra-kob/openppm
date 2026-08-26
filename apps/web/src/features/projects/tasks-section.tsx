@@ -33,6 +33,7 @@ interface TaskView {
   title: string;
   status: TaskStatus;
   priority: number;
+  startDate: string | null;
   dueDate: string | null;
   estimateHours: string | null;
   assignees: Array<{ userId: string; name: string }>;
@@ -395,6 +396,39 @@ function TaskPanel({
             </option>
           ))}
         </select>
+
+        {/* Planification : dates de début et de fin (alimentent le Gantt) */}
+        <div className="flex items-center gap-1.5 rounded-(--radius-control) border border-border-subtle bg-surface-solid px-2 py-1">
+          <CalendarDays size={13} className="text-muted" />
+          <label className="flex items-center gap-1 text-xs text-muted">
+            <span className="sr-only sm:not-sr-only">{t("startDate")}</span>
+            <input
+              type="date"
+              disabled={!canWork}
+              value={detail.startDate?.slice(0, 10) ?? ""}
+              max={detail.dueDate?.slice(0, 10) || undefined}
+              onChange={(event) =>
+                onAction(`/${detail.id}`, "PATCH", { startDate: event.target.value || null })
+              }
+              className="bg-transparent text-xs text-foreground focus:outline-none disabled:opacity-60"
+            />
+          </label>
+          <span className="text-muted">→</span>
+          <label className="flex items-center gap-1 text-xs text-muted">
+            <span className="sr-only sm:not-sr-only">{t("dueDate")}</span>
+            <input
+              type="date"
+              disabled={!canWork}
+              value={detail.dueDate?.slice(0, 10) ?? ""}
+              min={detail.startDate?.slice(0, 10) || undefined}
+              onChange={(event) =>
+                onAction(`/${detail.id}`, "PATCH", { dueDate: event.target.value || null })
+              }
+              className="bg-transparent text-xs text-foreground focus:outline-none disabled:opacity-60"
+            />
+          </label>
+        </div>
+
         {canWork && (
           <button
             type="button"

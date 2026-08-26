@@ -595,7 +595,10 @@
     "empty": "Aucune tâche datée : renseignez des dates de début et d'échéance pour dessiner le Gantt.",
     "undated": "{count} tâche(s) sans dates non affichée(s)",
     "criticalLegend": "Chemin critique",
-    "today": "Aujourd'hui"
+    "today": "Aujourd'hui",
+    "legendTodo": "À faire",
+    "legendActive": "En cours",
+    "legendDone": "Terminé"
   },
   "board": {
     "title": "Board",
@@ -626,6 +629,8 @@
     "add": "Ajouter",
     "subtaskPlaceholder": "Nouvelle sous-tâche…",
     "empty": "Aucune tâche pour l'instant.",
+    "startDate": "Début",
+    "dueDate": "Échéance",
     "status": {
       "todo": "À faire",
       "in_progress": "En cours",

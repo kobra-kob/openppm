@@ -595,7 +595,10 @@
     "empty": "No dated tasks: set start and due dates to draw the Gantt.",
     "undated": "{count} undated task(s) not displayed",
     "criticalLegend": "Critical path",
-    "today": "Today"
+    "today": "Today",
+    "legendTodo": "To do",
+    "legendActive": "In progress",
+    "legendDone": "Done"
   },
   "board": {
     "title": "Board",
@@ -626,6 +629,8 @@
     "add": "Add",
     "subtaskPlaceholder": "New subtask…",
     "empty": "No tasks yet.",
+    "startDate": "Start",
+    "dueDate": "Due",
     "status": {
       "todo": "To do",
       "in_progress": "In progress",
