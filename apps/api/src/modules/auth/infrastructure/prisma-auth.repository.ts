@@ -1,5 +1,12 @@
 import { Injectable } from "@nestjs/common";
-import { Invitation, PasswordReset, Prisma, RefreshToken, RoleKey } from "@openppm/db";
+import {
+  Invitation,
+  MembershipStatus,
+  PasswordReset,
+  Prisma,
+  RefreshToken,
+  RoleKey,
+} from "@openppm/db";
 import { PrismaService } from "../../../core/prisma/prisma.service";
 import {
   AcceptInvitationInput,
@@ -41,6 +48,34 @@ export class PrismaAuthRepository implements AuthRepository {
     return found !== null;
   }
 
+  async listUserOrganizations(userId: string) {
+    const memberships = await this.prisma.organizationMembership.findMany({
+      where: { userId, status: MembershipStatus.ACTIVE, organization: { deletedAt: null } },
+      select: {
+        isOwner: true,
+        organization: { select: { id: true, name: true, slug: true } },
+      },
+      orderBy: { organization: { name: "asc" } },
+    });
+    return memberships.map((m) => ({
+      id: m.organization.id,
+      name: m.organization.name,
+      slug: m.organization.slug,
+      isOwner: m.isOwner,
+    }));
+  }
+
+  async findActiveMembership(userId: string, organizationId: string) {
+    const membership = await this.prisma.organizationMembership.findUnique({
+      where: { userId_organizationId: { userId, organizationId } },
+      select: { status: true, isOwner: true },
+    });
+    if (!membership || membership.status !== MembershipStatus.ACTIVE) {
+      return null;
+    }
+    return { isOwner: membership.isOwner };
+  }
+
   createOrganizationWithOwner(
     input: CreateOrganizationWithOwnerInput,
   ): Promise<UserWithAccess> {
@@ -56,7 +91,7 @@ export class PrismaAuthRepository implements AuthRepository {
       const organization = await tx.organization.create({
         data: { name: input.organizationName, slug: input.slug },
       });
-      return tx.user.create({
+      const user = await tx.user.create({
         data: {
           organizationId: organization.id,
           email: input.email,
@@ -68,6 +103,21 @@ export class PrismaAuthRepository implements AuthRepository {
         },
         include: USER_INCLUDE,
       });
+      // Multi-tenant : le créateur devient membre owner (rôles par organisation).
+      await tx.organizationMembership.create({
+        data: {
+          userId: user.id,
+          organizationId: organization.id,
+          status: MembershipStatus.ACTIVE,
+          isOwner: true,
+          roles: { create: { roleId: adminRole.id } },
+        },
+      });
+      await tx.organization.update({
+        where: { id: organization.id },
+        data: { ownerUserId: user.id },
+      });
+      return user;
     });
   }
 
@@ -169,7 +219,7 @@ export class PrismaAuthRepository implements AuthRepository {
         where: { id: input.invitationId },
         data: { acceptedAt: new Date() },
       });
-      return tx.user.create({
+      const user = await tx.user.create({
         data: {
           organizationId: input.organizationId,
           email: input.email,
@@ -181,6 +231,16 @@ export class PrismaAuthRepository implements AuthRepository {
         },
         include: USER_INCLUDE,
       });
+      // Multi-tenant : membre actif de l'organisation invitante (rôle par org).
+      await tx.organizationMembership.create({
+        data: {
+          userId: user.id,
+          organizationId: input.organizationId,
+          status: MembershipStatus.ACTIVE,
+          roles: { create: { roleId: input.roleId } },
+        },
+      });
+      return user;
     });
   }
 

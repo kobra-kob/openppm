@@ -1,5 +1,5 @@
 import { Injectable } from "@nestjs/common";
-import { Invitation, Role, RoleKey } from "@openppm/db";
+import { Invitation, MembershipStatus, Role, RoleKey } from "@openppm/db";
 import { PrismaService } from "../../../core/prisma/prisma.service";
 import {
   CreateInvitationInput,
@@ -118,22 +118,42 @@ export class PrismaMembersRepository implements MembersRepository {
   }
 
   async countOrgAdmins(organizationId: string, excludeUserId: string): Promise<number> {
-    return this.prisma.user.count({
+    // Comptage par membership (rôle admin dans CETTE organisation).
+    return this.prisma.organizationMembership.count({
       where: {
         organizationId,
-        deletedAt: null,
-        id: { not: excludeUserId },
-        userRoles: { some: { role: { key: RoleKey.admin } } },
+        status: MembershipStatus.ACTIVE,
+        userId: { not: excludeUserId },
+        user: { deletedAt: null },
+        roles: { some: { role: { key: RoleKey.admin } } },
       },
     });
   }
 
-  async setUserRoles(userId: string, roleIds: string[]): Promise<void> {
-    await this.prisma.$transaction([
-      this.prisma.userRole.deleteMany({ where: { userId } }),
-      this.prisma.userRole.createMany({
-        data: roleIds.map((roleId) => ({ userId, roleId })),
-      }),
-    ]);
+  /**
+   * Fixe les rôles d'un membre dans une organisation : met à jour les rôles de
+   * son membership (source de vérité multi-tenant) et synchronise `user_roles`
+   * (repli legacy) dans une transaction.
+   */
+  async setUserRoles(userId: string, organizationId: string, roleIds: string[]): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const membership = await tx.organizationMembership.upsert({
+        where: { userId_organizationId: { userId, organizationId } },
+        create: { userId, organizationId, status: MembershipStatus.ACTIVE },
+        update: {},
+        select: { id: true },
+      });
+      await tx.membershipRole.deleteMany({ where: { membershipId: membership.id } });
+      if (roleIds.length > 0) {
+        await tx.membershipRole.createMany({
+          data: roleIds.map((roleId) => ({ membershipId: membership.id, roleId })),
+        });
+      }
+      // Synchronisation legacy (repli quand aucun membership) pour cohérence.
+      await tx.userRole.deleteMany({ where: { userId } });
+      if (roleIds.length > 0) {
+        await tx.userRole.createMany({ data: roleIds.map((roleId) => ({ userId, roleId })) });
+      }
+    });
   }
 }

@@ -50,7 +50,7 @@ export interface MembersRepository {
   /** Nombre d'utilisateurs actifs de l'org ayant le rôle admin, hors utilisateur donné. */
   countOrgAdmins(organizationId: string, excludeUserId: string): Promise<number>;
   /** Remplace intégralement les rôles d'un utilisateur. */
-  setUserRoles(userId: string, roleIds: string[]): Promise<void>;
+  setUserRoles(userId: string, organizationId: string, roleIds: string[]): Promise<void>;
 }
 
 export const MEMBERS_REPOSITORY = Symbol("MEMBERS_REPOSITORY");

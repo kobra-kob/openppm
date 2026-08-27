@@ -33,11 +33,15 @@ export class TokenService {
     return createHash("sha256").update(raw).digest("hex");
   }
 
-  buildPayload(user: UserWithAccess): Omit<JwtPayload, "iat" | "exp"> {
+  buildPayload(
+    user: UserWithAccess,
+    organizationId?: string,
+  ): Omit<JwtPayload, "iat" | "exp"> {
     return {
       sub: user.id,
       email: user.email,
-      org: user.organizationId,
+      // Org courante = organisation choisie (switch) sinon l'org d'origine.
+      org: organizationId ?? user.organizationId,
       roles: user.userRoles
         .map((userRole) => userRole.role.key)
         .filter((key): key is NonNullable<typeof key> => key !== null),
@@ -48,13 +52,15 @@ export class TokenService {
   /**
    * Émet un couple access/refresh. `familyId` absent = nouvelle session
    * (login) ; présent = rotation au sein de la même famille (refresh).
+   * `organizationId` permet d'émettre pour une org différente (switch tenant).
    */
   async issueTokens(
     user: UserWithAccess,
     context: RequestContext = {},
     familyId?: string,
+    organizationId?: string,
   ): Promise<IssuedTokens> {
-    const accessToken = await this.jwt.signAsync(this.buildPayload(user));
+    const accessToken = await this.jwt.signAsync(this.buildPayload(user, organizationId));
     const refreshToken = randomBytes(48).toString("base64url");
     const refreshExpiresAt = new Date(
       Date.now() + this.refreshTtlDays * 24 * 60 * 60 * 1000,

@@ -25,6 +25,7 @@ import {
 import { RefreshDto } from "../application/dto/refresh.dto";
 import { RegisterDto } from "../application/dto/register.dto";
 import { ResetPasswordDto } from "../application/dto/reset-password.dto";
+import { SwitchOrganizationDto } from "../application/dto/switch-organization.dto";
 import { MfaService, MfaSetup } from "../application/mfa.service";
 import { PermissionsService } from "../application/permissions.service";
 import type { JwtPayload } from "../application/jwt-payload";
@@ -185,15 +186,45 @@ export class AuthController {
 
   @Get("me")
   @ApiBearerAuth()
-  @ApiOperation({ summary: "Profil de l'utilisateur connecté (rôles + permissions effectives)" })
+  @ApiOperation({ summary: "Profil de l'utilisateur connecté (rôles + permissions + organisations)" })
   async me(
     @CurrentUser() payload: JwtPayload,
-  ): Promise<PublicUser & { permissions: string[] }> {
-    const [user, permissions] = await Promise.all([
+  ): Promise<
+    PublicUser & {
+      permissions: string[];
+      organizationId: string;
+      organizations: Array<{ id: string; name: string; slug: string; isOwner: boolean }>;
+    }
+  > {
+    const [user, permissions, organizations] = await Promise.all([
       this.auth.me(payload.sub),
-      this.permissions.getEffectivePermissions(payload.sub),
+      this.permissions.getEffectivePermissions(payload.sub, payload.org),
+      this.auth.listOrganizations(payload.sub),
     ]);
-    return { ...user, permissions: [...permissions].sort() };
+    return {
+      ...user,
+      permissions: [...permissions].sort(),
+      organizationId: payload.org,
+      organizations,
+    };
+  }
+
+  @Post("switch-organization")
+  @ApiBearerAuth()
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: "Changer d'organisation courante (ré-émet un jeton après vérification)" })
+  async switchOrganization(
+    @CurrentUser() payload: JwtPayload,
+    @Body() dto: SwitchOrganizationDto,
+    @Req() request: Request,
+    @Res({ passthrough: true }) response: Response,
+  ): Promise<AuthResponse> {
+    const result = await this.auth.switchOrganization(
+      payload,
+      dto.organizationId,
+      this.context(request),
+    );
+    return this.respond(result, response);
   }
 
   @Post("change-password")

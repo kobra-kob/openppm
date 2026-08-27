@@ -8,6 +8,7 @@ import { useEffect } from "react";
 import { GlobalSearch } from "@/components/global-search";
 import { LocaleSwitch } from "@/components/locale-switch";
 import { NotificationBell } from "@/components/notification-bell";
+import { OrganizationSwitcher } from "@/components/organization-switcher";
 import { ProfileMenu } from "@/components/profile-menu";
 import { TopNav } from "@/components/top-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
@@ -50,6 +51,8 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {t("appName")}
             </span>
           </Link>
+          <span className="mx-2 hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />
+          <OrganizationSwitcher />
           <span className="mx-2 hidden h-6 w-px shrink-0 bg-border-subtle md:block lg:mx-4" />
           {/* Onglets en ligne sur desktop, repliés en 2e rangée sur mobile */}
           <TopNav className="hidden md:flex" />

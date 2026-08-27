@@ -76,7 +76,7 @@ export class MembersService {
       }
     }
 
-    await this.repository.setUserRoles(userId, unique);
+    await this.repository.setUserRoles(userId, payload.org, unique);
     this.permissions.invalidate(userId);
     await this.audit.log({
       action: "member.roles_updated",

@@ -12,6 +12,14 @@ export type UserWithAccess = User & {
   userRoles: Array<{ role: Role }>;
 };
 
+/** Organisation accessible à un compte (via un membership actif). */
+export interface UserOrganization {
+  id: string;
+  name: string;
+  slug: string;
+  isOwner: boolean;
+}
+
 export interface CreateOrganizationWithOwnerInput {
   organizationName: string;
   slug: string;
@@ -57,6 +65,13 @@ export interface AuthRepository {
   findUserByEmail(email: string): Promise<UserWithAccess | null>;
   findUserById(id: string): Promise<UserWithAccess | null>;
   isSlugTaken(slug: string): Promise<boolean>;
+  /** Organisations où le compte a un membership ACTIF (sélecteur de tenant). */
+  listUserOrganizations(userId: string): Promise<UserOrganization[]>;
+  /** Membership ACTIF de l'utilisateur dans l'org, ou null (contrôle de switch). */
+  findActiveMembership(
+    userId: string,
+    organizationId: string,
+  ): Promise<{ isOwner: boolean } | null>;
   createOrganizationWithOwner(
     input: CreateOrganizationWithOwnerInput,
   ): Promise<UserWithAccess>;

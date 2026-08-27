@@ -284,6 +284,61 @@ export class AuthService {
     };
   }
 
+  /** Organisations accessibles au compte (sélecteur de tenant). */
+  listOrganizations(userId: string) {
+    return this.repository.listUserOrganizations(userId);
+  }
+
+  /**
+   * Change l'organisation courante : ré-émet un jeton pour l'org cible, après
+   * vérification d'un membership ACTIF. Le front ne peut jamais imposer l'org.
+   * Une tentative sur une org non membre est refusée et auditée.
+   */
+  async switchOrganization(
+    payload: { sub: string; org: string },
+    organizationId: string,
+    context: RequestContext,
+  ): Promise<AuthResult> {
+    const orgs = await this.repository.listUserOrganizations(payload.sub);
+    const target = orgs.find((o) => o.id === organizationId);
+    if (!target) {
+      await this.audit.log({
+        action: "security.cross_tenant_access_attempt",
+        entityType: "organization",
+        entityId: organizationId,
+        organizationId: payload.org,
+        userId: payload.sub,
+        after: { attemptedOrganizationId: organizationId },
+        ...context,
+      });
+      throw new ForbiddenException({
+        code: "NOT_A_MEMBER",
+        message: "Vous n'appartenez pas à cette organisation",
+      });
+    }
+    const user = await this.repository.findUserById(payload.sub);
+    if (!user) {
+      throw new UnauthorizedException({ code: "UNAUTHENTICATED", message: "Compte introuvable" });
+    }
+    const tokens = await this.tokens.issueTokens(user, context, undefined, organizationId);
+    await this.audit.log({
+      action: "auth.organization_switched",
+      entityType: "organization",
+      entityId: organizationId,
+      organizationId,
+      userId: payload.sub,
+      after: { organizationId },
+      ...context,
+    });
+    return {
+      user: {
+        ...this.toPublicUser(user),
+        organization: { id: target.id, name: target.name, slug: target.slug },
+      },
+      tokens,
+    };
+  }
+
   async refresh(rawToken: string, context: RequestContext): Promise<AuthResult> {
     const stored = await this.repository.findRefreshTokenByHash(
       this.tokens.hashToken(rawToken),

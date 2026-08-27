@@ -27,7 +27,7 @@ export class PermissionsGuard implements CanActivate {
     }
     const request = context.switchToHttp().getRequest<Request>();
     const user = request.user as JwtPayload | undefined;
-    if (!user || !(await this.permissions.hasAny(user.sub, required))) {
+    if (!user || !(await this.permissions.hasAny(user.sub, user.org, required))) {
       throw new ForbiddenException({
         code: "FORBIDDEN",
         message: "Permission insuffisante pour cette action",

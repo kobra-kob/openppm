@@ -58,7 +58,7 @@ export class JwtAuthGuard implements CanActivate {
     // Rôles relus en base : un rôle attribué ou retiré prend effet sans
     // reconnexion (le jeton, lui, fige les rôles émis à la connexion).
     try {
-      const roleKeys = await this.permissions.getRoleKeys(payload.sub);
+      const roleKeys = await this.permissions.getRoleKeys(payload.sub, payload.org);
       if (roleKeys.length > 0) {
         payload.roles = roleKeys;
       }
