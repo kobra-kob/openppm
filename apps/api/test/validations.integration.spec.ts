@@ -179,5 +179,29 @@ describe("Mes validations (intégration)", () => {
     expect(item).toBeDefined();
     expect(item.stateKey).toBe("submitted");
     expect(item.reference).toMatch(/^DEMD\d{5}$/);
+    // Les transitions d'approbation sont fournies pour agir depuis la file
+    expect(item.transitions.map((tr: { key: string }) => tr.key)).toContain("manager_approve");
+
+    // L'administrateur voit aussi la demande (bypass) et peut l'approuver
+    const adminView = await validations(adminToken);
+    const adminItem = adminView.body.demands.find(
+      (d: { demandId: string }) => d.demandId === demand.body.id,
+    );
+    expect(adminItem).toBeDefined();
+    const approve = adminItem.transitions.find(
+      (tr: { key: string }) => tr.key === "manager_approve",
+    );
+    expect(approve).toBeDefined();
+    await request(server())
+      .post(`/api/v1/demands/${demand.body.id}/transitions/${approve.key}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({})
+      .expect(201);
+
+    // Une fois franchie, elle quitte la file du Manager
+    const afterApprove = await validations(managerToken);
+    expect(
+      afterApprove.body.demands.some((d: { demandId: string }) => d.demandId === demand.body.id),
+    ).toBe(false);
   });
 });

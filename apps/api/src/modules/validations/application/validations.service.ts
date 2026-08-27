@@ -20,6 +20,12 @@ export interface BudgetValidationItem {
   createdAt: Date;
 }
 
+export interface DemandTransitionOption {
+  key: string;
+  label: string;
+  requiresComment: boolean;
+}
+
 export interface DemandValidationItem {
   type: "demand";
   demandId: string;
@@ -27,6 +33,8 @@ export interface DemandValidationItem {
   title: string;
   stateKey: string;
   stateLabel: string;
+  /** Transitions d'approbation que l'utilisateur peut franchir depuis cet état. */
+  transitions: DemandTransitionOption[];
 }
 
 export interface ValidationsView {
@@ -84,24 +92,34 @@ export class ValidationsService {
     if (!definition) {
       return [];
     }
-    // États depuis lesquels l'utilisateur dispose d'une transition d'approbation
-    // (restreinte à un rôle qu'il possède). Les transitions ouvertes à tous
-    // (ex. « Soumettre », action du demandeur) sont exclues de la file.
-    const actionableStates = new Set<string>();
+    // Transitions d'approbation franchissables par l'utilisateur, groupées par
+    // état de départ. Restreintes à un rôle : l'administrateur les franchit
+    // toutes (bypass), sinon il faut posséder l'un des rôles autorisés. Les
+    // transitions ouvertes à tous (ex. « Soumettre ») restent hors de la file.
+    const isAdmin = payload.roles.includes(RoleKey.admin);
+    const optionsByState = new Map<string, DemandTransitionOption[]>();
     for (const transition of definition.transitions) {
-      if (
-        transition.allowedRoles.length > 0 &&
-        transition.allowedRoles.some((role) => payload.roles.includes(role))
-      ) {
-        actionableStates.add(transition.fromStateKey);
+      const roleGated = transition.allowedRoles.length > 0;
+      const canAct =
+        roleGated &&
+        (isAdmin || transition.allowedRoles.some((role) => payload.roles.includes(role)));
+      if (!canAct) {
+        continue;
       }
+      const list = optionsByState.get(transition.fromStateKey) ?? [];
+      list.push({
+        key: transition.key,
+        label: transition.label,
+        requiresComment: transition.requiresComment,
+      });
+      optionsByState.set(transition.fromStateKey, list);
     }
-    if (actionableStates.size === 0) {
+    if (optionsByState.size === 0) {
       return [];
     }
 
     const open = await this.workflow.listOpenInstanceStates(payload.org, DEMAND_ENTITY_TYPE);
-    const relevant = open.filter((instance) => actionableStates.has(instance.currentStateKey));
+    const relevant = open.filter((instance) => optionsByState.has(instance.currentStateKey));
     if (relevant.length === 0) {
       return [];
     }
@@ -121,6 +139,7 @@ export class ValidationsService {
         title: summary.title,
         stateKey,
         stateLabel: stateLabelByKey.get(stateKey) ?? stateKey,
+        transitions: optionsByState.get(stateKey) ?? [],
       };
     });
   }

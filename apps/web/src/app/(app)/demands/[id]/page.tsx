@@ -377,17 +377,23 @@ export default function DemandDetailPage() {
         </div>
       )}
 
-      {/* Actions de workflow */}
-      {!editing && (wf.available.length > 0 || demand.canEdit) && (
+      {/* Actions de workflow — seules les actions du demandeur (ex. Soumettre)
+          restent ici ; les approbations réservées à un rôle se font depuis
+          « Mes validations ». */}
+      {(() => {
+        const ownActions = wf.available.filter((tr) => !tr.restricted);
+        const hasApprovals = wf.available.some((tr) => tr.restricted);
+        if (editing || (ownActions.length === 0 && !hasApprovals && !demand.canEdit)) {
+          return null;
+        }
+        return (
         <Card>
           <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted">
             {t("actionsTitle")}
           </h2>
-          {wf.available.length === 0 ? (
-            <p className="text-sm text-muted">{t("noAction")}</p>
-          ) : (
+          {ownActions.length > 0 && (
             <div className="space-y-3">
-              {wf.available.some((tr) => tr.requiresComment) && (
+              {ownActions.some((tr) => tr.requiresComment) && (
                 <Input
                   placeholder={t("commentPlaceholder")}
                   value={comment}
@@ -395,7 +401,7 @@ export default function DemandDetailPage() {
                 />
               )}
               <div className="flex flex-wrap gap-2">
-                {wf.available.map((tr) => {
+                {ownActions.map((tr) => {
                   const isReject = tr.key.startsWith("reject");
                   const isSubmit = tr.key === "submit";
                   return (
@@ -414,6 +420,17 @@ export default function DemandDetailPage() {
               </div>
             </div>
           )}
+          {hasApprovals && (
+            <Link
+              href="/validations"
+              className="mt-1 inline-flex items-center gap-1.5 text-sm text-accent hover:underline"
+            >
+              <CheckCircle2 size={15} /> {t("approvalsInValidations")}
+            </Link>
+          )}
+          {ownActions.length === 0 && !hasApprovals && (
+            <p className="text-sm text-muted">{t("noAction")}</p>
+          )}
           {demand.canEdit && wf.currentState.key === "draft" && (
             <div className="mt-3 border-t border-border-subtle pt-3">
               <Button type="button" variant="ghost" onClick={() => removeMutation.mutate()}>
@@ -422,7 +439,8 @@ export default function DemandDetailPage() {
             </div>
           )}
         </Card>
-      )}
+        );
+      })()}
 
       {/* Historique */}
       <Card>

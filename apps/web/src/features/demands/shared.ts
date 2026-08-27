@@ -55,6 +55,8 @@ export interface WorkflowTransition {
   toStateKey: string;
   toStateLabel: string;
   requiresComment: boolean;
+  /** Réservée à des rôles (approbation) : traitée dans « Mes validations ». */
+  restricted: boolean;
 }
 
 export interface WorkflowHistoryEntry {

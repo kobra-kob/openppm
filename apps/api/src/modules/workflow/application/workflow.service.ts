@@ -33,6 +33,8 @@ export interface WorkflowTransitionView {
   toStateKey: string;
   toStateLabel: string;
   requiresComment: boolean;
+  /** Réservée à des rôles (approbation) ; sinon ouverte (ex. « Soumettre »). */
+  restricted: boolean;
 }
 
 export interface WorkflowView {
@@ -368,6 +370,7 @@ export class WorkflowService {
               toStateKey: transition.toStateKey,
               toStateLabel: labels.get(transition.toStateKey) ?? transition.toStateKey,
               requiresComment: transition.requiresComment,
+              restricted: transition.allowedRoles.length > 0,
             })),
       history: instance.logs,
     };
