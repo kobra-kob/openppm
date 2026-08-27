@@ -52,6 +52,9 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
   await prisma.passwordReset.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.invitation.deleteMany();
+  // Multi-tenant : memberships avant users/orgs (FK RESTRICT sur l'org)
+  await prisma.membershipRole.deleteMany();
+  await prisma.organizationMembership.deleteMany();
   await prisma.userRole.deleteMany();
   await prisma.groupMember.deleteMany();
   await prisma.group.deleteMany();

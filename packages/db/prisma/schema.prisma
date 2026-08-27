@@ -21,6 +21,14 @@ model Organization {
   slug      String    @unique @db.VarChar(60)
   settings  Json?
   plan      String    @default("community") @db.VarChar(30)
+  /// Propriétaire initial de l'organisation (Organization Owner). Peut gérer
+  /// l'org, le billing et transférer la propriété. Nullable le temps du backfill.
+  ownerUserId String? @map("owner_user_id") @db.Char(36)
+  /// Coordonnées société (page Organisation / facturation).
+  country    String? @db.VarChar(2)
+  address    String? @db.VarChar(255)
+  vatNumber  String? @map("vat_number") @db.VarChar(40)
+  logoUrl    String? @map("logo_url") @db.VarChar(500)
   /// Autorise la création directe d'un projet (hors conversion d'une demande).
   /// Désactivée, seul un administrateur peut créer un projet directement.
   allowDirectProjectCreation Boolean @default(true) @map("allow_direct_project_creation")
@@ -28,6 +36,8 @@ model Organization {
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")
 
+  ownerUser   User?                    @relation("OrganizationOwner", fields: [ownerUserId], references: [id])
+  memberships OrganizationMembership[]
   users       User[]
   roles       Role[]
   groups      Group[]
@@ -69,6 +79,8 @@ model User {
   deletedAt        DateTime? @map("deleted_at")
 
   organization    Organization    @relation(fields: [organizationId], references: [id])
+  memberships       OrganizationMembership[]
+  ownedOrganizations Organization[]         @relation("OrganizationOwner")
   userRoles       UserRole[]
   groupMembers    GroupMember[]
   refreshTokens   RefreshToken[]
@@ -136,6 +148,7 @@ model Role {
 
   organization    Organization?    @relation(fields: [organizationId], references: [id])
   userRoles       UserRole[]
+  membershipRoles MembershipRole[]
   rolePermissions RolePermission[]
   invitations     Invitation[]
 
@@ -175,6 +188,47 @@ model UserRole {
 
   @@id([userId, roleId])
   @@map("user_roles")
+}
+
+/// Statut d'un membre au sein d'une organisation (SaaS multi-tenant).
+enum MembershipStatus {
+  INVITED
+  ACTIVE
+  SUSPENDED
+  REMOVED
+}
+
+/// Rattachement N:N d'un compte utilisateur à une organisation (tenant).
+/// Un même compte peut appartenir à plusieurs organisations avec des rôles
+/// différents dans chacune. Les rôles « effectifs » se lisent par membership.
+model OrganizationMembership {
+  id             String           @id @default(uuid(7)) @db.Char(36)
+  userId         String           @map("user_id") @db.Char(36)
+  organizationId String           @map("organization_id") @db.Char(36)
+  status         MembershipStatus @default(ACTIVE)
+  isOwner        Boolean          @default(false) @map("is_owner")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+
+  user         User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  organization Organization     @relation(fields: [organizationId], references: [id])
+  roles        MembershipRole[]
+
+  @@unique([userId, organizationId])
+  @@index([organizationId, status])
+  @@map("organization_memberships")
+}
+
+/// Rôles attribués à un membre dans le contexte d'une organisation.
+model MembershipRole {
+  membershipId String @map("membership_id") @db.Char(36)
+  roleId       String @map("role_id") @db.Char(36)
+
+  membership OrganizationMembership @relation(fields: [membershipId], references: [id], onDelete: Cascade)
+  role       Role                   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([membershipId, roleId])
+  @@map("membership_roles")
 }
 
 model Group {
