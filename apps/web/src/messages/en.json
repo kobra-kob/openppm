@@ -56,6 +56,7 @@
     "PORTFOLIO_NOT_FOUND": "Portfolio not found.",
     "WORKFLOW_TRANSITION_NOT_AVAILABLE": "This action isn't available at this stage.",
     "WORKFLOW_COMMENT_REQUIRED": "A comment is required for this action.",
+    "BUSINESS_CASE_INCOMPLETE": "Complete the demand's Business Case first (costs, benefits and ROI) before Finance validation.",
     "ROLE_NOT_ASSIGNABLE": "One or more roles cannot be assigned in this organization.",
     "LAST_ADMIN": "You cannot remove the Administrator role from the last administrator.",
     "UNKNOWN": "An unexpected error occurred. Please retry."

@@ -56,6 +56,7 @@
     "PORTFOLIO_NOT_FOUND": "Portefeuille introuvable.",
     "WORKFLOW_TRANSITION_NOT_AVAILABLE": "Cette action n'est pas disponible à cette étape.",
     "WORKFLOW_COMMENT_REQUIRED": "Un commentaire est requis pour cette action.",
+    "BUSINESS_CASE_INCOMPLETE": "Complétez d'abord le Business Case de la demande (coûts, bénéfices et ROI) avant la validation Finance.",
     "ROLE_NOT_ASSIGNABLE": "Un ou plusieurs rôles ne sont pas attribuables dans cette organisation.",
     "LAST_ADMIN": "Impossible de retirer le rôle Administrateur au dernier administrateur.",
     "UNKNOWN": "Une erreur inattendue s'est produite. Réessayez."
