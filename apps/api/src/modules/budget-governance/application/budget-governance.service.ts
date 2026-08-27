@@ -186,14 +186,6 @@ export class BudgetGovernanceService {
         message: "Ce n'est pas l'étape en attente de décision",
       });
     }
-    // Séparation des responsabilités : nul ne valide son propre budget,
-    // pas même un administrateur.
-    if (request.requestedById === payload.sub) {
-      throw new ForbiddenException({
-        code: "SELF_APPROVAL_FORBIDDEN",
-        message: "Vous ne pouvez pas valider votre propre demande de budget",
-      });
-    }
     if (!this.canDecideStep(payload, step.approverRole)) {
       throw new ForbiddenException({
         code: "FORBIDDEN",
@@ -315,7 +307,6 @@ export class BudgetGovernanceService {
         canDecide:
           request.status === BudgetRequestStatus.pending &&
           step.stepOrder === request.currentStep &&
-          request.requestedById !== payload.sub &&
           this.canDecideStep(payload, step.approverRole),
       })),
     };

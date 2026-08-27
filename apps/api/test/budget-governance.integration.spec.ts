@@ -287,11 +287,11 @@ describe("Gouvernance budgétaire (intégration)", () => {
     expect(Number(active.body.budget)).toBe(5000);
   });
 
-  it("séparation des responsabilités : nul ne valide sa propre demande, même admin", async () => {
+  it("un demandeur peut valider sa propre demande de budget (règle SoD retirée)", async () => {
     const project4 = await request(server())
       .post("/api/v1/projects")
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ name: "Conflit d'intérêt" })
+      .send({ name: "Auto-validation" })
       .expect(201);
     await attachToPortfolio(project4.body.id);
 
@@ -301,26 +301,16 @@ describe("Gouvernance budgétaire (intégration)", () => {
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ capexAmount: 4000, opexAmount: 0 })
       .expect(201);
-    // …le champ canDecide est faux pour elle sur sa propre étape
-    expect(req.body.steps[0].canDecide).toBe(false);
+    // …et peut la valider elle-même (le champ canDecide est vrai)
+    expect(req.body.steps[0].canDecide).toBe(true);
 
-    // …et l'API refuse qu'elle la valide (bypass admin exclu)
-    const forbidden = await request(server())
+    const approved = await request(server())
       .post(
         `/api/v1/projects/${project4.body.id}/budget/requests/${req.body.id}/steps/${req.body.steps[0].id}/decide`,
       )
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ approve: true })
-      .expect(403);
-    expect(forbidden.body.code).toBe("SELF_APPROVAL_FORBIDDEN");
-
-    // Un Manager tiers peut, lui, valider
-    await request(server())
-      .post(
-        `/api/v1/projects/${project4.body.id}/budget/requests/${req.body.id}/steps/${req.body.steps[0].id}/decide`,
-      )
-      .set("Authorization", `Bearer ${managerToken}`)
-      .send({ approve: true })
       .expect(201);
+    expect(approved.body.status).toBe("approved");
   });
 });

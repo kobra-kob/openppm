@@ -69,12 +69,7 @@ export class ValidationsService {
     const pending = await this.budget.listPendingApprovals(payload.org);
     const isAdmin = payload.roles.includes(RoleKey.admin);
     return pending
-      .filter(
-        (item) =>
-          // Séparation des responsabilités : jamais sa propre demande
-          item.requestedById !== payload.sub &&
-          (isAdmin || payload.roles.includes(item.currentApproverRole)),
-      )
+      .filter((item) => isAdmin || payload.roles.includes(item.currentApproverRole))
       .map((item) => ({
         type: "budget" as const,
         requestId: item.requestId,

@@ -118,7 +118,7 @@ describe("Mes validations (intégration)", () => {
     expect(finance.body.budget[0].approverRole).toBe("finance");
     expect(finance.body.total).toBe(1);
 
-    // Paula (chef de projet, demandeuse) ne se valide pas elle-même
+    // Paula (chef de projet) n'a pas le rôle Finance : rien à valider pour elle
     const paula = await validations(pmToken);
     expect(paula.body.budget).toHaveLength(0);
 
@@ -127,7 +127,7 @@ describe("Mes validations (intégration)", () => {
     expect(mona.body.budget).toHaveLength(0);
   });
 
-  it("séparation des responsabilités : l'admin ne voit pas sa propre demande de budget", async () => {
+  it("un demandeur voit et peut valider sa propre demande de budget (SoD retirée)", async () => {
     const project = await request(server())
       .post("/api/v1/projects")
       .set("Authorization", `Bearer ${adminToken}`)
@@ -144,14 +144,15 @@ describe("Mes validations (intégration)", () => {
       .send({ capexAmount: 3000, opexAmount: 0 }) // <10k → Manager
       .expect(201);
 
-    // Cette demande revient au Manager (Mona), pas à l'admin (auteur)
+    // Le Manager (Mona) la voit…
     const mona = await validations(managerToken);
     expect(mona.body.budget.some((b: { projectId: string }) => b.projectId === project.body.id)).toBe(
       true,
     );
+    // …et l'admin auteur la voit aussi désormais (bypass, plus de séparation)
     const admin = await validations(adminToken);
     expect(admin.body.budget.some((b: { projectId: string }) => b.projectId === project.body.id)).toBe(
-      false,
+      true,
     );
   });
 
