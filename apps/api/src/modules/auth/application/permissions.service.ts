@@ -4,6 +4,7 @@ import { permKey } from "../domain/permissions";
 
 interface CacheEntry {
   permissions: Set<string>;
+  roleKeys: string[];
   expiresAt: number;
 }
 
@@ -22,17 +23,18 @@ export class PermissionsService {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  /** Ensemble des clés de permissions effectives de l'utilisateur. */
-  async getEffectivePermissions(userId: string): Promise<Set<string>> {
+  /** Charge (ou relit depuis le cache) rôles + permissions effectifs. */
+  private async load(userId: string): Promise<CacheEntry> {
     const cached = this.cache.get(userId);
     if (cached && cached.expiresAt > Date.now()) {
-      return cached.permissions;
+      return cached;
     }
     const rows = await this.prisma.userRole.findMany({
       where: { userId },
       select: {
         role: {
           select: {
+            key: true,
             rolePermissions: {
               select: { permission: { select: { action: true, subject: true } } },
             },
@@ -41,13 +43,35 @@ export class PermissionsService {
       },
     });
     const permissions = new Set<string>();
+    const roleKeys: string[] = [];
     for (const { role } of rows) {
+      if (role.key) {
+        roleKeys.push(role.key);
+      }
       for (const rp of role.rolePermissions) {
         permissions.add(permKey(rp.permission.subject, rp.permission.action));
       }
     }
-    this.cache.set(userId, { permissions, expiresAt: Date.now() + CACHE_TTL_MS });
-    return permissions;
+    const entry: CacheEntry = {
+      permissions,
+      roleKeys: [...new Set(roleKeys)],
+      expiresAt: Date.now() + CACHE_TTL_MS,
+    };
+    this.cache.set(userId, entry);
+    return entry;
+  }
+
+  /** Ensemble des clés de permissions effectives de l'utilisateur. */
+  async getEffectivePermissions(userId: string): Promise<Set<string>> {
+    return (await this.load(userId)).permissions;
+  }
+
+  /**
+   * Clés des rôles courants de l'utilisateur, lues en base (et non depuis le
+   * jeton) : un rôle ajouté prend effet sans reconnexion, au plus après le TTL.
+   */
+  async getRoleKeys(userId: string): Promise<string[]> {
+    return (await this.load(userId)).roleKeys;
   }
 
   /** Vrai si l'utilisateur possède AU MOINS une des permissions demandées. */

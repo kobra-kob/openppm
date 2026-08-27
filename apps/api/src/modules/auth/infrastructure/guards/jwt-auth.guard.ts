@@ -7,6 +7,7 @@ import {
 import { Reflector } from "@nestjs/core";
 import { JwtService } from "@nestjs/jwt";
 import type { Request } from "express";
+import { PermissionsService } from "../../application/permissions.service";
 import { JwtPayload } from "../../application/jwt-payload";
 import { IS_PUBLIC_KEY } from "../decorators/public.decorator";
 
@@ -16,6 +17,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(
     private readonly jwt: JwtService,
     private readonly reflector: Reflector,
+    private readonly permissions: PermissionsService,
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
@@ -53,6 +55,17 @@ export class JwtAuthGuard implements CanActivate {
         message: "Jeton d'accès invalide ou expiré",
       });
     }
+    // Rôles relus en base : un rôle attribué ou retiré prend effet sans
+    // reconnexion (le jeton, lui, fige les rôles émis à la connexion).
+    try {
+      const roleKeys = await this.permissions.getRoleKeys(payload.sub);
+      if (roleKeys.length > 0) {
+        payload.roles = roleKeys;
+      }
+    } catch {
+      // En cas d'échec de lecture, on conserve les rôles du jeton (dégradé).
+    }
+
     request.user = payload;
     return true;
   }
