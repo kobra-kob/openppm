@@ -40,6 +40,7 @@
     "BUDGET_REQUEST_PENDING": "A budget request is already in progress for this project.",
     "BUDGET_AMOUNT_REQUIRED": "The total amount (CAPEX + OPEX) must be greater than zero.",
     "BUDGET_REQUEST_CLOSED": "This budget request is already closed.",
+    "SELF_APPROVAL_FORBIDDEN": "You cannot approve your own budget request.",
     "BUDGET_REQUEST_NOT_FOUND": "Budget request not found.",
     "APPROVAL_STEP_NOT_FOUND": "Approval step not found.",
     "STEP_NOT_CURRENT": "This is not the step awaiting a decision.",

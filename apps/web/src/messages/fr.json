@@ -40,6 +40,7 @@
     "BUDGET_REQUEST_PENDING": "Une demande de budget est déjà en cours pour ce projet.",
     "BUDGET_AMOUNT_REQUIRED": "Le montant total (CAPEX + OPEX) doit être supérieur à zéro.",
     "BUDGET_REQUEST_CLOSED": "Cette demande de budget est déjà clôturée.",
+    "SELF_APPROVAL_FORBIDDEN": "Vous ne pouvez pas valider votre propre demande de budget.",
     "BUDGET_REQUEST_NOT_FOUND": "Demande de budget introuvable.",
     "APPROVAL_STEP_NOT_FOUND": "Étape d'approbation introuvable.",
     "STEP_NOT_CURRENT": "Ce n'est pas l'étape en attente de décision.",

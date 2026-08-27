@@ -70,9 +70,9 @@ export default function ValidationsPage() {
   };
   const onError = (caught: unknown) => {
     const code = caught instanceof ApiError ? caught.code : "UNKNOWN";
-    // FORBIDDEN = rôle insuffisant (jeton périmé le plus souvent) → message dédié ;
-    // sinon on affiche l'erreur métier traduite si elle existe.
-    setError(code === "FORBIDDEN" || !tErrors.has(code) ? t("actionError") : tErrors(code));
+    // On affiche le vrai motif traduit (droit de rôle, séparation des tâches,
+    // étape non courante…) ; repli générique seulement si le code est inconnu.
+    setError(tErrors.has(code) ? tErrors(code) : t("actionError"));
   };
 
   const fireDemand = useMutation({
