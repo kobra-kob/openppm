@@ -13,23 +13,42 @@ export class PrismaMembersRepository implements MembersRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async listMembers(organizationId: string): Promise<MemberSummary[]> {
+    // Membres = comptes rattachés à l'org, soit par leur org d'origine (legacy),
+    // soit par un membership ACTIF (multi-org). Rôles PAR org via le membership
+    // s'il existe, sinon rôles globaux (repli transition).
     const users = await this.prisma.user.findMany({
-      where: { organizationId, deletedAt: null },
-      include: { userRoles: { include: { role: true } } },
+      where: {
+        deletedAt: null,
+        OR: [
+          { organizationId },
+          { memberships: { some: { organizationId, status: MembershipStatus.ACTIVE } } },
+        ],
+      },
+      include: {
+        userRoles: { include: { role: true } },
+        memberships: {
+          where: { organizationId },
+          include: { roles: { include: { role: true } } },
+        },
+      },
       orderBy: { createdAt: "asc" },
     });
-    return users.map((user) => ({
-      id: user.id,
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      isActive: user.isActive,
-      lastLoginAt: user.lastLoginAt,
-      roles: user.userRoles
-        .map((userRole) => userRole.role.key)
-        .filter((key): key is RoleKey => key !== null),
-      roleIds: user.userRoles.map((userRole) => userRole.roleId),
-    }));
+    return users.map((user) => {
+      const membership = user.memberships[0];
+      const roles = membership
+        ? membership.roles.map((mr) => ({ key: mr.role.key, id: mr.roleId }))
+        : user.userRoles.map((ur) => ({ key: ur.role.key, id: ur.roleId }));
+      return {
+        id: user.id,
+        email: user.email,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        isActive: user.isActive,
+        lastLoginAt: user.lastLoginAt,
+        roles: roles.map((r) => r.key).filter((key): key is RoleKey => key !== null),
+        roleIds: roles.map((r) => r.id),
+      };
+    });
   }
 
   listPendingInvitations(organizationId: string): Promise<InvitationWithRelations[]> {
@@ -92,9 +111,44 @@ export class PrismaMembersRepository implements MembersRepository {
     await this.prisma.invitation.delete({ where: { id } });
   }
 
+  async findAccountByEmail(email: string) {
+    return this.prisma.user.findUnique({
+      where: { email },
+      select: { id: true, deletedAt: true },
+    });
+  }
+
+  async addExistingMember(
+    organizationId: string,
+    userId: string,
+    roleId: string,
+  ): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      // Upsert : réactive un membership retiré, ou en crée un nouveau.
+      const membership = await tx.organizationMembership.upsert({
+        where: { userId_organizationId: { userId, organizationId } },
+        create: { userId, organizationId, status: MembershipStatus.ACTIVE },
+        update: { status: MembershipStatus.ACTIVE },
+        select: { id: true },
+      });
+      await tx.membershipRole.createMany({
+        data: [{ membershipId: membership.id, roleId }],
+        skipDuplicates: true,
+      });
+    });
+  }
+
   async userInOrganization(organizationId: string, userId: string): Promise<boolean> {
+    // Appartenance = org d'origine (legacy) OU membership ACTIF (multi-tenant).
     const found = await this.prisma.user.findFirst({
-      where: { id: userId, organizationId, deletedAt: null },
+      where: {
+        id: userId,
+        deletedAt: null,
+        OR: [
+          { organizationId },
+          { memberships: { some: { organizationId, status: MembershipStatus.ACTIVE } } },
+        ],
+      },
       select: { id: true },
     });
     return found !== null;

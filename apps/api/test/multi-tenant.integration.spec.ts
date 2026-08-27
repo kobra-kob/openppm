@@ -98,15 +98,29 @@ describe("Multi-tenant (intégration)", () => {
       .expect(404);
   });
 
-  it("compte multi-org : switch autorisé + rôles résolus PAR organisation", async () => {
-    // Alice devient membre de l'org B avec le rôle observer (simulé : futur invite S7c)
-    const observer = await prisma.role.findUniqueOrThrow({ where: { key: "observer" as never } });
-    const membership = await prisma.organizationMembership.create({
-      data: { userId: aliceId, organizationId: orgBId, status: "ACTIVE" },
-    });
-    await prisma.membershipRole.create({
-      data: { membershipId: membership.id, roleId: observer.id },
-    });
+  it("refuse d'ajouter un compte inexistant (ACCOUNT_NOT_FOUND)", async () => {
+    const res = await request(server())
+      .post("/api/v1/members/existing")
+      .set("Authorization", `Bearer ${bobToken}`)
+      .send({ email: "inconnu@nowhere.test", roleKey: "observer" })
+      .expect(404);
+    expect(res.body.code).toBe("ACCOUNT_NOT_FOUND");
+  });
+
+  it("compte multi-org : ajout d'un compte existant + switch + rôles PAR organisation", async () => {
+    // Bob (admin de B) ajoute le compte EXISTANT d'Alice à l'org B en observer.
+    await request(server())
+      .post("/api/v1/members/existing")
+      .set("Authorization", `Bearer ${bobToken}`)
+      .send({ email: "alice@alpha.test", roleKey: "observer" })
+      .expect(201);
+
+    // Alice figure désormais dans les membres de l'org B
+    const bMembers = await request(server())
+      .get("/api/v1/members")
+      .set("Authorization", `Bearer ${bobToken}`)
+      .expect(200);
+    expect(bMembers.body.some((m: { email: string }) => m.email === "alice@alpha.test")).toBe(true);
 
     // /me voit désormais les 2 organisations
     const me = await request(server())
@@ -125,6 +139,17 @@ describe("Multi-tenant (intégration)", () => {
       .expect(200);
     const bTokenForAlice = switched.body.accessToken;
     expect(switched.body.user.organization.id).toBe(orgBId);
+
+    // S7b.1 : le refresh conserve l'organisation courante (B), pas l'org d'origine (A)
+    const refreshed = await request(server())
+      .post("/api/v1/auth/refresh")
+      .send({ refreshToken: switched.body.refreshToken })
+      .expect(200);
+    const refreshedMe = await request(server())
+      .get("/api/v1/auth/me")
+      .set("Authorization", `Bearer ${refreshed.body.accessToken}`)
+      .expect(200);
+    expect(refreshedMe.body.organizationId).toBe(orgBId);
 
     // Dans B, Alice est observer (pas admin) : /roles (ROLE_MANAGE) est refusé
     await request(server())

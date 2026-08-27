@@ -17,6 +17,7 @@ import type {
   MembersRepository,
   MemberSummary,
 } from "../domain/members.repository";
+import type { AddExistingMemberDto } from "./dto/add-existing-member.dto";
 import type { InviteMemberDto } from "./dto/invite-member.dto";
 
 const INVITATION_TTL_DAYS = 7;
@@ -106,6 +107,57 @@ export class MembersService {
       expiresAt: invitation.expiresAt,
       createdAt: invitation.createdAt,
     }));
+  }
+
+  /**
+   * Ajoute un **compte existant** (par email) à l'organisation courante avec un
+   * rôle : crée un membership actif. Rend le multi-org concret (un même compte
+   * dans plusieurs organisations). Pour un email inconnu, passer par l'invitation.
+   */
+  async addExistingMember(
+    organizationId: string,
+    addedById: string,
+    dto: AddExistingMemberDto,
+    context: RequestContext,
+  ): Promise<MemberSummary> {
+    const role = await this.repository.findRoleByKey(dto.roleKey);
+    if (!role) {
+      throw new NotFoundException({ code: "ROLE_NOT_FOUND", message: "Rôle inconnu" });
+    }
+    const assignable = await this.repository.assignableRoleIds(organizationId);
+    if (!assignable.has(role.id)) {
+      throw new BadRequestException({
+        code: "ROLE_NOT_ASSIGNABLE",
+        message: "Ce rôle n'est pas attribuable dans cette organisation",
+      });
+    }
+    const account = await this.repository.findAccountByEmail(dto.email);
+    if (!account || account.deletedAt) {
+      throw new NotFoundException({
+        code: "ACCOUNT_NOT_FOUND",
+        message:
+          "Aucun compte OpenPPM avec cet email. Utilisez une invitation pour créer un nouveau compte.",
+      });
+    }
+    if (await this.repository.userInOrganization(organizationId, account.id)) {
+      throw new ConflictException({
+        code: "MEMBER_ALREADY_EXISTS",
+        message: "Ce compte est déjà membre de cette organisation",
+      });
+    }
+    await this.repository.addExistingMember(organizationId, account.id, role.id);
+    this.permissions.invalidate(account.id);
+    await this.audit.log({
+      action: "member.added_existing",
+      entityType: "user",
+      entityId: account.id,
+      organizationId,
+      userId: addedById,
+      after: { email: dto.email, role: dto.roleKey },
+      ...context,
+    });
+    const members = await this.repository.listMembers(organizationId);
+    return members.find((m) => m.id === account.id)!;
   }
 
   async invite(

@@ -58,6 +58,9 @@
     "WORKFLOW_COMMENT_REQUIRED": "A comment is required for this action.",
     "BUSINESS_CASE_INCOMPLETE": "Complete the demand's Business Case first (costs, benefits and ROI) before Finance validation.",
     "ROLE_NOT_ASSIGNABLE": "One or more roles cannot be assigned in this organization.",
+    "ACCOUNT_NOT_FOUND": "No OpenPPM account with this email. Use an invitation to create a new account.",
+    "ROLE_NOT_FOUND": "Unknown role.",
+    "NOT_A_MEMBER": "You do not belong to this organization.",
     "LAST_ADMIN": "You cannot remove the Administrator role from the last administrator.",
     "UNKNOWN": "An unexpected error occurred. Please retry."
   },
@@ -677,6 +680,12 @@
       "role": "Role",
       "submit": "Send invitation",
       "success": "Invitation sent to {email}."
+    },
+    "addExisting": {
+      "title": "Add an existing account",
+      "subtitle": "Attach an OpenPPM account that already exists to this organization (multi-organization).",
+      "submit": "Add",
+      "success": "{email} was added to the organization."
     },
     "pending": {
       "title": "Pending invitations",

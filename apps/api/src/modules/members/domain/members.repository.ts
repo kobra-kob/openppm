@@ -32,6 +32,10 @@ export interface MembersRepository {
   listPendingInvitations(organizationId: string): Promise<InvitationWithRelations[]>;
   findRoleByKey(key: RoleKey): Promise<Role | null>;
   emailHasAccount(email: string): Promise<boolean>;
+  /** Compte existant par email (pour l'ajout d'un membre déjà inscrit ailleurs). */
+  findAccountByEmail(email: string): Promise<{ id: string; deletedAt: Date | null } | null>;
+  /** Ajoute (ou réactive) un membership pour un compte existant, avec un rôle. */
+  addExistingMember(organizationId: string, userId: string, roleId: string): Promise<void>;
   hasPendingInvitation(organizationId: string, email: string): Promise<boolean>;
   createInvitation(input: CreateInvitationInput): Promise<Invitation>;
   findPendingInvitationById(

@@ -373,7 +373,13 @@ export class AuthService {
     }
     return {
       user: this.toPublicUser(user),
-      tokens: await this.tokens.issueTokens(user, context, stored.familyId),
+      // Préserve l'organisation courante à travers la rotation du refresh.
+      tokens: await this.tokens.issueTokens(
+        user,
+        context,
+        stored.familyId,
+        stored.organizationId ?? undefined,
+      ),
     };
   }
 

@@ -32,6 +32,7 @@ export interface CreateOrganizationWithOwnerInput {
 
 export interface CreateRefreshTokenInput {
   userId: string;
+  organizationId?: string;
   tokenHash: string;
   familyId: string;
   expiresAt: Date;

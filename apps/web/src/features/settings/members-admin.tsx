@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { MailPlus, ShieldCheck, Trash2, UsersRound } from "lucide-react";
+import { MailPlus, ShieldCheck, Trash2, UserPlus, UsersRound } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { FormEvent, useState } from "react";
 import { Alert, Button, Card, Input, Label } from "@/components/ui";
@@ -53,6 +53,8 @@ export function MembersAdmin() {
 
   const [email, setEmail] = useState("");
   const [roleKey, setRoleKey] = useState("employee");
+  const [existingEmail, setExistingEmail] = useState("");
+  const [existingRole, setExistingRole] = useState("employee");
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
 
   const { data: members } = useQuery({
@@ -84,6 +86,20 @@ export function MembersAdmin() {
   const revokeMutation = useMutation({
     mutationFn: (id: string) => api<void>(`/members/invitations/${id}`, { method: "DELETE" }),
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["invitations"] }),
+  });
+
+  const addExistingMutation = useMutation({
+    mutationFn: (payload: { email: string; roleKey: string }) =>
+      api<Member>("/members/existing", { method: "POST", body: JSON.stringify(payload) }),
+    onSuccess: (_, payload) => {
+      setFeedback({ tone: "success", text: t("addExisting.success", { email: payload.email }) });
+      setExistingEmail("");
+      void queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+    onError: (caught) => {
+      const code = caught instanceof ApiError ? caught.code : "UNKNOWN";
+      setFeedback({ tone: "error", text: tErrors.has(code) ? tErrors(code) : tErrors("UNKNOWN") });
+    },
   });
 
   const submitInvite = (event: FormEvent) => {
@@ -135,6 +151,54 @@ export function MembersAdmin() {
             <Alert tone={feedback.tone}>{feedback.text}</Alert>
           </div>
         )}
+      </Card>
+
+      {/* Ajouter un compte existant (multi-org) */}
+      <Card>
+        <div className="mb-3 flex items-center gap-2 text-muted">
+          <UserPlus size={16} />
+          <h2 className="text-sm font-semibold uppercase tracking-wider">
+            {t("addExisting.title")}
+          </h2>
+        </div>
+        <p className="mb-3 text-xs text-muted">{t("addExisting.subtitle")}</p>
+        <form
+          onSubmit={(event) => {
+            event.preventDefault();
+            setFeedback(null);
+            addExistingMutation.mutate({ email: existingEmail, roleKey: existingRole });
+          }}
+          className="flex flex-wrap items-end gap-3"
+        >
+          <div className="min-w-56 flex-1">
+            <Label htmlFor="existingEmail">{t("invite.email")}</Label>
+            <Input
+              id="existingEmail"
+              type="email"
+              required
+              value={existingEmail}
+              onChange={(event) => setExistingEmail(event.target.value)}
+            />
+          </div>
+          <div>
+            <Label htmlFor="existingRole">{t("invite.role")}</Label>
+            <select
+              id="existingRole"
+              value={existingRole}
+              onChange={(event) => setExistingRole(event.target.value)}
+              className="rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm focus:border-accent focus:outline-none"
+            >
+              {INVITABLE_ROLES.map((role) => (
+                <option key={role} value={role}>
+                  {tRoles.has(role) ? tRoles(role) : role}
+                </option>
+              ))}
+            </select>
+          </div>
+          <Button type="submit" disabled={addExistingMutation.isPending}>
+            {t("addExisting.submit")}
+          </Button>
+        </form>
       </Card>
 
       {/* Membres */}

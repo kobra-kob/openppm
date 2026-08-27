@@ -143,6 +143,7 @@ export class PrismaAuthRepository implements AuthRepository {
     return this.prisma.refreshToken.create({
       data: {
         userId: input.userId,
+        organizationId: input.organizationId ?? null,
         tokenHash: input.tokenHash,
         familyId: input.familyId,
         expiresAt: input.expiresAt,

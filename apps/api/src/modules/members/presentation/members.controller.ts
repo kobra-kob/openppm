@@ -21,6 +21,7 @@ import { P } from "../../auth/domain/permissions";
 import { RequirePermissions } from "../../auth/infrastructure/decorators/require-permissions.decorator";
 import { Roles } from "../../auth/infrastructure/decorators/roles.decorator";
 import type { MemberSummary } from "../domain/members.repository";
+import { AddExistingMemberDto } from "../application/dto/add-existing-member.dto";
 import { InviteMemberDto } from "../application/dto/invite-member.dto";
 import { SetMemberRolesDto } from "../application/dto/set-member-roles.dto";
 import {
@@ -50,6 +51,17 @@ export class MembersController {
     @Req() request: Request,
   ): Promise<MemberSummary> {
     return this.members.setRoles(user, userId, dto.roleIds, this.context(request));
+  }
+
+  @Post("existing")
+  @RequirePermissions(P.MEMBER_MANAGE)
+  @ApiOperation({ summary: "Ajouter un compte OpenPPM existant à l'organisation (multi-org)" })
+  addExisting(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: AddExistingMemberDto,
+    @Req() request: Request,
+  ): Promise<MemberSummary> {
+    return this.members.addExistingMember(user.org, user.sub, dto, this.context(request));
   }
 
   @Get("invitations")

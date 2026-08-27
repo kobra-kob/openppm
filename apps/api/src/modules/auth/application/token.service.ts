@@ -60,13 +60,15 @@ export class TokenService {
     familyId?: string,
     organizationId?: string,
   ): Promise<IssuedTokens> {
-    const accessToken = await this.jwt.signAsync(this.buildPayload(user, organizationId));
+    const org = organizationId ?? user.organizationId;
+    const accessToken = await this.jwt.signAsync(this.buildPayload(user, org));
     const refreshToken = randomBytes(48).toString("base64url");
     const refreshExpiresAt = new Date(
       Date.now() + this.refreshTtlDays * 24 * 60 * 60 * 1000,
     );
     await this.repository.createRefreshToken({
       userId: user.id,
+      organizationId: org,
       tokenHash: this.hashToken(refreshToken),
       familyId: familyId ?? randomUUID(),
       expiresAt: refreshExpiresAt,
