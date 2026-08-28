@@ -708,6 +708,7 @@
     "workflowsSubtitle": "Réglez qui valide chaque étape des circuits de validation.",
     "categories": "Catégories de projets",
     "categoriesSubtitle": "Organisez vos projets par catégories couleur.",
+    "billing": "Abonnement & Facturation",
     "password": {
       "title": "Changer le mot de passe",
       "current": "Mot de passe actuel",
@@ -764,6 +765,29 @@
     "cancel": "Annuler",
     "delete": "Supprimer",
     "adminImmutable": "Le rôle Administrateur détient toutes les permissions et n'est pas modifiable."
+  },
+  "billing": {
+    "title": "Abonnement & Facturation",
+    "subtitle": "L'abonnement appartient à l'organisation. Facturation par siège.",
+    "loading": "Chargement…",
+    "perSeatPerMonth": "/ siège / mois",
+    "seats": "Sièges facturables",
+    "billableMembers": "Membres actifs de l'organisation",
+    "monthlyAmount": "Montant mensuel",
+    "seatsTimesPrice": "{seats} × {price}",
+    "trialEnds": "Fin de l'essai",
+    "nextRenewal": "Prochaine échéance",
+    "cancelsAtPeriodEnd": "Annulation à la fin de la période",
+    "managedByOrg": "La gestion du moyen de paiement et des factures arrivera prochainement.",
+    "status": {
+      "ACTIVE": "Actif",
+      "TRIALING": "Essai",
+      "PAST_DUE": "Impayé",
+      "GRACE_PERIOD": "Période de grâce",
+      "SUSPENDED": "Suspendu",
+      "CANCELED": "Annulé",
+      "ENTERPRISE": "Entreprise"
+    }
   },
   "permissionsMatrix": {
     "title": "Matrice des responsabilités",

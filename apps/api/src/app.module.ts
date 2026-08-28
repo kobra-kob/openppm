@@ -12,6 +12,7 @@ import { MailerModule } from "./core/mailer/mailer.module";
 import { NotificationsModule } from "./core/notifications/notifications.module";
 import { PrismaModule } from "./core/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
+import { BillingModule } from "./modules/billing/billing.module";
 import { BudgetGovernanceModule } from "./modules/budget-governance/budget-governance.module";
 import { ValidationsModule } from "./modules/validations/validations.module";
 import { CommentModule } from "./modules/comment/comment.module";
@@ -84,6 +85,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     ProjectModule,
     BudgetGovernanceModule,
     ValidationsModule,
+    BillingModule,
     FinanceModule,
     QuoteModule,
     TaskModule,

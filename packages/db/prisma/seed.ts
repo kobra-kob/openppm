@@ -70,6 +70,11 @@ const PERMISSIONS: Array<{ subject: string; action: string }> = [
   { subject: "member", action: "manage" },
   { subject: "workflow", action: "manage" },
   { subject: "organization", action: "manage" },
+  { subject: "billing", action: "view" },
+  { subject: "billing", action: "manage" },
+  { subject: "subscription", action: "view" },
+  { subject: "subscription", action: "manage" },
+  { subject: "invoice", action: "view" },
 ];
 
 const permKey = (subject: string, action: string): string =>

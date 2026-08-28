@@ -708,6 +708,7 @@
     "workflowsSubtitle": "Set who approves each step of the validation flows.",
     "categories": "Project categories",
     "categoriesSubtitle": "Organize your projects with color categories.",
+    "billing": "Subscription & Billing",
     "password": {
       "title": "Change password",
       "current": "Current password",
@@ -764,6 +765,29 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "adminImmutable": "The Administrator role holds all permissions and cannot be edited."
+  },
+  "billing": {
+    "title": "Subscription & Billing",
+    "subtitle": "The subscription belongs to the organization. Per-seat billing.",
+    "loading": "Loading…",
+    "perSeatPerMonth": "/ seat / month",
+    "seats": "Billable seats",
+    "billableMembers": "Active members of the organization",
+    "monthlyAmount": "Monthly amount",
+    "seatsTimesPrice": "{seats} × {price}",
+    "trialEnds": "Trial ends",
+    "nextRenewal": "Next renewal",
+    "cancelsAtPeriodEnd": "Cancels at period end",
+    "managedByOrg": "Payment method and invoice management coming soon.",
+    "status": {
+      "ACTIVE": "Active",
+      "TRIALING": "Trial",
+      "PAST_DUE": "Past due",
+      "GRACE_PERIOD": "Grace period",
+      "SUSPENDED": "Suspended",
+      "CANCELED": "Canceled",
+      "ENTERPRISE": "Enterprise"
+    }
   },
   "permissionsMatrix": {
     "title": "Responsibility matrix",

@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, GitBranch, Shield, Tags, UserRound, UsersRound } from "lucide-react";
+import { ArrowLeft, CreditCard, GitBranch, Shield, Tags, UserRound, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -20,6 +20,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
     { href: "/settings/roles", key: "settings.roles", icon: Shield, show: isAdmin },
     { href: "/settings/workflows", key: "settings.workflows", icon: GitBranch, show: isAdmin },
     { href: "/settings/categories", key: "settings.categories", icon: Tags, show: isAdmin },
+    { href: "/settings/billing", key: "settings.billing", icon: CreditCard, show: isAdmin },
   ];
 
   return (
