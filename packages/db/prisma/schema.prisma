@@ -51,6 +51,8 @@ model Organization {
   demands           Demand[]
   risks             Risk[]
   budgetApprovalTiers BudgetApprovalTier[]
+  subscription      Subscription?
+  invoices          Invoice[]
 
   @@map("organizations")
 }
@@ -1190,4 +1192,107 @@ model Risk {
 
   @@index([organizationId, projectId])
   @@map("risks")
+}
+
+// ── SaaS : abonnements & facturation (Stripe) ───────────────────────────
+
+/// Cycle de vie d'un abonnement (aligné sur Stripe + états métier).
+enum SubscriptionStatus {
+  TRIALING
+  ACTIVE
+  PAST_DUE
+  GRACE_PERIOD
+  SUSPENDED
+  CANCELED
+  ENTERPRISE
+}
+
+enum BillingInterval {
+  month
+  year
+}
+
+/// Plan commercial — **donnée plateforme** (non modifiable par un client).
+/// Les Price IDs Stripe viennent de la configuration, jamais du front.
+model SubscriptionPlan {
+  id                 String          @id @default(uuid(7)) @db.Char(36)
+  key                String          @unique @db.VarChar(30) // STANDARD | ENTERPRISE
+  name               String          @db.VarChar(80)
+  /// Montant par siège et par mois, en centimes (ex. 2000 = 20,00 €).
+  unitAmount         Int             @default(0) @map("unit_amount")
+  currency           String          @default("eur") @db.VarChar(3)
+  interval           BillingInterval @default(month)
+  /// Références des tarifs Stripe (résolues via l'ENV, ici pour traçabilité).
+  stripePriceMonthly String?         @map("stripe_price_monthly") @db.VarChar(120)
+  stripePriceYearly  String?         @map("stripe_price_yearly") @db.VarChar(120)
+  active             Boolean         @default(true)
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  @@map("subscription_plans")
+}
+
+/// Abonnement d'une organisation (le tenant est le client facturé, pas l'user).
+model Subscription {
+  id                   String             @id @default(uuid(7)) @db.Char(36)
+  organizationId       String             @unique @map("organization_id") @db.Char(36)
+  planKey              String             @default("STANDARD") @map("plan_key") @db.VarChar(30)
+  status               SubscriptionStatus @default(TRIALING)
+  /// Nombre de sièges facturés (déterminé côté backend).
+  quantity             Int                @default(1)
+  unitAmount           Int                @default(2000) @map("unit_amount")
+  currency             String             @default("eur") @db.VarChar(3)
+  interval             BillingInterval    @default(month)
+  stripeCustomerId     String?            @map("stripe_customer_id") @db.VarChar(120)
+  stripeSubscriptionId String?            @map("stripe_subscription_id") @db.VarChar(120)
+  trialStart           DateTime?          @map("trial_start")
+  trialEnd             DateTime?          @map("trial_end")
+  currentPeriodStart   DateTime?          @map("current_period_start")
+  currentPeriodEnd     DateTime?          @map("current_period_end")
+  cancelAtPeriodEnd    Boolean            @default(false) @map("cancel_at_period_end")
+  canceledAt           DateTime?          @map("canceled_at")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([status])
+  @@index([stripeCustomerId])
+  @@index([stripeSubscriptionId])
+  @@map("subscriptions")
+}
+
+/// Journal des événements Stripe reçus — **idempotence** (un event = une fois).
+model BillingEvent {
+  id            String    @id @default(uuid(7)) @db.Char(36)
+  stripeEventId String    @unique @map("stripe_event_id") @db.VarChar(120)
+  type          String    @db.VarChar(80)
+  payload       Json
+  processedAt   DateTime? @map("processed_at")
+  result        String?   @db.VarChar(255)
+  createdAt     DateTime  @default(now()) @map("created_at")
+
+  @@index([type])
+  @@map("billing_events")
+}
+
+/// Facture d'une organisation (miroir des factures Stripe).
+model Invoice {
+  id               String   @id @default(uuid(7)) @db.Char(36)
+  organizationId   String   @map("organization_id") @db.Char(36)
+  stripeInvoiceId  String?  @unique @map("stripe_invoice_id") @db.VarChar(120)
+  number           String?  @db.VarChar(60)
+  amountDue        Int      @default(0) @map("amount_due")
+  currency         String   @default("eur") @db.VarChar(3)
+  status           String   @default("draft") @db.VarChar(30)
+  periodStart      DateTime? @map("period_start")
+  periodEnd        DateTime? @map("period_end")
+  hostedInvoiceUrl String?  @map("hosted_invoice_url") @db.VarChar(500)
+  pdfUrl           String?  @map("pdf_url") @db.VarChar(500)
+  createdAt        DateTime @default(now()) @map("created_at")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+
+  @@index([organizationId, createdAt])
+  @@map("invoices")
 }

@@ -175,10 +175,26 @@ async function seedRolePermissions(
   }
 }
 
+/** Plans commerciaux — donnée plateforme (idempotent). */
+async function seedPlans(): Promise<void> {
+  const plans = [
+    { key: "STANDARD", name: "Standard", unitAmount: 2000 },
+    { key: "ENTERPRISE", name: "Enterprise", unitAmount: 0 },
+  ];
+  for (const plan of plans) {
+    await prisma.subscriptionPlan.upsert({
+      where: { key: plan.key },
+      update: { name: plan.name },
+      create: { key: plan.key, name: plan.name, unitAmount: plan.unitAmount, currency: "eur" },
+    });
+  }
+}
+
 async function main(): Promise<void> {
   const roleIds = await seedRoles();
   const permIds = await seedPermissions();
   await seedRolePermissions(roleIds, permIds);
+  await seedPlans();
   console.log(
     `Seed OK — ${SYSTEM_ROLES.length} rôles, ${PERMISSIONS.length} permissions, matrice appliquée.`,
   );
