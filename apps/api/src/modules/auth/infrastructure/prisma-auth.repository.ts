@@ -6,7 +6,11 @@ import {
   Prisma,
   RefreshToken,
   RoleKey,
+  SubscriptionStatus,
 } from "@openppm/db";
+
+/** Durée de l'essai gratuit à la création d'une organisation (jours). */
+const TRIAL_DAYS = 14;
 import { PrismaService } from "../../../core/prisma/prisma.service";
 import {
   AcceptInvitationInput,
@@ -116,6 +120,20 @@ export class PrismaAuthRepository implements AuthRepository {
       await tx.organization.update({
         where: { id: organization.id },
         data: { ownerUserId: user.id },
+      });
+      // SaaS : essai gratuit de 14 jours à la création (accès complet).
+      const now = new Date();
+      await tx.subscription.create({
+        data: {
+          organizationId: organization.id,
+          planKey: "STANDARD",
+          status: SubscriptionStatus.TRIALING,
+          quantity: 1,
+          unitAmount: 2000,
+          currency: "eur",
+          trialStart: now,
+          trialEnd: new Date(now.getTime() + TRIAL_DAYS * 24 * 60 * 60 * 1000),
+        },
       });
       return user;
     });

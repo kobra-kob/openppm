@@ -13,6 +13,7 @@ import { NotificationsModule } from "./core/notifications/notifications.module";
 import { PrismaModule } from "./core/prisma/prisma.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { BillingModule } from "./modules/billing/billing.module";
+import { SubscriptionGuard } from "./modules/billing/infrastructure/subscription.guard";
 import { BudgetGovernanceModule } from "./modules/budget-governance/budget-governance.module";
 import { ValidationsModule } from "./modules/validations/validations.module";
 import { CommentModule } from "./modules/comment/comment.module";
@@ -100,6 +101,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     { provide: APP_GUARD, useClass: JwtAuthGuard },
     { provide: APP_GUARD, useClass: RolesGuard },
     { provide: APP_GUARD, useClass: PermissionsGuard },
+    { provide: APP_GUARD, useClass: SubscriptionGuard },
   ],
 })
 export class AppModule {}

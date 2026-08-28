@@ -10,6 +10,7 @@ import { LocaleSwitch } from "@/components/locale-switch";
 import { NotificationBell } from "@/components/notification-bell";
 import { OrganizationSwitcher } from "@/components/organization-switcher";
 import { ProfileMenu } from "@/components/profile-menu";
+import { SubscriptionBanner } from "@/components/subscription-banner";
 import { TopNav } from "@/components/top-nav";
 import { ThemeToggle } from "@/components/theme-toggle";
 import { useAuthStore } from "@/lib/auth-store";
@@ -73,6 +74,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <TopNav />
         </div>
       </div>
+      <SubscriptionBanner />
       <main className="flex min-h-0 flex-1 flex-col">{children}</main>
     </div>
   );

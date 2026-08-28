@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { BillingModule } from "../billing/billing.module";
 import { AuthService } from "./application/auth.service";
 import { MfaService } from "./application/mfa.service";
 import { PermissionsService } from "./application/permissions.service";
@@ -8,6 +9,7 @@ import { PrismaAuthRepository } from "./infrastructure/prisma-auth.repository";
 import { AuthController } from "./presentation/auth.controller";
 
 @Module({
+  imports: [BillingModule],
   controllers: [AuthController],
   providers: [
     AuthService,

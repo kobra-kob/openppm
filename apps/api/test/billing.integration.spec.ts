@@ -87,6 +87,60 @@ describe("Facturation (intégration)", () => {
       .expect(403);
   });
 
+  it("l'inscription crée un essai gratuit de 14 jours (TRIALING)", async () => {
+    const sub = await prisma.subscription.findUniqueOrThrow({ where: { organizationId: orgId } });
+    expect(sub.status).toBe("TRIALING");
+    expect(sub.trialEnd).not.toBeNull();
+    expect(sub.trialEnd!.getTime()).toBeGreaterThan(Date.now());
+  });
+
+  it("org active (essai en cours) : l'écriture métier est autorisée", async () => {
+    await request(server())
+      .post("/api/v1/projects")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ name: "Projet pendant l'essai" })
+      .expect(201);
+  });
+
+  it("essai expiré : écriture bloquée (402), lecture et billing accessibles", async () => {
+    const reg = await request(server()).post("/api/v1/auth/register").send({
+      organizationName: "Expired Trial Corp",
+      firstName: "Carol",
+      lastName: "C",
+      email: "carol@exp.test",
+      password: "SuperSecret123",
+    });
+    const token = reg.body.accessToken;
+    const expOrg = reg.body.user.organization.id;
+    // Force l'expiration de l'essai (avant toute requête → pas de cache périmé)
+    await prisma.subscription.update({
+      where: { organizationId: expOrg },
+      data: { trialEnd: new Date(Date.now() - 1000) },
+    });
+
+    // Écriture métier refusée
+    const blocked = await request(server())
+      .post("/api/v1/projects")
+      .set("Authorization", `Bearer ${token}`)
+      .send({ name: "Interdit" })
+      .expect(402);
+    expect(blocked.body.code).toBe("SUBSCRIPTION_INACTIVE");
+
+    // Lecture toujours possible (données conservées)
+    await request(server())
+      .get("/api/v1/projects")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+
+    // Billing accessible (pour réactiver) + /auth/me signale l'inactivité
+    await request(server()).get("/api/v1/billing").set("Authorization", `Bearer ${token}`).expect(200);
+    const me = await request(server())
+      .get("/api/v1/auth/me")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+    expect(me.body.subscriptionActive).toBe(false);
+  });
+
   it("crée un abonnement à la volée si l'org n'en a pas encore", async () => {
     // On supprime l'abonnement puis on relit : il doit être recréé.
     await prisma.subscription.deleteMany({ where: { organizationId: orgId } });

@@ -61,6 +61,7 @@
     "ACCOUNT_NOT_FOUND": "No OpenPPM account with this email. Use an invitation to create a new account.",
     "ROLE_NOT_FOUND": "Unknown role.",
     "NOT_A_MEMBER": "You do not belong to this organization.",
+    "SUBSCRIPTION_INACTIVE": "Subscription inactive (trial expired or suspended): read-only access. Reactivate the subscription to edit data.",
     "LAST_ADMIN": "You cannot remove the Administrator role from the last administrator.",
     "UNKNOWN": "An unexpected error occurred. Please retry."
   },
@@ -765,6 +766,10 @@
     "cancel": "Cancel",
     "delete": "Delete",
     "adminImmutable": "The Administrator role holds all permissions and cannot be edited."
+  },
+  "subscriptionBanner": {
+    "message": "Subscription inactive: your organization is read-only. Editing is disabled.",
+    "action": "Manage subscription"
   },
   "billing": {
     "title": "Subscription & Billing",

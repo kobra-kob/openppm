@@ -5,10 +5,12 @@ import { P } from "../../auth/domain/permissions";
 import { CurrentUser } from "../../auth/infrastructure/decorators/current-user.decorator";
 import { RequirePermissions } from "../../auth/infrastructure/decorators/require-permissions.decorator";
 import { BillingOverview, BillingService } from "../application/billing.service";
+import { SubscriptionExempt } from "../infrastructure/subscription-exempt.decorator";
 
 @ApiTags("billing")
 @ApiBearerAuth()
 @Controller("billing")
+@SubscriptionExempt()
 export class BillingController {
   constructor(private readonly billing: BillingService) {}
 

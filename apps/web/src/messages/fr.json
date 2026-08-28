@@ -61,6 +61,7 @@
     "ACCOUNT_NOT_FOUND": "Aucun compte OpenPPM avec cet email. Utilisez une invitation pour créer un nouveau compte.",
     "ROLE_NOT_FOUND": "Rôle inconnu.",
     "NOT_A_MEMBER": "Vous n'appartenez pas à cette organisation.",
+    "SUBSCRIPTION_INACTIVE": "Abonnement inactif (essai expiré ou suspendu) : accès en lecture seule. Réactivez l'abonnement pour modifier les données.",
     "LAST_ADMIN": "Impossible de retirer le rôle Administrateur au dernier administrateur.",
     "UNKNOWN": "Une erreur inattendue s'est produite. Réessayez."
   },
@@ -765,6 +766,10 @@
     "cancel": "Annuler",
     "delete": "Supprimer",
     "adminImmutable": "Le rôle Administrateur détient toutes les permissions et n'est pas modifiable."
+  },
+  "subscriptionBanner": {
+    "message": "Abonnement inactif : votre organisation est en lecture seule. Les modifications sont désactivées.",
+    "action": "Gérer l'abonnement"
   },
   "billing": {
     "title": "Abonnement & Facturation",

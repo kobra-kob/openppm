@@ -32,6 +32,8 @@ import type { JwtPayload } from "../application/jwt-payload";
 import type { RequestContext } from "../application/token.service";
 import { CurrentUser } from "../infrastructure/decorators/current-user.decorator";
 import { Public } from "../infrastructure/decorators/public.decorator";
+import { SubscriptionAccessService } from "../../billing/application/subscription-access.service";
+import { SubscriptionExempt } from "../../billing/infrastructure/subscription-exempt.decorator";
 
 export const REFRESH_COOKIE = "oppm_rt";
 
@@ -50,12 +52,14 @@ interface MfaChallengeResponse {
 
 @ApiTags("auth")
 @Controller("auth")
+@SubscriptionExempt()
 export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly mfa: MfaService,
     private readonly config: ConfigService,
     private readonly permissions: PermissionsService,
+    private readonly subscriptionAccess: SubscriptionAccessService,
   ) {}
 
   @Public()
@@ -194,18 +198,21 @@ export class AuthController {
       permissions: string[];
       organizationId: string;
       organizations: Array<{ id: string; name: string; slug: string; isOwner: boolean }>;
+      subscriptionActive: boolean;
     }
   > {
-    const [user, permissions, organizations] = await Promise.all([
+    const [user, permissions, organizations, accessLevel] = await Promise.all([
       this.auth.me(payload.sub),
       this.permissions.getEffectivePermissions(payload.sub, payload.org),
       this.auth.listOrganizations(payload.sub),
+      this.subscriptionAccess.getAccessLevel(payload.org),
     ]);
     return {
       ...user,
       permissions: [...permissions].sort(),
       organizationId: payload.org,
       organizations,
+      subscriptionActive: accessLevel === "full",
     };
   }
 
