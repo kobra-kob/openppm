@@ -14,4 +14,12 @@ export interface BillingRepository {
   findPlan(key: string): Promise<SubscriptionPlan | null>;
   /** Nombre de membres actifs de l'organisation (base des sièges facturables). */
   countActiveMembers(organizationId: string): Promise<number>;
+  /** Enregistre l'identifiant client Stripe sur l'abonnement de l'org. */
+  setStripeCustomerId(organizationId: string, customerId: string): Promise<void>;
+  /** Active l'abonnement (mode mock : simule un paiement réussi). */
+  activate(organizationId: string, quantity: number): Promise<Subscription>;
+  /** Nom de l'org + email du propriétaire (client Stripe). */
+  getBillingIdentity(
+    organizationId: string,
+  ): Promise<{ name: string; email: string } | null>;
 }

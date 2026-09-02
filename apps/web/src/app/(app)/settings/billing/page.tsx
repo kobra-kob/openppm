@@ -1,9 +1,9 @@
 "use client";
 
-import { useQuery } from "@tanstack/react-query";
-import { CreditCard, Users, Wallet } from "lucide-react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { CreditCard, ExternalLink, Users, Wallet } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { Card, cn } from "@/components/ui";
+import { Button, Card, cn } from "@/components/ui";
 import { AdminOnly } from "@/features/settings/admin-only";
 import { formatEuro } from "@/features/portfolios/shared";
 import { api } from "@/lib/api-client";
@@ -59,10 +59,27 @@ function Stat({
 export default function BillingPage() {
   const t = useTranslations("billing");
   const locale = useLocale();
+  const queryClient = useQueryClient();
   const { data, isLoading } = useQuery({
     queryKey: ["billing"],
     queryFn: () => api<BillingOverview>("/billing"),
   });
+
+  const checkout = useMutation({
+    mutationFn: () => api<{ url: string; activated: boolean }>("/billing/checkout", { method: "POST" }),
+    onSuccess: (res) => {
+      void queryClient.invalidateQueries({ queryKey: ["billing"] });
+      void queryClient.invalidateQueries({ queryKey: ["me"] });
+      window.location.href = res.url;
+    },
+  });
+  const portal = useMutation({
+    mutationFn: () => api<{ url: string }>("/billing/portal", { method: "POST" }),
+    onSuccess: (res) => {
+      window.location.href = res.url;
+    },
+  });
+  const busy = checkout.isPending || portal.isPending;
 
   const money = (cents: number) => formatEuro(cents / 100, locale);
   const date = (iso: string | null) =>
@@ -102,6 +119,16 @@ export default function BillingPage() {
                 >
                   {t.has(`status.${data.status}`) ? t(`status.${data.status}`) : data.status}
                 </span>
+              </div>
+              <div className="mt-4 flex flex-wrap gap-2 border-t border-border-subtle pt-4">
+                {data.status !== "ACTIVE" && data.status !== "ENTERPRISE" && (
+                  <Button disabled={busy} onClick={() => checkout.mutate()}>
+                    {t("subscribe")}
+                  </Button>
+                )}
+                <Button variant="ghost" disabled={busy} onClick={() => portal.mutate()}>
+                  <ExternalLink size={15} /> {t("managePayment")}
+                </Button>
               </div>
             </Card>
 

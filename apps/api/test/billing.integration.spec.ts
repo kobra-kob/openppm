@@ -141,6 +141,43 @@ describe("Facturation (intégration)", () => {
     expect(me.body.subscriptionActive).toBe(false);
   });
 
+  it("mode mock : le checkout active l'abonnement et enregistre un client Stripe", async () => {
+    const reg = await request(server()).post("/api/v1/auth/register").send({
+      organizationName: "Checkout Corp",
+      firstName: "Dan",
+      lastName: "D",
+      email: "dan@checkout.test",
+      password: "SuperSecret123",
+    });
+    const token = reg.body.accessToken;
+    const coOrg = reg.body.user.organization.id;
+
+    const res = await request(server())
+      .post("/api/v1/billing/checkout")
+      .set("Authorization", `Bearer ${token}`)
+      .expect(200);
+    expect(res.body.activated).toBe(true);
+
+    const sub = await prisma.subscription.findUniqueOrThrow({ where: { organizationId: coOrg } });
+    expect(sub.status).toBe("ACTIVE");
+    expect(sub.stripeCustomerId).toMatch(/^cus_mock_/);
+  });
+
+  it("le portail de facturation renvoie une URL", async () => {
+    const res = await request(server())
+      .post("/api/v1/billing/portal")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .expect(200);
+    expect(typeof res.body.url).toBe("string");
+  });
+
+  it("un membre sans SUBSCRIPTION_MANAGE ne peut pas lancer le checkout (403)", async () => {
+    await request(server())
+      .post("/api/v1/billing/checkout")
+      .set("Authorization", `Bearer ${employeeToken}`)
+      .expect(403);
+  });
+
   it("crée un abonnement à la volée si l'org n'en a pas encore", async () => {
     // On supprime l'abonnement puis on relit : il doit être recréé.
     await prisma.subscription.deleteMany({ where: { organizationId: orgId } });

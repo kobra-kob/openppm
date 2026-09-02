@@ -783,7 +783,9 @@
     "trialEnds": "Fin de l'essai",
     "nextRenewal": "Prochaine échéance",
     "cancelsAtPeriodEnd": "Annulation à la fin de la période",
-    "managedByOrg": "La gestion du moyen de paiement et des factures arrivera prochainement.",
+    "managedByOrg": "L'abonnement est facturé au niveau de l'organisation.",
+    "subscribe": "S'abonner / Réactiver",
+    "managePayment": "Gérer le paiement",
     "status": {
       "ACTIVE": "Actif",
       "TRIALING": "Essai",

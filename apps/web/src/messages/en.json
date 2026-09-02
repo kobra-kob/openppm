@@ -783,7 +783,9 @@
     "trialEnds": "Trial ends",
     "nextRenewal": "Next renewal",
     "cancelsAtPeriodEnd": "Cancels at period end",
-    "managedByOrg": "Payment method and invoice management coming soon.",
+    "managedByOrg": "The subscription is billed at the organization level.",
+    "subscribe": "Subscribe / Reactivate",
+    "managePayment": "Manage payment",
     "status": {
       "ACTIVE": "Active",
       "TRIALING": "Trial",
