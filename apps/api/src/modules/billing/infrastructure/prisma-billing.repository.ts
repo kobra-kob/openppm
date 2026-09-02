@@ -1,7 +1,11 @@
 import { Injectable } from "@nestjs/common";
 import { MembershipStatus, Subscription, SubscriptionPlan, SubscriptionStatus } from "@openppm/db";
 import { PrismaService } from "../../../core/prisma/prisma.service";
-import { BillingRepository } from "../domain/billing.repository";
+import {
+  BillingRepository,
+  InvoiceRecord,
+  SubscriptionSync,
+} from "../domain/billing.repository";
 
 @Injectable()
 export class PrismaBillingRepository implements BillingRepository {
@@ -73,5 +77,56 @@ export class PrismaBillingRepository implements BillingRepository {
       return null;
     }
     return { name: org.name, email: org.ownerUser?.email ?? "billing@openppm.local" };
+  }
+
+  findByStripeCustomerId(customerId: string): Promise<Subscription | null> {
+    return this.prisma.subscription.findFirst({ where: { stripeCustomerId: customerId } });
+  }
+
+  async syncSubscription(organizationId: string, data: SubscriptionSync): Promise<void> {
+    await this.prisma.subscription.update({
+      where: { organizationId },
+      data: {
+        ...(data.status !== undefined ? { status: data.status } : {}),
+        ...(data.quantity !== undefined ? { quantity: data.quantity } : {}),
+        ...(data.stripeSubscriptionId !== undefined
+          ? { stripeSubscriptionId: data.stripeSubscriptionId }
+          : {}),
+        ...(data.currentPeriodStart !== undefined
+          ? { currentPeriodStart: data.currentPeriodStart }
+          : {}),
+        ...(data.currentPeriodEnd !== undefined
+          ? { currentPeriodEnd: data.currentPeriodEnd }
+          : {}),
+        ...(data.cancelAtPeriodEnd !== undefined
+          ? { cancelAtPeriodEnd: data.cancelAtPeriodEnd }
+          : {}),
+        ...(data.canceledAt !== undefined ? { canceledAt: data.canceledAt } : {}),
+      },
+    });
+  }
+
+  async upsertInvoice(organizationId: string, invoice: InvoiceRecord): Promise<void> {
+    await this.prisma.invoice.upsert({
+      where: { stripeInvoiceId: invoice.stripeInvoiceId },
+      update: {
+        amountDue: invoice.amountDue,
+        status: invoice.status,
+        hostedInvoiceUrl: invoice.hostedInvoiceUrl,
+        pdfUrl: invoice.pdfUrl,
+      },
+      create: {
+        organizationId,
+        stripeInvoiceId: invoice.stripeInvoiceId,
+        number: invoice.number,
+        amountDue: invoice.amountDue,
+        currency: invoice.currency,
+        status: invoice.status,
+        periodStart: invoice.periodStart,
+        periodEnd: invoice.periodEnd,
+        hostedInvoiceUrl: invoice.hostedInvoiceUrl,
+        pdfUrl: invoice.pdfUrl,
+      },
+    });
   }
 }
