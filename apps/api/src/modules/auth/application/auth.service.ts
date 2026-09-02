@@ -13,6 +13,7 @@ import { ConfigService } from "@nestjs/config";
 import * as argon2 from "argon2";
 import { AuditService } from "../../../core/audit/audit.service";
 import { MailerService } from "../../../core/mailer/mailer.service";
+import { BillingSeatService } from "../../billing/application/billing-seat.service";
 import { AUTH_REPOSITORY } from "../domain/auth.repository";
 import type { AuthRepository, UserWithAccess } from "../domain/auth.repository";
 import { computeLockedUntil } from "../domain/lockout.policy";
@@ -65,6 +66,7 @@ export class AuthService {
     private readonly mailer: MailerService,
     private readonly config: ConfigService,
     private readonly mfa: MfaService,
+    private readonly seats: BillingSeatService,
   ) {}
 
   toPublicUser(user: UserWithAccess): PublicUser {
@@ -269,6 +271,8 @@ export class AuthService {
       lastName: dto.lastName,
       locale: dto.locale,
     });
+    // Nouveau membre → recalcule les sièges facturés de l'organisation.
+    await this.seats.syncSeats(invitation.organizationId);
     await this.audit.log({
       action: "auth.invitation_accepted",
       entityType: "user",

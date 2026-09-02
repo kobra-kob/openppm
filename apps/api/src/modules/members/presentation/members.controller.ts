@@ -64,6 +64,18 @@ export class MembersController {
     return this.members.addExistingMember(user.org, user.sub, dto, this.context(request));
   }
 
+  @Delete(":userId")
+  @RequirePermissions(P.MEMBER_MANAGE)
+  @HttpCode(HttpStatus.NO_CONTENT)
+  @ApiOperation({ summary: "Retirer un membre de l'organisation (le compte global est conservé)" })
+  async remove(
+    @CurrentUser() user: JwtPayload,
+    @Param("userId", ParseUUIDPipe) userId: string,
+    @Req() request: Request,
+  ): Promise<void> {
+    await this.members.removeMember(user, userId, this.context(request));
+  }
+
   @Get("invitations")
   @Roles(RoleKey.admin, RoleKey.manager)
   @ApiOperation({ summary: "Invitations en attente" })

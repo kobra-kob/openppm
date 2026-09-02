@@ -111,6 +111,30 @@ export class PrismaMembersRepository implements MembersRepository {
     await this.prisma.invitation.delete({ where: { id } });
   }
 
+  async isOrgOwner(organizationId: string, userId: string): Promise<boolean> {
+    const org = await this.prisma.organization.findFirst({
+      where: { id: organizationId, ownerUserId: userId },
+      select: { id: true },
+    });
+    return org !== null;
+  }
+
+  async removeMembership(organizationId: string, userId: string): Promise<void> {
+    await this.prisma.$transaction(async (tx) => {
+      const membership = await tx.organizationMembership.findUnique({
+        where: { userId_organizationId: { userId, organizationId } },
+        select: { id: true },
+      });
+      if (membership) {
+        await tx.membershipRole.deleteMany({ where: { membershipId: membership.id } });
+        await tx.organizationMembership.update({
+          where: { id: membership.id },
+          data: { status: MembershipStatus.REMOVED },
+        });
+      }
+    });
+  }
+
   async findAccountByEmail(email: string) {
     return this.prisma.user.findUnique({
       where: { email },

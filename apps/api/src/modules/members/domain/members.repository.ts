@@ -55,6 +55,10 @@ export interface MembersRepository {
   countOrgAdmins(organizationId: string, excludeUserId: string): Promise<number>;
   /** Remplace intégralement les rôles d'un utilisateur. */
   setUserRoles(userId: string, organizationId: string, roleIds: string[]): Promise<void>;
+  /** Vrai si l'utilisateur est le propriétaire de l'organisation. */
+  isOrgOwner(organizationId: string, userId: string): Promise<boolean>;
+  /** Retire un membre de l'organisation (membership REMOVED + rôles nettoyés). */
+  removeMembership(organizationId: string, userId: string): Promise<void>;
 }
 
 export const MEMBERS_REPOSITORY = Symbol("MEMBERS_REPOSITORY");

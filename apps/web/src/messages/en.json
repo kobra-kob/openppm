@@ -62,6 +62,8 @@
     "ROLE_NOT_FOUND": "Unknown role.",
     "NOT_A_MEMBER": "You do not belong to this organization.",
     "SUBSCRIPTION_INACTIVE": "Subscription inactive (trial expired or suspended): read-only access. Reactivate the subscription to edit data.",
+    "CANNOT_REMOVE_OWNER": "The organization owner cannot be removed.",
+    "CANNOT_REMOVE_SELF": "You cannot remove yourself.",
     "LAST_ADMIN": "You cannot remove the Administrator role from the last administrator.",
     "UNKNOWN": "An unexpected error occurred. Please retry."
   },
@@ -464,7 +466,10 @@
     "category": "Type",
     "label": "Label",
     "delete": "Delete",
-    "cat": { "capex": "CAPEX", "opex": "OPEX" },
+    "cat": {
+      "capex": "CAPEX",
+      "opex": "OPEX"
+    },
     "kpi": {
       "approved": "Approved budget",
       "planned": "Planned",
@@ -694,7 +699,8 @@
       "expires": "Expires on {date}",
       "revoke": "Revoke",
       "empty": "No pending invitations."
-    }
+    },
+    "remove": "Remove"
   },
   "settings": {
     "account": "Account",

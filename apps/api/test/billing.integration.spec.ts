@@ -178,6 +178,47 @@ describe("Facturation (intégration)", () => {
       .expect(403);
   });
 
+  it("les sièges suivent la composition : ajout puis retrait synchronisent la quantité", async () => {
+    // Dave a son propre compte (owner d'une autre org)
+    const dave = await request(server()).post("/api/v1/auth/register").send({
+      organizationName: "Dave Org",
+      firstName: "Dave",
+      lastName: "D",
+      email: "dave@seat.test",
+      password: "SuperSecret123",
+    });
+    const daveId = dave.body.user.id;
+
+    // Ajout de Dave à l'org d'Alice → 3 membres (Alice, Bob, Dave)
+    await request(server())
+      .post("/api/v1/members/existing")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .send({ email: "dave@seat.test", roleKey: "employee" })
+      .expect(201);
+    let sub = await prisma.subscription.findUniqueOrThrow({ where: { organizationId: orgId } });
+    expect(sub.quantity).toBe(3);
+
+    // Retrait de Dave → 2 sièges
+    await request(server())
+      .delete(`/api/v1/members/${daveId}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .expect(204);
+    sub = await prisma.subscription.findUniqueOrThrow({ where: { organizationId: orgId } });
+    expect(sub.quantity).toBe(2);
+  });
+
+  it("on ne peut pas se retirer soi-même (400)", async () => {
+    const me = await request(server())
+      .get("/api/v1/auth/me")
+      .set("Authorization", `Bearer ${adminToken}`)
+      .expect(200);
+    const res = await request(server())
+      .delete(`/api/v1/members/${me.body.id}`)
+      .set("Authorization", `Bearer ${adminToken}`)
+      .expect(400);
+    expect(res.body.code).toBe("CANNOT_REMOVE_SELF");
+  });
+
   it("crée un abonnement à la volée si l'org n'en a pas encore", async () => {
     // On supprime l'abonnement puis on relit : il doit être recréé.
     await prisma.subscription.deleteMany({ where: { organizationId: orgId } });

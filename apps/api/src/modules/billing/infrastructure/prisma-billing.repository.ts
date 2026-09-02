@@ -46,6 +46,13 @@ export class PrismaBillingRepository implements BillingRepository {
     });
   }
 
+  async setQuantity(organizationId: string, quantity: number): Promise<void> {
+    await this.prisma.subscription.updateMany({
+      where: { organizationId },
+      data: { quantity: Math.max(1, quantity) },
+    });
+  }
+
   async setStripeCustomerId(organizationId: string, customerId: string): Promise<void> {
     await this.prisma.subscription.update({
       where: { organizationId },

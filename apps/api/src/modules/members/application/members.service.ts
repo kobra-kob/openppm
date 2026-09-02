@@ -9,6 +9,7 @@ import {
 import { ConfigService } from "@nestjs/config";
 import { AuditService } from "../../../core/audit/audit.service";
 import { MailerService } from "../../../core/mailer/mailer.service";
+import { BillingSeatService } from "../../billing/application/billing-seat.service";
 import { PermissionsService } from "../../auth/application/permissions.service";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
@@ -40,6 +41,7 @@ export class MembersService {
     private readonly audit: AuditService,
     private readonly config: ConfigService,
     private readonly permissions: PermissionsService,
+    private readonly seats: BillingSeatService,
   ) {}
 
   /**
@@ -147,6 +149,8 @@ export class MembersService {
     }
     await this.repository.addExistingMember(organizationId, account.id, role.id);
     this.permissions.invalidate(account.id);
+    // Le nombre de sièges facturés suit la composition de l'organisation.
+    await this.seats.syncSeats(organizationId);
     await this.audit.log({
       action: "member.added_existing",
       entityType: "user",
@@ -158,6 +162,59 @@ export class MembersService {
     });
     const members = await this.repository.listMembers(organizationId);
     return members.find((m) => m.id === account.id)!;
+  }
+
+  /**
+   * Retire un membre de l'organisation (membership REMOVED). Le compte global
+   * n'est pas supprimé (il peut appartenir à d'autres organisations, §21). On ne
+   * retire ni le propriétaire ni le dernier administrateur. Les sièges facturés
+   * sont recalculés.
+   */
+  async removeMember(
+    payload: JwtPayload,
+    userId: string,
+    context: RequestContext,
+  ): Promise<void> {
+    if (userId === payload.sub) {
+      throw new BadRequestException({
+        code: "CANNOT_REMOVE_SELF",
+        message: "Vous ne pouvez pas vous retirer vous-même",
+      });
+    }
+    if (!(await this.repository.userInOrganization(payload.org, userId))) {
+      throw new NotFoundException({ code: "USER_NOT_IN_ORG", message: "Membre introuvable" });
+    }
+    if (await this.repository.isOrgOwner(payload.org, userId)) {
+      throw new BadRequestException({
+        code: "CANNOT_REMOVE_OWNER",
+        message: "Le propriétaire de l'organisation ne peut pas être retiré",
+      });
+    }
+    // Dernier administrateur : on ne le retire pas.
+    const otherAdmins = await this.repository.countOrgAdmins(payload.org, userId);
+    const adminRoleId = await this.repository.adminRoleId();
+    const members = await this.repository.listMembers(payload.org);
+    const target = members.find((m) => m.id === userId);
+    const isAdmin = target?.roleIds.includes(adminRoleId) ?? false;
+    if (isAdmin && otherAdmins === 0) {
+      throw new BadRequestException({
+        code: "LAST_ADMIN",
+        message: "Impossible de retirer le dernier administrateur",
+      });
+    }
+
+    await this.repository.removeMembership(payload.org, userId);
+    this.permissions.invalidate(userId);
+    await this.seats.syncSeats(payload.org);
+    await this.audit.log({
+      action: "member.removed",
+      entityType: "user",
+      entityId: userId,
+      organizationId: payload.org,
+      userId: payload.sub,
+      before: { userId },
+      ...context,
+    });
   }
 
   async invite(

@@ -37,6 +37,8 @@ export interface BillingRepository {
   findPlan(key: string): Promise<SubscriptionPlan | null>;
   /** Nombre de membres actifs de l'organisation (base des sièges facturables). */
   countActiveMembers(organizationId: string): Promise<number>;
+  /** Met à jour la quantité de sièges de l'abonnement (no-op si absent). */
+  setQuantity(organizationId: string, quantity: number): Promise<void>;
   /** Enregistre l'identifiant client Stripe sur l'abonnement de l'org. */
   setStripeCustomerId(organizationId: string, customerId: string): Promise<void>;
   /** Active l'abonnement (mode mock : simule un paiement réussi). */

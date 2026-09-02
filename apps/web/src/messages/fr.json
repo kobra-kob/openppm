@@ -62,6 +62,8 @@
     "ROLE_NOT_FOUND": "Rôle inconnu.",
     "NOT_A_MEMBER": "Vous n'appartenez pas à cette organisation.",
     "SUBSCRIPTION_INACTIVE": "Abonnement inactif (essai expiré ou suspendu) : accès en lecture seule. Réactivez l'abonnement pour modifier les données.",
+    "CANNOT_REMOVE_OWNER": "Le propriétaire de l'organisation ne peut pas être retiré.",
+    "CANNOT_REMOVE_SELF": "Vous ne pouvez pas vous retirer vous-même.",
     "LAST_ADMIN": "Impossible de retirer le rôle Administrateur au dernier administrateur.",
     "UNKNOWN": "Une erreur inattendue s'est produite. Réessayez."
   },
@@ -464,7 +466,10 @@
     "category": "Nature",
     "label": "Libellé",
     "delete": "Supprimer",
-    "cat": { "capex": "CAPEX", "opex": "OPEX" },
+    "cat": {
+      "capex": "CAPEX",
+      "opex": "OPEX"
+    },
     "kpi": {
       "approved": "Budget approuvé",
       "planned": "Prévu réparti",
@@ -694,7 +699,8 @@
       "expires": "Expire le {date}",
       "revoke": "Révoquer",
       "empty": "Aucune invitation en attente."
-    }
+    },
+    "remove": "Retirer"
   },
   "settings": {
     "account": "Compte",

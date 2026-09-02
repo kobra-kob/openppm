@@ -89,6 +89,25 @@ export class StripeService {
     return { url: session.url };
   }
 
+  /** Met à jour la quantité (sièges) d'un abonnement Stripe, avec proratisation. */
+  async updateSubscriptionQuantity(
+    stripeSubscriptionId: string,
+    quantity: number,
+  ): Promise<void> {
+    if (!this.client) {
+      return; // mock : la quantité locale fait foi
+    }
+    const subscription = await this.client.subscriptions.retrieve(stripeSubscriptionId);
+    const itemId = subscription.items.data[0]?.id;
+    if (!itemId) {
+      return;
+    }
+    await this.client.subscriptions.update(stripeSubscriptionId, {
+      items: [{ id: itemId, quantity: Math.max(1, quantity) }],
+      proration_behavior: "create_prorations",
+    });
+  }
+
   /** Vérifie la signature d'un webhook et renvoie l'event typé (S5). */
   constructEvent(payload: Buffer, signature: string, secret: string): Stripe.Event {
     if (!this.client) {

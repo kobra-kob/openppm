@@ -88,6 +88,18 @@ export function MembersAdmin() {
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ["invitations"] }),
   });
 
+  const removeMutation = useMutation({
+    mutationFn: (userId: string) => api<void>(`/members/${userId}`, { method: "DELETE" }),
+    onSuccess: () => {
+      setFeedback(null);
+      void queryClient.invalidateQueries({ queryKey: ["members"] });
+    },
+    onError: (caught) => {
+      const code = caught instanceof ApiError ? caught.code : "UNKNOWN";
+      setFeedback({ tone: "error", text: tErrors.has(code) ? tErrors(code) : tErrors("UNKNOWN") });
+    },
+  });
+
   const addExistingMutation = useMutation({
     mutationFn: (payload: { email: string; roleKey: string }) =>
       api<Member>("/members/existing", { method: "POST", body: JSON.stringify(payload) }),
@@ -245,6 +257,18 @@ export function MembersAdmin() {
                   <ShieldCheck size={14} />
                   <span className="hidden sm:inline">{t("roleEditor.manage")}</span>
                 </Button>
+                {member.id !== currentUser?.id && (
+                  <button
+                    type="button"
+                    onClick={() => removeMutation.mutate(member.id)}
+                    disabled={removeMutation.isPending}
+                    aria-label={t("remove")}
+                    title={t("remove")}
+                    className="shrink-0 rounded-full p-1.5 text-muted transition-colors hover:bg-border-subtle hover:text-danger"
+                  >
+                    <Trash2 size={15} />
+                  </button>
+                )}
               </div>
               {editingMemberId === member.id && (
                 <MemberRolesEditor
