@@ -103,6 +103,12 @@ export interface AuthRepository {
   /** Change le mot de passe et révoque toutes les sessions, en transaction. */
   changePassword(userId: string, passwordHash: string): Promise<void>;
 
+  /** Met à jour l'identité (prénom / nom) et renvoie le compte avec ses accès. */
+  updateProfile(
+    userId: string,
+    data: { firstName: string; lastName: string },
+  ): Promise<UserWithAccess>;
+
   findActiveInvitationByHash(tokenHash: string): Promise<Invitation | null>;
   /** Crée le compte dans l'organisation avec le rôle de l'invitation et la
    *  marque acceptée, en transaction. */

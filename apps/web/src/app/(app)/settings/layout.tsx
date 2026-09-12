@@ -1,6 +1,15 @@
 "use client";
 
-import { ArrowLeft, CreditCard, GitBranch, Shield, Tags, UserRound, UsersRound } from "lucide-react";
+import {
+  ArrowLeft,
+  Building2,
+  CreditCard,
+  GitBranch,
+  Shield,
+  Tags,
+  UserRound,
+  UsersRound,
+} from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -16,6 +25,7 @@ export default function SettingsLayout({ children }: { children: React.ReactNode
 
   const entries = [
     { href: "/settings/account", key: "settings.account", icon: UserRound, show: true },
+    { href: "/settings/organization", key: "settings.organization", icon: Building2, show: isAdmin },
     { href: "/settings/members", key: "settings.members", icon: UsersRound, show: isAdmin },
     { href: "/settings/roles", key: "settings.roles", icon: Shield, show: isAdmin },
     { href: "/settings/workflows", key: "settings.workflows", icon: GitBranch, show: isAdmin },

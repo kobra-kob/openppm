@@ -703,7 +703,10 @@
     "remove": "Remove"
   },
   "settings": {
+    "title": "Settings",
     "account": "Account",
+    "organization": "Organization",
+    "organizationSubtitle": "Your organization's name and details.",
     "admin": "Administration",
     "adminSubtitle": "Application management: members and project categories.",
     "adminForbidden": "This page is restricted to administrators.",
@@ -716,6 +719,13 @@
     "categories": "Project categories",
     "categoriesSubtitle": "Organize your projects with color categories.",
     "billing": "Subscription & Billing",
+    "profile": {
+      "title": "Profile",
+      "firstName": "First name",
+      "lastName": "Last name",
+      "submit": "Save",
+      "success": "Profile updated."
+    },
     "password": {
       "title": "Change password",
       "current": "Current password",
@@ -723,6 +733,16 @@
       "submit": "Update",
       "success": "Password updated. Your other sessions have been signed out."
     }
+  },
+  "organization": {
+    "profile": "Organization profile",
+    "name": "Organization name",
+    "country": "Country (ISO code)",
+    "address": "Address",
+    "vatNumber": "VAT number",
+    "logoUrl": "Logo URL",
+    "submit": "Save",
+    "success": "Organization updated."
   },
   "security": {
     "title": "Security",

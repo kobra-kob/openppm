@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { KeyRound, ShieldCheck, ShieldOff } from "lucide-react";
+import { KeyRound, ShieldCheck, ShieldOff, UserRound } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { toDataURL } from "qrcode";
 import { FormEvent, useState } from "react";
@@ -22,6 +22,7 @@ export default function AccountPage() {
   const tErrors = useTranslations("errors");
   const queryClient = useQueryClient();
   const setSession = useAuthStore((state) => state.setSession);
+  const setUser = useAuthStore((state) => state.setUser);
 
   const { data: me } = useQuery({
     queryKey: ["me"],
@@ -32,6 +33,12 @@ export default function AccountPage() {
   const [enableCode, setEnableCode] = useState("");
   const [recoveryCodes, setRecoveryCodes] = useState<string[] | null>(null);
   const [disableForm, setDisableForm] = useState({ password: "", code: "" });
+  const [profileForm, setProfileForm] = useState({ firstName: "", lastName: "" });
+  const [profileLoadedId, setProfileLoadedId] = useState<string | null>(null);
+  const [profileFeedback, setProfileFeedback] = useState<{
+    tone: "success" | "error";
+    text: string;
+  } | null>(null);
   const [passwordForm, setPasswordForm] = useState({ current: "", next: "" });
   const [feedback, setFeedback] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [passwordFeedback, setPasswordFeedback] = useState<{
@@ -43,6 +50,24 @@ export default function AccountPage() {
     const code = caught instanceof ApiError ? caught.code : "UNKNOWN";
     return tErrors.has(code) ? tErrors(code) : tErrors("UNKNOWN");
   };
+
+  // Pré-remplit le formulaire de profil dès que le compte est chargé
+  // (synchronisation en phase de rendu, pattern React recommandé).
+  if (me && me.id !== profileLoadedId) {
+    setProfileLoadedId(me.id);
+    setProfileForm({ firstName: me.firstName, lastName: me.lastName });
+  }
+
+  const updateProfile = useMutation({
+    mutationFn: (payload: { firstName: string; lastName: string }) =>
+      api<AuthUser>("/auth/profile", { method: "PATCH", body: JSON.stringify(payload) }),
+    onSuccess: (user) => {
+      setUser(user);
+      setProfileFeedback({ tone: "success", text: tSettings("profile.success") });
+      void queryClient.invalidateQueries({ queryKey: ["me"] });
+    },
+    onError: (caught) => setProfileFeedback({ tone: "error", text: errorText(caught) }),
+  });
 
   const startSetup = useMutation({
     mutationFn: () => api<MfaSetup>("/auth/2fa/setup", { method: "POST", body: "{}" }),
@@ -107,6 +132,14 @@ export default function AccountPage() {
     event.preventDefault();
     disable.mutate(disableForm);
   };
+  const submitProfile = (event: FormEvent) => {
+    event.preventDefault();
+    setProfileFeedback(null);
+    updateProfile.mutate({
+      firstName: profileForm.firstName.trim(),
+      lastName: profileForm.lastName.trim(),
+    });
+  };
   const submitPassword = (event: FormEvent) => {
     event.preventDefault();
     setPasswordFeedback(null);
@@ -123,6 +156,54 @@ export default function AccountPage() {
         <h1 className="text-2xl font-semibold tracking-tight">{tSettings("account")}</h1>
         <p className="text-sm text-muted">{tPage("subtitle")}</p>
       </div>
+
+      {/* Profil : prénom et nom */}
+      <Card>
+        <div className="mb-4 flex items-center gap-2 text-muted">
+          <UserRound size={16} />
+          <h2 className="text-sm font-semibold uppercase tracking-wider">
+            {tSettings("profile.title")}
+          </h2>
+        </div>
+        {profileFeedback && (
+          <div className="mb-4">
+            <Alert tone={profileFeedback.tone}>{profileFeedback.text}</Alert>
+          </div>
+        )}
+        <form onSubmit={submitProfile} className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <Label htmlFor="firstName">{tSettings("profile.firstName")}</Label>
+              <Input
+                id="firstName"
+                autoComplete="given-name"
+                required
+                maxLength={80}
+                value={profileForm.firstName}
+                onChange={(event) =>
+                  setProfileForm((current) => ({ ...current, firstName: event.target.value }))
+                }
+              />
+            </div>
+            <div>
+              <Label htmlFor="lastName">{tSettings("profile.lastName")}</Label>
+              <Input
+                id="lastName"
+                autoComplete="family-name"
+                required
+                maxLength={80}
+                value={profileForm.lastName}
+                onChange={(event) =>
+                  setProfileForm((current) => ({ ...current, lastName: event.target.value }))
+                }
+              />
+            </div>
+          </div>
+          <Button type="submit" disabled={updateProfile.isPending}>
+            {tSettings("profile.submit")}
+          </Button>
+        </form>
+      </Card>
 
       {/* Changement de mot de passe */}
       <Card>

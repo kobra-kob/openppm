@@ -1,6 +1,6 @@
 "use client";
 
-import { LogOut, Settings2, UserRound } from "lucide-react";
+import { LogOut, Settings2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useTranslations } from "next-intl";
@@ -8,7 +8,7 @@ import { useState } from "react";
 import { api } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
 
-/** Avatar cliquable → menu : Compte, Administration (admin), Déconnexion. */
+/** Avatar cliquable → menu : Paramètres, Déconnexion. */
 export function ProfileMenu() {
   const t = useTranslations();
   const router = useRouter();
@@ -18,7 +18,6 @@ export function ProfileMenu() {
   if (!user) {
     return null;
   }
-  const isAdmin = user.roles.includes("admin");
   const initials = `${user.firstName.charAt(0)}${user.lastName.charAt(0)}`.toUpperCase();
 
   const logout = async () => {
@@ -63,21 +62,12 @@ export function ProfileMenu() {
             </div>
             <div className="mt-1 space-y-0.5">
               <Link
-                href="/settings/account"
+                href="/settings"
                 onClick={() => setOpen(false)}
                 className="flex items-center gap-2.5 rounded-(--radius-control) px-3 py-2 text-sm transition-colors hover:bg-border-subtle"
               >
-                <UserRound size={15} /> {t("settings.account")}
+                <Settings2 size={15} /> {t("settings.title")}
               </Link>
-              {isAdmin && (
-                <Link
-                  href="/settings/members"
-                  onClick={() => setOpen(false)}
-                  className="flex items-center gap-2.5 rounded-(--radius-control) px-3 py-2 text-sm transition-colors hover:bg-border-subtle"
-                >
-                  <Settings2 size={15} /> {t("settings.admin")}
-                </Link>
-              )}
               <button
                 type="button"
                 onClick={logout}

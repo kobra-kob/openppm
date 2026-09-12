@@ -415,6 +415,36 @@ export class AuthService {
     return this.toPublicUser(user);
   }
 
+  /** Modification de son identité (prénom / nom) depuis la page Compte. */
+  async updateProfile(
+    userId: string,
+    dto: { firstName: string; lastName: string },
+    context: RequestContext,
+  ): Promise<PublicUser> {
+    const user = await this.repository.findUserById(userId);
+    if (!user || !user.isActive || user.deletedAt) {
+      throw new UnauthorizedException({
+        code: "UNAUTHENTICATED",
+        message: "Session invalide",
+      });
+    }
+    const updated = await this.repository.updateProfile(userId, {
+      firstName: dto.firstName.trim(),
+      lastName: dto.lastName.trim(),
+    });
+    await this.audit.log({
+      action: "auth.profile.updated",
+      entityType: "user",
+      entityId: userId,
+      organizationId: user.organizationId,
+      userId,
+      before: { firstName: user.firstName, lastName: user.lastName },
+      after: { firstName: updated.firstName, lastName: updated.lastName },
+      ...context,
+    });
+    return this.toPublicUser(updated);
+  }
+
   /**
    * Changement de mot de passe depuis le compte : vérifie l'actuel, applique
    * la politique, révoque toutes les sessions et rouvre une session fraîche.

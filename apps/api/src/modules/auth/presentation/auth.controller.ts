@@ -4,6 +4,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Patch,
   Post,
   Req,
   Res,
@@ -24,6 +25,7 @@ import {
 } from "../application/dto/mfa.dto";
 import { RefreshDto } from "../application/dto/refresh.dto";
 import { RegisterDto } from "../application/dto/register.dto";
+import { UpdateProfileDto } from "../application/dto/update-profile.dto";
 import { ResetPasswordDto } from "../application/dto/reset-password.dto";
 import { SwitchOrganizationDto } from "../application/dto/switch-organization.dto";
 import { MfaService, MfaSetup } from "../application/mfa.service";
@@ -232,6 +234,17 @@ export class AuthController {
       this.context(request),
     );
     return this.respond(result, response);
+  }
+
+  @Patch("profile")
+  @ApiBearerAuth()
+  @ApiOperation({ summary: "Modifier son prénom et son nom" })
+  updateProfile(
+    @CurrentUser() payload: JwtPayload,
+    @Body() dto: UpdateProfileDto,
+    @Req() request: Request,
+  ): Promise<PublicUser> {
+    return this.auth.updateProfile(payload.sub, dto, this.context(request));
   }
 
   @Post("change-password")

@@ -226,6 +226,17 @@ export class PrismaAuthRepository implements AuthRepository {
     ]);
   }
 
+  updateProfile(
+    userId: string,
+    data: { firstName: string; lastName: string },
+  ): Promise<UserWithAccess> {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { firstName: data.firstName, lastName: data.lastName },
+      include: USER_INCLUDE,
+    });
+  }
+
   findActiveInvitationByHash(tokenHash: string): Promise<Invitation | null> {
     return this.prisma.invitation.findFirst({
       where: { tokenHash, acceptedAt: null, expiresAt: { gt: new Date() } },

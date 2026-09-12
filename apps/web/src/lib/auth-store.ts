@@ -22,6 +22,7 @@ interface AuthState {
   accessToken: string | null;
   refreshToken: string | null;
   setSession: (session: SessionPayload) => void;
+  setUser: (user: AuthUser) => void;
   clear: () => void;
 }
 
@@ -37,6 +38,7 @@ export const useAuthStore = create<AuthState>()(
           accessToken: session.accessToken,
           refreshToken: session.refreshToken,
         }),
+      setUser: (user) => set({ user }),
       clear: () => set({ user: null, accessToken: null, refreshToken: null }),
     }),
     { name: "openppm-auth" },

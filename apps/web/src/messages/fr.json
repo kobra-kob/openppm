@@ -703,7 +703,10 @@
     "remove": "Retirer"
   },
   "settings": {
+    "title": "Paramètres",
     "account": "Compte",
+    "organization": "Organisation",
+    "organizationSubtitle": "Nom et coordonnées de votre organisation.",
     "admin": "Administration",
     "adminSubtitle": "Gestion de l'application : membres et catégories de projets.",
     "adminForbidden": "Cette page est réservée aux administrateurs.",
@@ -716,6 +719,13 @@
     "categories": "Catégories de projets",
     "categoriesSubtitle": "Organisez vos projets par catégories couleur.",
     "billing": "Abonnement & Facturation",
+    "profile": {
+      "title": "Profil",
+      "firstName": "Prénom",
+      "lastName": "Nom",
+      "submit": "Enregistrer",
+      "success": "Profil mis à jour."
+    },
     "password": {
       "title": "Changer le mot de passe",
       "current": "Mot de passe actuel",
@@ -723,6 +733,16 @@
       "submit": "Mettre à jour",
       "success": "Mot de passe mis à jour. Vos autres sessions ont été déconnectées."
     }
+  },
+  "organization": {
+    "profile": "Profil de l'organisation",
+    "name": "Nom de l'organisation",
+    "country": "Pays (code ISO)",
+    "address": "Adresse",
+    "vatNumber": "Numéro de TVA",
+    "logoUrl": "URL du logo",
+    "submit": "Enregistrer",
+    "success": "Organisation mise à jour."
   },
   "security": {
     "title": "Sécurité",
