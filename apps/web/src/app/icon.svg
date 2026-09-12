@@ -1,0 +1,13 @@
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Marque OpenPPM : glyphe Command (⌘) sur le dégradé accent, façon bouton macOS du header. -->
+  <defs>
+    <linearGradient id="oppm" x1="16" y1="0" x2="16" y2="32" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#007aff"/>
+      <stop offset="1" stop-color="#0060df"/>
+    </linearGradient>
+  </defs>
+  <rect width="32" height="32" rx="9" fill="url(#oppm)"/>
+  <g transform="translate(7 7) scale(0.75)" stroke="#ffffff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none">
+    <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3"/>
+  </g>
+</svg>
