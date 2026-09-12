@@ -707,9 +707,16 @@
     "title": "Tableau de bord",
     "subtitle": "Vue d'ensemble de votre organisation",
     "activeProjects": "Projets actifs",
+    "totalProjectsHint": "sur {total} projets",
     "demands": "Demandes",
+    "pendingDemandsHint": "{count} en attente",
+    "portfolios": "Portefeuilles",
     "engagedBudget": "Budget engagé",
     "members": "Membres",
+    "completionRate": "Taux de réalisation",
+    "completedHint": "{count} projets terminés",
+    "projectsAtRisk": "Projets à risque",
+    "overdueProjects": "Projets en retard",
     "openTasks": "Tâches ouvertes",
     "overdueTasks": "Tâches en retard",
     "totalProjects": "Projets au total",
@@ -717,6 +724,11 @@
     "deliveriesUnit": "livraisons",
     "objectives": "Objectifs atteints",
     "byStatus": "Répartition des projets",
+    "health": "Santé des projets",
+    "budget": "Budget",
+    "budgetEngaged": "Engagé",
+    "budgetConsumed": "Consommé",
+    "budgetConsumptionHint": "{ratio}% du budget engagé consommé",
     "empty": "Aucune donnée à afficher pour le moment."
   },
   "settings": {
@@ -882,16 +894,5 @@
       "close": "Clôturer",
       "manage": "Administrer"
     }
-  },
-  "dashboard": {
-    "welcome": "Bonjour {name}",
-    "subtitle": "Voici l'état de votre espace de travail.",
-    "organizationCard": "Organisation",
-    "organizationId": "Identifiant",
-    "profileCard": "Votre profil",
-    "rolesLabel": "Rôles",
-    "localeLabel": "Langue du compte",
-    "nextSteps": "Prochaines étapes",
-    "nextStepsBody": "La gestion des projets, tâches, Kanban et Gantt arrive dans la Phase 1 de la roadmap. Cet espace accueillera vos indicateurs."
   }
 }

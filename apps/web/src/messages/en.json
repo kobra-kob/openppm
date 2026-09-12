@@ -707,9 +707,16 @@
     "title": "Dashboard",
     "subtitle": "Overview of your organization",
     "activeProjects": "Active projects",
+    "totalProjectsHint": "of {total} projects",
     "demands": "Requests",
+    "pendingDemandsHint": "{count} pending",
+    "portfolios": "Portfolios",
     "engagedBudget": "Committed budget",
     "members": "Members",
+    "completionRate": "Completion rate",
+    "completedHint": "{count} completed projects",
+    "projectsAtRisk": "Projects at risk",
+    "overdueProjects": "Overdue projects",
     "openTasks": "Open tasks",
     "overdueTasks": "Overdue tasks",
     "totalProjects": "Total projects",
@@ -717,6 +724,11 @@
     "deliveriesUnit": "deliveries",
     "objectives": "Objectives met",
     "byStatus": "Projects by status",
+    "health": "Project health",
+    "budget": "Budget",
+    "budgetEngaged": "Committed",
+    "budgetConsumed": "Consumed",
+    "budgetConsumptionHint": "{ratio}% of committed budget consumed",
     "empty": "No data to display yet."
   },
   "settings": {
@@ -882,16 +894,5 @@
       "close": "Close",
       "manage": "Manage"
     }
-  },
-  "dashboard": {
-    "welcome": "Hello {name}",
-    "subtitle": "Here is the state of your workspace.",
-    "organizationCard": "Organization",
-    "organizationId": "Identifier",
-    "profileCard": "Your profile",
-    "rolesLabel": "Roles",
-    "localeLabel": "Account language",
-    "nextSteps": "Next steps",
-    "nextStepsBody": "Projects, tasks, Kanban and Gantt are coming in Phase 1 of the roadmap. This space will host your indicators."
   }
 }

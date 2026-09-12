@@ -47,10 +47,19 @@ describe("Tableau de bord global (intégration)", () => {
       .expect(200);
     expect(res.body.totalProjects).toBe(0);
     expect(res.body.activeProjects).toBe(0);
+    expect(res.body.completedProjects).toBe(0);
+    expect(res.body.completionRate).toBe(0);
+    expect(res.body.portfolios).toBe(0);
     expect(res.body.totalDemands).toBe(0);
+    expect(res.body.pendingDemands).toBe(0);
     expect(res.body.engagedBudget).toBe(0);
+    expect(res.body.consumedBudget).toBe(0);
     expect(res.body.memberCount).toBe(1);
+    expect(res.body.openTasks).toBe(0);
+    expect(res.body.overdueProjects).toBe(0);
+    expect(res.body.projectsAtRisk).toBe(0);
     expect(res.body.objectivesRatio).toBe(0);
+    expect(res.body.projectsByHealth).toEqual({ green: 0, amber: 0, red: 0 });
     expect(res.body.deliveriesByQuarter).toHaveLength(6);
     // Les trimestres sont ordonnés du plus ancien au plus récent.
     const quarters = res.body.deliveriesByQuarter as Array<{ key: string; count: number }>;
