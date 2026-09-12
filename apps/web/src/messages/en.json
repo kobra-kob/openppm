@@ -217,6 +217,7 @@
     }
   },
   "topNav": {
+    "dashboard": "Dashboard",
     "projects": "Projects",
     "demands": "Demands",
     "portfolios": "Portfolios",
@@ -701,6 +702,22 @@
       "empty": "No pending invitations."
     },
     "remove": "Remove"
+  },
+  "dashboard": {
+    "title": "Dashboard",
+    "subtitle": "Overview of your organization",
+    "activeProjects": "Active projects",
+    "demands": "Requests",
+    "engagedBudget": "Committed budget",
+    "members": "Members",
+    "openTasks": "Open tasks",
+    "overdueTasks": "Overdue tasks",
+    "totalProjects": "Total projects",
+    "deliveries": "Deliveries per quarter",
+    "deliveriesUnit": "deliveries",
+    "objectives": "Objectives met",
+    "byStatus": "Projects by status",
+    "empty": "No data to display yet."
   },
   "settings": {
     "title": "Settings",

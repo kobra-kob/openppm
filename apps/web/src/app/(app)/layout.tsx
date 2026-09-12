@@ -52,9 +52,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               {t("appName")}
             </span>
           </Link>
-          <span className="mx-2 hidden h-6 w-px shrink-0 bg-border-subtle sm:block" />
+          <span className="mx-2 hidden h-6 w-px shrink-0 bg-border-subtle sm:block lg:mx-4" />
+          {/* Sélecteur d'organisation : masqué en mono-tenant (pas de nom d'entreprise) */}
           <OrganizationSwitcher />
-          <span className="mx-2 hidden h-6 w-px shrink-0 bg-border-subtle md:block lg:mx-4" />
           {/* Onglets en ligne sur desktop, repliés en 2e rangée sur mobile */}
           <TopNav className="hidden md:flex" />
           <div className="flex min-w-0 flex-1 justify-center">

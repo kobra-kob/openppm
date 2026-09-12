@@ -217,6 +217,7 @@
     }
   },
   "topNav": {
+    "dashboard": "Tableau de bord",
     "projects": "Projets",
     "demands": "Demandes",
     "portfolios": "Portefeuilles",
@@ -701,6 +702,22 @@
       "empty": "Aucune invitation en attente."
     },
     "remove": "Retirer"
+  },
+  "dashboard": {
+    "title": "Tableau de bord",
+    "subtitle": "Vue d'ensemble de votre organisation",
+    "activeProjects": "Projets actifs",
+    "demands": "Demandes",
+    "engagedBudget": "Budget engagé",
+    "members": "Membres",
+    "openTasks": "Tâches ouvertes",
+    "overdueTasks": "Tâches en retard",
+    "totalProjects": "Projets au total",
+    "deliveries": "Livraisons par trimestre",
+    "deliveriesUnit": "livraisons",
+    "objectives": "Objectifs atteints",
+    "byStatus": "Répartition des projets",
+    "empty": "Aucune donnée à afficher pour le moment."
   },
   "settings": {
     "title": "Paramètres",

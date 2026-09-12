@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { cn } from "@/components/ui";
 
 const LINKS = [
+  { href: "/dashboard", key: "dashboard", match: (p: string) => p.startsWith("/dashboard") },
   { href: "/demands", key: "demands", match: (p: string) => p.startsWith("/demands") },
   { href: "/", key: "projects", match: (p: string) => p === "/" || p.startsWith("/projects") },
   { href: "/portfolios", key: "portfolios", match: (p: string) => p.startsWith("/portfolios") },

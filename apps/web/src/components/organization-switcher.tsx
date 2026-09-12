@@ -50,7 +50,9 @@ export function OrganizationSwitcher() {
     },
   });
 
-  if (!current) {
+  // Mono-organisation : on n'affiche pas le nom de l'entreprise dans la barre.
+  // Le sélecteur n'apparaît que lorsqu'il y a plusieurs organisations à basculer.
+  if (!current || !multi) {
     return null;
   }
 

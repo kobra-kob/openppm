@@ -3,9 +3,11 @@ import { CategoriesService } from "./application/categories.service";
 import { ProjectDashboardService } from "./application/project-dashboard.service";
 import { ProjectsService } from "./application/projects.service";
 import { TemplatesService } from "./application/templates.service";
+import { TenantDashboardService } from "./application/tenant-dashboard.service";
 import { PROJECT_REPOSITORY } from "./domain/project.repository";
 import { PrismaProjectRepository } from "./infrastructure/prisma-project.repository";
 import { CategoriesController } from "./presentation/categories.controller";
+import { DashboardController } from "./presentation/dashboard.controller";
 import { OrganizationSettingsController } from "./presentation/organization-settings.controller";
 import { ProjectsController } from "./presentation/projects.controller";
 import { TemplatesController } from "./presentation/templates.controller";
@@ -16,10 +18,12 @@ import { TemplatesController } from "./presentation/templates.controller";
     CategoriesController,
     TemplatesController,
     OrganizationSettingsController,
+    DashboardController,
   ],
   providers: [
     ProjectsService,
     ProjectDashboardService,
+    TenantDashboardService,
     CategoriesService,
     TemplatesService,
     { provide: PROJECT_REPOSITORY, useClass: PrismaProjectRepository },
