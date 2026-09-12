@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArrowLeft, Ban, CheckCircle2, FolderKanban, History, Lock, Pencil, Send, Trash2 } from "lucide-react";
+import { ArrowLeft, Ban, Check, CheckCircle2, FolderKanban, History, Inbox, Lock, Pencil, Send, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -205,15 +205,12 @@ export default function DemandDetailPage() {
             {t("rejectedNotice")}
           </Alert>
         ) : (
-          <div className="mt-4 flex flex-wrap items-center gap-1">
-            {track.map((state, index) => (
-              <StepPill
-                key={state.key}
-                state={state}
-                done={index < currentIndex}
-                current={index === currentIndex}
-              />
-            ))}
+          <div className="mt-5 border-t border-border-subtle pt-5">
+            <div className="mb-4 flex items-center gap-2 text-sm font-semibold">
+              <Inbox size={16} className="text-accent" />
+              {t("approvalCircuit")}
+            </div>
+            <WorkflowStepper track={track} currentIndex={currentIndex} />
           </div>
         )}
 
@@ -480,29 +477,68 @@ export default function DemandDetailPage() {
   );
 }
 
-function StepPill({
-  state,
-  done,
-  current,
+/**
+ * Circuit d'approbation en escalier : pastille par étape (check si franchie,
+ * pleine accent si courante, contour si à venir), reliées par un trait, libellé
+ * en dessous. Le comportement du workflow est inchangé, seul le rendu évolue.
+ */
+function WorkflowStepper({
+  track,
+  currentIndex,
 }: {
-  state: WorkflowState;
-  done: boolean;
-  current: boolean;
+  track: WorkflowState[];
+  currentIndex: number;
 }) {
   return (
-    <div
-      className={cn(
-        "flex items-center gap-1 rounded-full px-2.5 py-1 text-[11px] font-medium",
-        current
-          ? "bg-accent text-accent-foreground"
-          : done
-            ? "bg-accent/15 text-accent"
-            : "bg-border-subtle text-muted",
-      )}
-    >
-      {state.kind === "final_ok" && current && <Lock size={11} />}
-      {state.label}
-    </div>
+    <ol className="flex items-start">
+      {track.map((state, index) => {
+        const done = index < currentIndex;
+        const current = index === currentIndex;
+        const isLast = index === track.length - 1;
+        const locked = state.kind === "final_ok" && current;
+        return (
+          <li key={state.key} className="flex min-w-0 flex-1 flex-col items-center">
+            <div className="flex w-full items-center">
+              {/* Connecteur gauche (invisible sur la 1re étape) */}
+              <span
+                className={cn(
+                  "h-0.5 flex-1",
+                  index === 0 ? "invisible" : done || current ? "bg-accent/40" : "bg-border-subtle",
+                )}
+              />
+              <span
+                className={cn(
+                  "flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-semibold transition-colors",
+                  done
+                    ? "bg-success/15 text-success"
+                    : current
+                      ? "bg-accent text-accent-foreground shadow-[var(--shadow-btn)]"
+                      : "border-2 border-border-strong text-muted",
+                )}
+              >
+                {done ? <Check size={18} /> : locked ? <Lock size={15} /> : index + 1}
+              </span>
+              {/* Connecteur droit (invisible sur la dernière étape) */}
+              <span
+                className={cn(
+                  "h-0.5 flex-1",
+                  isLast ? "invisible" : done ? "bg-accent/40" : "bg-border-subtle",
+                )}
+              />
+            </div>
+            <span
+              className={cn(
+                "mt-2 max-w-full truncate px-1 text-center text-xs",
+                current ? "font-semibold text-foreground" : done ? "text-foreground" : "text-muted",
+              )}
+              title={state.label}
+            >
+              {state.label}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
   );
 }
 

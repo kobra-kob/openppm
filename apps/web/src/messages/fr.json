@@ -315,6 +315,7 @@
     "approvalsInValidations": "Les validations se font depuis « Mes validations »",
     "commentPlaceholder": "Commentaire (obligatoire pour un refus ou un retour)",
     "historyTitle": "Historique",
+    "approvalCircuit": "Circuit d'approbation",
     "rejectedNotice": "Cette demande a été rejetée.",
     "convertedTo": "Projet créé : {code} — ouvrir la fiche projet",
     "tabDetail": "Détail",

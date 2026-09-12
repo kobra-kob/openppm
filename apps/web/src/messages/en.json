@@ -315,6 +315,7 @@
     "approvalsInValidations": "Approvals are handled in \"My approvals\"",
     "commentPlaceholder": "Comment (required to reject or send back)",
     "historyTitle": "History",
+    "approvalCircuit": "Approval circuit",
     "rejectedNotice": "This demand was rejected.",
     "convertedTo": "Project created: {code} — open the project",
     "tabDetail": "Details",
