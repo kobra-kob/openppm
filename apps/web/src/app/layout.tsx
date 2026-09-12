@@ -1,17 +1,14 @@
 import type { Metadata } from "next";
-// Police auto-hébergée (paquet `geist` : fichiers woff2 embarqués). Contrairement
-// à next/font/google, aucun accès réseau n'est requis au build → le conteneur se
-// construit même sans joindre fonts.googleapis.com. Variables CSS identiques
-// (--font-geist-sans / --font-geist-mono), aucun changement de rendu.
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
+// Polices auto-hébergées (paquets @fontsource-variable : fichiers woff2 embarqués).
+// Archivo → titres (--font-heading), Space Grotesk → corps (--font-sans).
+// Contrairement à next/font/google, aucun accès réseau n'est requis au build →
+// le conteneur se construit même sans joindre fonts.googleapis.com.
+import "@fontsource-variable/archivo";
+import "@fontsource-variable/space-grotesk";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
 import "./globals.css";
 import { Providers } from "./providers";
-
-const geistSans = GeistSans;
-const geistMono = GeistMono;
 
 export const metadata: Metadata = {
   title: "OpenPPM",
@@ -32,11 +29,7 @@ export default async function RootLayout({
   // (pas de dépendance à l'héritage implicite).
   const messages = await getMessages();
   return (
-    <html
-      lang={locale}
-      suppressHydrationWarning
-      className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
-    >
+    <html lang={locale} suppressHydrationWarning className="h-full antialiased">
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
