@@ -65,6 +65,8 @@
     "CANNOT_REMOVE_OWNER": "The organization owner cannot be removed.",
     "CANNOT_REMOVE_SELF": "You cannot remove yourself.",
     "LAST_ADMIN": "You cannot remove the Administrator role from the last administrator.",
+    "COMMITTEE_REQUIRED": "This demand must go through the investment committee.",
+    "COMMITTEE_NOT_REQUIRED": "Finance approval is enough: the committee is not required.",
     "UNKNOWN": "An unexpected error occurred. Please retry."
   },
   "auth": {
@@ -731,6 +733,12 @@
     "budgetConsumed": "Consumed",
     "budgetConsumptionHint": "{ratio}% of committed budget consumed",
     "empty": "No data to display yet."
+  },
+  "governance": {
+    "title": "Governance",
+    "committeeRule": "Investment committee by budget",
+    "enabledHint": "Enabled: above €100k a demand goes to the investment committee; below, Finance approval alone creates the project.",
+    "disabledHint": "Disabled: every demand goes through the investment committee (default behavior)."
   },
   "settings": {
     "title": "Settings",

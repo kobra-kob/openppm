@@ -86,7 +86,6 @@ describe("Conversion demande → projet (intégration)", () => {
     // Alice (admin) arbitre chaque étape du circuit jusqu'au comité.
     for (const key of [
       "submit",
-      "manager_approve",
       "pmo_qualify",
       "prepare_business_case",
       "finance_validate",

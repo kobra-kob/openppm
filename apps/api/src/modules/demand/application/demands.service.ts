@@ -9,13 +9,17 @@ import {
 import { DemandUrgency, RoleKey } from "@openppm/db";
 import { AuditService } from "../../../core/audit/audit.service";
 import { NotificationsService } from "../../../core/notifications/notifications.service";
+import { PrismaService } from "../../../core/prisma/prisma.service";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
 import { WorkflowService, WorkflowView } from "../../workflow/application/workflow.service";
 import { formatDemandCode } from "../domain/demand-code";
 import {
+  committeeRequired,
   DEFAULT_DEMAND_WORKFLOW,
   DEMAND_ENTITY_TYPE,
+  T_FINANCE_CREATES_PROJECT,
+  T_SUBMIT_TO_COMMITTEE,
 } from "../domain/demand-workflow";
 import { DEMAND_REPOSITORY } from "../domain/demand.repository";
 import type { DemandRecord, DemandRepository } from "../domain/demand.repository";
@@ -67,6 +71,8 @@ export interface DemandView {
 /** Détail : le workflow complet (états, transitions franchissables, historique). */
 export interface DemandDetailView extends DemandView {
   workflow: WorkflowView;
+  /** true si le comité est court-circuité pour cette demande (Finance crée le projet). */
+  committeeSkipped: boolean;
 }
 
 export interface DemandListView {
@@ -84,7 +90,17 @@ export class DemandsService {
     private readonly audit: AuditService,
     private readonly notifications: NotificationsService,
     private readonly conversion: DemandConversionService,
+    private readonly prisma: PrismaService,
   ) {}
+
+  /** Règle de gouvernance de l'organisation (comité conditionnel au budget). */
+  private async committeeRuleEnabled(organizationId: string): Promise<boolean> {
+    const org = await this.prisma.organization.findUnique({
+      where: { id: organizationId },
+      select: { committeeRuleEnabled: true },
+    });
+    return org?.committeeRuleEnabled ?? false;
+  }
 
   async list(payload: JwtPayload, query: ListDemandsQuery): Promise<DemandListView> {
     const { items, total } = await this.repository.list({
@@ -213,6 +229,26 @@ export class DemandsService {
         code: "FORBIDDEN",
         message: "Vous ne pouvez agir que sur vos propres demandes",
       });
+    }
+
+    // Bifurcation Finance : la transition choisie doit être cohérente avec la
+    // règle de gouvernance et le budget (empêche de court-circuiter le comité).
+    if (transitionKey === T_SUBMIT_TO_COMMITTEE || transitionKey === T_FINANCE_CREATES_PROJECT) {
+      const ruleEnabled = await this.committeeRuleEnabled(payload.org);
+      const budget = demand.estimatedBudget !== null ? Number(demand.estimatedBudget) : null;
+      const committeeReq = committeeRequired(ruleEnabled, budget);
+      if (transitionKey === T_FINANCE_CREATES_PROJECT && committeeReq) {
+        throw new BadRequestException({
+          code: "COMMITTEE_REQUIRED",
+          message: "Cette demande doit passer par le comité d'investissement",
+        });
+      }
+      if (transitionKey === T_SUBMIT_TO_COMMITTEE && !committeeReq) {
+        throw new BadRequestException({
+          code: "COMMITTEE_NOT_REQUIRED",
+          message: "La validation Finance suffit : le comité n'est pas requis",
+        });
+      }
     }
 
     const result = await this.workflow.fire(
@@ -354,16 +390,26 @@ export class DemandsService {
     };
   }
 
-  private toDetailView(
+  private async toDetailView(
     payload: JwtPayload,
     demand: DemandRecord,
     workflow: WorkflowView,
-  ): DemandDetailView {
+  ): Promise<DemandDetailView> {
     const base = this.toView(payload, demand, {
       stateKey: workflow.currentState.key,
       stateLabel: workflow.currentState.label,
       kind: workflow.currentState.kind,
     });
-    return { ...base, workflow };
+    // Bifurcation Finance : selon la règle et le budget, une seule des deux
+    // transitions terminales est proposée (comité ou création directe).
+    const ruleEnabled = await this.committeeRuleEnabled(payload.org);
+    const budget = demand.estimatedBudget !== null ? Number(demand.estimatedBudget) : null;
+    const committeeReq = committeeRequired(ruleEnabled, budget);
+    const available = workflow.available.filter((transition) => {
+      if (transition.key === T_SUBMIT_TO_COMMITTEE) return committeeReq;
+      if (transition.key === T_FINANCE_CREATES_PROJECT) return !committeeReq;
+      return true;
+    });
+    return { ...base, workflow: { ...workflow, available }, committeeSkipped: !committeeReq };
   }
 }

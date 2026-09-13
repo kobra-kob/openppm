@@ -23,12 +23,23 @@ export interface UpdateOrganizationInput {
  * Port de persistance du module organisation : l'application ne connaît que
  * cette interface, Prisma reste confiné dans l'infrastructure.
  */
+/** Règles de gouvernance de l'organisation. */
+export interface OrganizationGovernance {
+  /** Règle du comité conditionnel au budget (voir demand-workflow). */
+  committeeRuleEnabled: boolean;
+}
+
 export interface OrganizationRepository {
   findProfile(organizationId: string): Promise<OrganizationProfile | null>;
   updateProfile(
     organizationId: string,
     input: UpdateOrganizationInput,
   ): Promise<OrganizationProfile>;
+  getGovernance(organizationId: string): Promise<OrganizationGovernance | null>;
+  setCommitteeRuleEnabled(
+    organizationId: string,
+    enabled: boolean,
+  ): Promise<OrganizationGovernance>;
 }
 
 export const ORGANIZATION_REPOSITORY = Symbol("ORGANIZATION_REPOSITORY");

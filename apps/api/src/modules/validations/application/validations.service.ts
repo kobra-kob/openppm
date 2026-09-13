@@ -1,9 +1,16 @@
 import { Inject, Injectable } from "@nestjs/common";
 import { RoleKey } from "@openppm/db";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
+import { PrismaService } from "../../../core/prisma/prisma.service";
 import { BUDGET_GOVERNANCE_REPOSITORY } from "../../budget-governance/domain/budget-governance.repository";
 import type { BudgetGovernanceRepository } from "../../budget-governance/domain/budget-governance.repository";
-import { DEMAND_ENTITY_TYPE } from "../../demand/domain/demand-workflow";
+import {
+  committeeRequired,
+  DEMAND_ENTITY_TYPE,
+  FINANCE_REVIEW_STATE,
+  T_FINANCE_CREATES_PROJECT,
+  T_SUBMIT_TO_COMMITTEE,
+} from "../../demand/domain/demand-workflow";
 import { DEMAND_REPOSITORY } from "../../demand/domain/demand.repository";
 import type { DemandRepository } from "../../demand/domain/demand.repository";
 import { WORKFLOW_REPOSITORY } from "../../workflow/domain/workflow.repository";
@@ -55,6 +62,7 @@ export class ValidationsService {
     private readonly budget: BudgetGovernanceRepository,
     @Inject(DEMAND_REPOSITORY) private readonly demands: DemandRepository,
     @Inject(WORKFLOW_REPOSITORY) private readonly workflow: WorkflowRepository,
+    private readonly prisma: PrismaService,
   ) {}
 
   async listForUser(payload: JwtPayload): Promise<ValidationsView> {
@@ -125,8 +133,24 @@ export class ValidationsService {
       payload.org,
       relevant.map((r) => r.entityId),
     );
+    // Règle de gouvernance : à l'étape Finance, une seule des deux issues
+    // (comité ou création directe) est proposée, selon le budget de la demande.
+    const org = await this.prisma.organization.findUnique({
+      where: { id: payload.org },
+      select: { committeeRuleEnabled: true },
+    });
+    const ruleEnabled = org?.committeeRuleEnabled ?? false;
     return summaries.map((summary) => {
       const stateKey = stateByEntity.get(summary.id) ?? "";
+      let transitions = optionsByState.get(stateKey) ?? [];
+      if (stateKey === FINANCE_REVIEW_STATE) {
+        const committeeReq = committeeRequired(ruleEnabled, summary.estimatedBudget);
+        transitions = transitions.filter((option) => {
+          if (option.key === T_SUBMIT_TO_COMMITTEE) return committeeReq;
+          if (option.key === T_FINANCE_CREATES_PROJECT) return !committeeReq;
+          return true;
+        });
+      }
       return {
         type: "demand" as const,
         demandId: summary.id,
@@ -134,7 +158,7 @@ export class ValidationsService {
         title: summary.title,
         stateKey,
         stateLabel: stateLabelByKey.get(stateKey) ?? stateKey,
-        transitions: optionsByState.get(stateKey) ?? [],
+        transitions,
       };
     });
   }

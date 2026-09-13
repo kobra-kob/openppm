@@ -127,9 +127,12 @@ export default function DemandDetailPage() {
 
   const wf = demand.workflow;
   const rejected = wf.currentState.kind === "final_ko";
-  // Piste principale (hors état de rejet) pour l'indicateur d'étapes
+  // Piste principale (hors état de rejet) pour l'indicateur d'étapes. Quand la
+  // règle du comité court-circuite ce dernier (budget sous le seuil), l'étape
+  // « Comité d'investissement » est retirée du parcours affiché.
   const track = wf.states
     .filter((s) => s.kind !== "final_ko")
+    .filter((s) => !(demand.committeeSkipped && s.key === "committee"))
     .sort((a, b) => a.position - b.position);
   const currentIndex = track.findIndex((s) => s.key === wf.currentState.key);
 

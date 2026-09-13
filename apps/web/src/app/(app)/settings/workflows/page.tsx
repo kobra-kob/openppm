@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { AdminOnly } from "@/features/settings/admin-only";
+import { CommitteeRuleCard } from "@/features/settings/committee-rule-card";
 import { WorkflowAdmin } from "@/features/settings/workflow-admin";
 
 export default function WorkflowsSettingsPage() {
@@ -13,6 +14,7 @@ export default function WorkflowsSettingsPage() {
         <p className="text-sm text-muted">{t("workflowsSubtitle")}</p>
       </div>
       <AdminOnly>
+        <CommitteeRuleCard />
         <WorkflowAdmin />
       </AdminOnly>
     </div>

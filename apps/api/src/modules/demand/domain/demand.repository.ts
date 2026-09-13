@@ -72,6 +72,7 @@ export interface DemandSummary {
   reference: string;
   title: string;
   requesterId: string;
+  estimatedBudget: number | null;
 }
 
 export interface DemandRepository {

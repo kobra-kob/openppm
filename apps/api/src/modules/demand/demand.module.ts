@@ -3,6 +3,7 @@ import { WorkflowModule } from "../workflow/workflow.module";
 import { BusinessCasesService } from "./application/business-cases.service";
 import { DemandConversionService } from "./application/demand-conversion.service";
 import { DemandsService } from "./application/demands.service";
+import { DemandWorkflowUpgradeService } from "./application/demand-workflow-upgrade.service";
 import { BUSINESS_CASE_REPOSITORY } from "./domain/business-case.repository";
 import { DEMAND_CONVERSION_REPOSITORY } from "./domain/demand-conversion.repository";
 import { DEMAND_REPOSITORY } from "./domain/demand.repository";
@@ -25,6 +26,7 @@ import { WorkflowAdminController } from "./presentation/workflow-admin.controlle
     DemandsService,
     BusinessCasesService,
     DemandConversionService,
+    DemandWorkflowUpgradeService,
     { provide: DEMAND_REPOSITORY, useClass: PrismaDemandRepository },
     { provide: BUSINESS_CASE_REPOSITORY, useClass: PrismaBusinessCaseRepository },
     { provide: DEMAND_CONVERSION_REPOSITORY, useClass: PrismaDemandConversionRepository },

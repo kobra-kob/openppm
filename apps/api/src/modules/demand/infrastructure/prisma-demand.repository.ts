@@ -68,9 +68,15 @@ export class PrismaDemandRepository implements DemandRepository {
     }
     const rows = await this.prisma.demand.findMany({
       where: { organizationId, id: { in: ids }, deletedAt: null },
-      select: { id: true, reference: true, title: true, requesterId: true },
+      select: { id: true, reference: true, title: true, requesterId: true, estimatedBudget: true },
     });
-    return rows;
+    return rows.map((row) => ({
+      id: row.id,
+      reference: row.reference,
+      title: row.title,
+      requesterId: row.requesterId,
+      estimatedBudget: row.estimatedBudget !== null ? Number(row.estimatedBudget) : null,
+    }));
   }
 
   async create(input: CreateDemandInput): Promise<DemandRecord> {

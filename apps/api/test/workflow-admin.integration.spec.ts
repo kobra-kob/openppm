@@ -84,13 +84,13 @@ describe("Administration des workflows (intégration)", () => {
       .expect(200);
     const demand = response.body.find((d: { key: string }) => d.key === "demand-default");
     expect(demand).toBeDefined();
-    const approve = demand.transitions.find((t: { key: string }) => t.key === "manager_approve");
-    expect(approve.allowedRoles).toEqual(["manager", "pmo"]);
+    const approve = demand.transitions.find((t: { key: string }) => t.key === "pmo_qualify");
+    expect(approve.allowedRoles).toEqual(["pmo"]);
   });
 
   it("rejette un rôle inconnu (400) et une transition inconnue (404)", async () => {
     await request(server())
-      .patch("/api/v1/workflows/demand-default/transitions/manager_approve")
+      .patch("/api/v1/workflows/demand-default/transitions/pmo_qualify")
       .set("Authorization", `Bearer ${adminToken}`)
       .send({ allowedRoles: ["not_a_role"], requiresComment: false })
       .expect(400);
@@ -103,16 +103,16 @@ describe("Administration des workflows (intégration)", () => {
   });
 
   it("reconfigure une étape et la règle s'applique au moteur immédiatement", async () => {
-    // La validation Manager devient réservée au PMO
+    // La qualification PMO devient réservée au Manager
     const updated = await request(server())
-      .patch("/api/v1/workflows/demand-default/transitions/manager_approve")
+      .patch("/api/v1/workflows/demand-default/transitions/pmo_qualify")
       .set("Authorization", `Bearer ${adminToken}`)
-      .send({ allowedRoles: ["pmo"], requiresComment: false })
+      .send({ allowedRoles: ["manager"], requiresComment: false })
       .expect(200);
-    const approve = updated.body.transitions.find((t: { key: string }) => t.key === "manager_approve");
-    expect(approve.allowedRoles).toEqual(["pmo"]);
+    const approve = updated.body.transitions.find((t: { key: string }) => t.key === "pmo_qualify");
+    expect(approve.allowedRoles).toEqual(["manager"]);
 
-    // Une demande soumise : le manager ne peut plus valider…
+    // Une demande soumise : le PMO ne peut plus qualifier…
     const demand = await request(server())
       .post("/api/v1/demands")
       .set("Authorization", `Bearer ${bobToken}`)
@@ -126,15 +126,15 @@ describe("Administration des workflows (intégration)", () => {
       .expect(201);
 
     await request(server())
-      .post(tr("manager_approve"))
-      .set("Authorization", `Bearer ${managerToken}`)
+      .post(tr("pmo_qualify"))
+      .set("Authorization", `Bearer ${pmoToken}`)
       .send({})
       .expect(403);
 
-    // …mais le PMO oui, désormais
+    // …mais le Manager oui, désormais
     await request(server())
-      .post(tr("manager_approve"))
-      .set("Authorization", `Bearer ${pmoToken}`)
+      .post(tr("pmo_qualify"))
+      .set("Authorization", `Bearer ${managerToken}`)
       .send({})
       .expect(201);
   });

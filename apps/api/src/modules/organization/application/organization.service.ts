@@ -3,6 +3,7 @@ import { AuditService } from "../../../core/audit/audit.service";
 import type { RequestContext } from "../../auth/application/token.service";
 import {
   ORGANIZATION_REPOSITORY,
+  OrganizationGovernance,
   OrganizationProfile,
 } from "../domain/organization.repository";
 import type { OrganizationRepository } from "../domain/organization.repository";
@@ -68,5 +69,36 @@ export class OrganizationService {
       ...context,
     });
     return profile;
+  }
+
+  async getGovernance(organizationId: string): Promise<OrganizationGovernance> {
+    const governance = await this.repository.getGovernance(organizationId);
+    if (!governance) {
+      throw new NotFoundException({
+        code: "ORGANIZATION_NOT_FOUND",
+        message: "Organisation introuvable",
+      });
+    }
+    return governance;
+  }
+
+  /** Active/désactive la règle du comité conditionnel au budget (admin). */
+  async setCommitteeRule(
+    organizationId: string,
+    userId: string,
+    enabled: boolean,
+    context: RequestContext,
+  ): Promise<OrganizationGovernance> {
+    const governance = await this.repository.setCommitteeRuleEnabled(organizationId, enabled);
+    await this.audit.log({
+      action: "organization.governance_updated",
+      entityType: "organization",
+      entityId: organizationId,
+      organizationId,
+      userId,
+      after: { committeeRuleEnabled: governance.committeeRuleEnabled },
+      ...context,
+    });
+    return governance;
   }
 }

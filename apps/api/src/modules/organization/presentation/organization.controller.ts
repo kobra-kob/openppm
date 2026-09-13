@@ -8,7 +8,11 @@ import { CurrentUser } from "../../auth/infrastructure/decorators/current-user.d
 import { RequirePermissions } from "../../auth/infrastructure/decorators/require-permissions.decorator";
 import { OrganizationService } from "../application/organization.service";
 import { UpdateOrganizationDto } from "../application/dto/update-organization.dto";
-import type { OrganizationProfile } from "../domain/organization.repository";
+import { UpdateGovernanceDto } from "../application/dto/update-governance.dto";
+import type {
+  OrganizationGovernance,
+  OrganizationProfile,
+} from "../domain/organization.repository";
 
 @ApiTags("organization")
 @ApiBearerAuth()
@@ -31,6 +35,28 @@ export class OrganizationController {
     @Req() request: Request,
   ): Promise<OrganizationProfile> {
     return this.organization.updateProfile(user.org, user.sub, dto, this.context(request));
+  }
+
+  @Get("governance")
+  @ApiOperation({ summary: "Règles de gouvernance de l'organisation" })
+  getGovernance(@CurrentUser() user: JwtPayload): Promise<OrganizationGovernance> {
+    return this.organization.getGovernance(user.org);
+  }
+
+  @Patch("governance")
+  @RequirePermissions(P.ORGANIZATION_MANAGE)
+  @ApiOperation({ summary: "Activer/désactiver la règle du comité d'investissement (admin)" })
+  setGovernance(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: UpdateGovernanceDto,
+    @Req() request: Request,
+  ): Promise<OrganizationGovernance> {
+    return this.organization.setCommitteeRule(
+      user.org,
+      user.sub,
+      dto.committeeRuleEnabled,
+      this.context(request),
+    );
   }
 
   private context(request: Request): RequestContext {

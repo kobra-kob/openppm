@@ -32,6 +32,11 @@ model Organization {
   /// Autorise la création directe d'un projet (hors conversion d'une demande).
   /// Désactivée, seul un administrateur peut créer un projet directement.
   allowDirectProjectCreation Boolean @default(true) @map("allow_direct_project_creation")
+  /// Règle de gouvernance : si activée, seules les demandes dont le budget
+  /// dépasse le seuil (100 k€) passent par le comité d'investissement ; en
+  /// dessous, la validation Finance suffit à créer le projet. Désactivée, toute
+  /// demande passe par le comité (comportement par défaut).
+  committeeRuleEnabled Boolean @default(false) @map("committee_rule_enabled")
   createdAt DateTime  @default(now()) @map("created_at")
   updatedAt DateTime  @updatedAt @map("updated_at")
   deletedAt DateTime? @map("deleted_at")

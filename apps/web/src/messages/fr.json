@@ -65,6 +65,8 @@
     "CANNOT_REMOVE_OWNER": "Le propriétaire de l'organisation ne peut pas être retiré.",
     "CANNOT_REMOVE_SELF": "Vous ne pouvez pas vous retirer vous-même.",
     "LAST_ADMIN": "Impossible de retirer le rôle Administrateur au dernier administrateur.",
+    "COMMITTEE_REQUIRED": "Cette demande doit passer par le comité d'investissement.",
+    "COMMITTEE_NOT_REQUIRED": "La validation Finance suffit : le comité n'est pas requis.",
     "UNKNOWN": "Une erreur inattendue s'est produite. Réessayez."
   },
   "auth": {
@@ -731,6 +733,12 @@
     "budgetConsumed": "Consommé",
     "budgetConsumptionHint": "{ratio}% du budget engagé consommé",
     "empty": "Aucune donnée à afficher pour le moment."
+  },
+  "governance": {
+    "title": "Gouvernance",
+    "committeeRule": "Comité d'investissement selon le budget",
+    "enabledHint": "Activée : au-delà de 100 k€, la demande passe au comité d'investissement ; en dessous, la validation Finance suffit à créer le projet.",
+    "disabledHint": "Désactivée : toute demande passe par le comité d'investissement (comportement par défaut)."
   },
   "settings": {
     "title": "Paramètres",

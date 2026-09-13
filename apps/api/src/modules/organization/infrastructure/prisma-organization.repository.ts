@@ -1,6 +1,7 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../../core/prisma/prisma.service";
 import {
+  OrganizationGovernance,
   OrganizationProfile,
   OrganizationRepository,
   UpdateOrganizationInput,
@@ -44,5 +45,25 @@ export class PrismaOrganizationRepository implements OrganizationRepository {
       },
       select: PROFILE_SELECT,
     });
+  }
+
+  async getGovernance(organizationId: string): Promise<OrganizationGovernance | null> {
+    const org = await this.prisma.organization.findFirst({
+      where: { id: organizationId, deletedAt: null },
+      select: { committeeRuleEnabled: true },
+    });
+    return org ? { committeeRuleEnabled: org.committeeRuleEnabled } : null;
+  }
+
+  async setCommitteeRuleEnabled(
+    organizationId: string,
+    enabled: boolean,
+  ): Promise<OrganizationGovernance> {
+    const org = await this.prisma.organization.update({
+      where: { id: organizationId },
+      data: { committeeRuleEnabled: enabled },
+      select: { committeeRuleEnabled: true },
+    });
+    return { committeeRuleEnabled: org.committeeRuleEnabled };
   }
 }

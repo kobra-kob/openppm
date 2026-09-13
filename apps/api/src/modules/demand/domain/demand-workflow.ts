@@ -5,17 +5,50 @@ import type { WorkflowDefinitionInput } from "../../workflow/domain/workflow.rep
 export const DEMAND_ENTITY_TYPE = "demand";
 export const DEMAND_WORKFLOW_KEY = "demand-default";
 
+/** État de revue Finance : point de bifurcation vers le comité ou la création directe. */
+export const FINANCE_REVIEW_STATE = "finance_review";
+/** Transition « Transmettre au comité » (budget élevé ou règle désactivée). */
+export const T_SUBMIT_TO_COMMITTEE = "submit_to_committee";
+/** Transition « Créer le projet » directement après Finance (budget sous le seuil). */
+export const T_FINANCE_CREATES_PROJECT = "finance_creates_project";
+
+/** Seuil (€) au-delà duquel une demande passe obligatoirement par le comité. */
+export const COMMITTEE_THRESHOLD = 100_000;
+
 /**
- * Circuit par défaut d'une demande, tel que spécifié :
+ * Le comité d'investissement est-il requis pour cette demande ?
+ * - Règle désactivée → toujours le comité (comportement par défaut).
+ * - Règle activée → comité seulement si le budget dépasse le seuil ; un budget
+ *   inconnu part au comité par prudence.
+ */
+export function committeeRequired(
+  ruleEnabled: boolean,
+  estimatedBudget: number | null,
+): boolean {
+  if (!ruleEnabled) {
+    return true;
+  }
+  if (estimatedBudget === null) {
+    return true;
+  }
+  return estimatedBudget > COMMITTEE_THRESHOLD;
+}
+
+/**
+ * Circuit par défaut d'une demande :
  *
- *   Brouillon → Soumise → Validation Manager → Qualification PMO →
- *   Business Case → Validation Finance → Comité d'investissement →
- *   Projet créé (final) — rejet possible à chaque étape de revue.
+ *   Brouillon → Soumise → Qualification PMO → Business Case →
+ *   Validation Finance → (Comité d'investissement) → Projet créé.
  *
- * Entièrement déclaratif : les états, transitions et rôles vivent en base via
- * le moteur de workflow. Aucun statut n'est codé en dur ailleurs. La transition
- * finale porte l'automatisation `createProject`, interprétée par le module
- * métier au lot de conversion.
+ * La validation Manager a été retirée. Après la validation Finance, deux issues
+ * mutuellement exclusives selon la règle de gouvernance et le budget :
+ *   • `submit_to_committee`   → passe au comité (budget élevé ou règle off) ;
+ *   • `finance_creates_project` → crée directement le projet (budget sous le seuil).
+ * Le choix est arbitré côté service (voir committeeRequired) : une seule des
+ * deux transitions est proposée/franchissable pour une demande donnée.
+ *
+ * Entièrement déclaratif : états, transitions et rôles vivent en base. La
+ * création de projet est portée par l'automatisation `createProject`.
  */
 export const DEFAULT_DEMAND_WORKFLOW: WorkflowDefinitionInput = {
   key: DEMAND_WORKFLOW_KEY,
@@ -25,7 +58,6 @@ export const DEFAULT_DEMAND_WORKFLOW: WorkflowDefinitionInput = {
   states: [
     { key: "draft", label: "Brouillon", kind: WorkflowStateKind.initial },
     { key: "submitted", label: "Soumise", kind: WorkflowStateKind.intermediate },
-    { key: "manager_review", label: "Validation Manager", kind: WorkflowStateKind.intermediate },
     { key: "pmo_qualification", label: "Qualification PMO", kind: WorkflowStateKind.intermediate },
     { key: "business_case", label: "Business Case", kind: WorkflowStateKind.intermediate },
     { key: "finance_review", label: "Validation Finance", kind: WorkflowStateKind.intermediate },
@@ -34,7 +66,6 @@ export const DEFAULT_DEMAND_WORKFLOW: WorkflowDefinitionInput = {
     { key: "rejected", label: "Rejetée", kind: WorkflowStateKind.final_ko },
   ],
   transitions: [
-    // Avancement — chaque rôle agit à son étape
     {
       key: "submit",
       label: "Soumettre",
@@ -43,16 +74,9 @@ export const DEFAULT_DEMAND_WORKFLOW: WorkflowDefinitionInput = {
       // Rôle non restreint : le demandeur soumet (contrôle de propriété côté service)
     },
     {
-      key: "manager_approve",
-      label: "Valider (Manager)",
-      fromStateKey: "submitted",
-      toStateKey: "manager_review",
-      allowedRoles: [RoleKey.manager, RoleKey.pmo],
-    },
-    {
       key: "pmo_qualify",
       label: "Qualifier (PMO)",
-      fromStateKey: "manager_review",
+      fromStateKey: "submitted",
       toStateKey: "pmo_qualification",
       allowedRoles: [RoleKey.pmo],
     },
@@ -71,11 +95,19 @@ export const DEFAULT_DEMAND_WORKFLOW: WorkflowDefinitionInput = {
       allowedRoles: [RoleKey.finance],
     },
     {
-      key: "submit_to_committee",
+      key: T_SUBMIT_TO_COMMITTEE,
       label: "Transmettre au comité",
       fromStateKey: "finance_review",
       toStateKey: "committee",
       allowedRoles: [RoleKey.finance, RoleKey.pmo],
+    },
+    {
+      key: T_FINANCE_CREATES_PROJECT,
+      label: "Créer le projet",
+      fromStateKey: "finance_review",
+      toStateKey: "approved",
+      allowedRoles: [RoleKey.finance],
+      autoAction: { createProject: true },
     },
     {
       key: "committee_approve",
@@ -85,28 +117,28 @@ export const DEFAULT_DEMAND_WORKFLOW: WorkflowDefinitionInput = {
       allowedRoles: [RoleKey.executive],
       autoAction: { createProject: true },
     },
-    // Renvoi au demandeur pour complément (Manager)
+    // Renvoi au demandeur pour complément (PMO)
     {
       key: "request_changes",
       label: "Demander des compléments",
       fromStateKey: "submitted",
       toStateKey: "draft",
-      allowedRoles: [RoleKey.manager, RoleKey.pmo],
+      allowedRoles: [RoleKey.pmo],
       requiresComment: true,
     },
     // Rejets — possibles à chaque étape de revue, commentaire obligatoire
     {
-      key: "reject_manager",
+      key: "reject_submitted",
       label: "Rejeter",
       fromStateKey: "submitted",
       toStateKey: "rejected",
-      allowedRoles: [RoleKey.manager, RoleKey.pmo],
+      allowedRoles: [RoleKey.pmo],
       requiresComment: true,
     },
     {
       key: "reject_pmo",
       label: "Rejeter",
-      fromStateKey: "manager_review",
+      fromStateKey: "pmo_qualification",
       toStateKey: "rejected",
       allowedRoles: [RoleKey.pmo],
       requiresComment: true,

@@ -12,7 +12,8 @@ describe("Mes validations (intégration)", () => {
   let prisma: PrismaService;
   let adminToken: string; // Alice — admin
   let financeToken: string; // Fred — Finance
-  let managerToken: string; // Mona — Manager
+  let managerToken: string; // Mona — Manager (palier budgétaire <10k)
+  let pmoToken: string; // Nina — PMO (circuit des demandes)
   let pmToken: string; // Paula — chef de projet
   let pmId: string;
   let portfolioId: string;
@@ -68,6 +69,7 @@ describe("Mes validations (intégration)", () => {
       .token;
     managerToken = (await createUser(org.id, "mona@val.test", "Mona", "manager", alice.passwordHash))
       .token;
+    pmoToken = (await createUser(org.id, "nina@val.test", "Nina", "pmo", alice.passwordHash)).token;
     const paula = await createUser(org.id, "paula@val.test", "Paula", "project_manager", alice.passwordHash);
     pmId = paula.id;
     pmToken = paula.token;
@@ -156,41 +158,41 @@ describe("Mes validations (intégration)", () => {
     );
   });
 
-  it("une demande soumise apparaît dans la file de validation du Manager", async () => {
+  it("une demande soumise apparaît dans la file de validation du PMO", async () => {
     const demand = await request(server())
       .post("/api/v1/demands")
       .set("Authorization", `Bearer ${pmToken}`)
       .send({ title: "Nouveau besoin", targetPortfolioId: portfolioId })
       .expect(201);
-    // Brouillon : rien à valider pour le Manager
-    const before = await validations(managerToken);
+    // Brouillon : rien à valider pour le PMO
+    const before = await validations(pmoToken);
     expect(before.body.demands.some((d: { demandId: string }) => d.demandId === demand.body.id)).toBe(
       false,
     );
 
-    // Soumission → l'étape « Validation Manager » revient au Manager
+    // Soumission → l'étape « Qualification PMO » revient au PMO
     await request(server())
       .post(`/api/v1/demands/${demand.body.id}/transitions/submit`)
       .set("Authorization", `Bearer ${pmToken}`)
       .send({})
       .expect(201);
 
-    const after = await validations(managerToken);
+    const after = await validations(pmoToken);
     const item = after.body.demands.find((d: { demandId: string }) => d.demandId === demand.body.id);
     expect(item).toBeDefined();
     expect(item.stateKey).toBe("submitted");
     expect(item.reference).toMatch(/^DEMD\d{5}$/);
     // Les transitions d'approbation sont fournies pour agir depuis la file
-    expect(item.transitions.map((tr: { key: string }) => tr.key)).toContain("manager_approve");
+    expect(item.transitions.map((tr: { key: string }) => tr.key)).toContain("pmo_qualify");
 
-    // L'administrateur voit aussi la demande (bypass) et peut l'approuver
+    // L'administrateur voit aussi la demande (bypass) et peut la qualifier
     const adminView = await validations(adminToken);
     const adminItem = adminView.body.demands.find(
       (d: { demandId: string }) => d.demandId === demand.body.id,
     );
     expect(adminItem).toBeDefined();
     const approve = adminItem.transitions.find(
-      (tr: { key: string }) => tr.key === "manager_approve",
+      (tr: { key: string }) => tr.key === "pmo_qualify",
     );
     expect(approve).toBeDefined();
     await request(server())
@@ -199,10 +201,16 @@ describe("Mes validations (intégration)", () => {
       .send({})
       .expect(201);
 
-    // Une fois franchie, elle quitte la file du Manager
-    const afterApprove = await validations(managerToken);
-    expect(
-      afterApprove.body.demands.some((d: { demandId: string }) => d.demandId === demand.body.id),
-    ).toBe(false);
+    // Une fois qualifiée, elle avance à « Qualification PMO » et reste
+    // actionnable par le PMO (préparation du Business Case).
+    const afterApprove = await validations(pmoToken);
+    const advanced = afterApprove.body.demands.find(
+      (d: { demandId: string }) => d.demandId === demand.body.id,
+    );
+    expect(advanced).toBeDefined();
+    expect(advanced.stateKey).toBe("pmo_qualification");
+    expect(advanced.transitions.map((tr: { key: string }) => tr.key)).toContain(
+      "prepare_business_case",
+    );
   });
 });

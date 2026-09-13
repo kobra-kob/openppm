@@ -102,6 +102,8 @@ export interface DemandView {
 
 export interface DemandDetailView extends DemandView {
   workflow: DemandWorkflow;
+  /** true si le comité est court-circuité (Finance crée le projet directement). */
+  committeeSkipped: boolean;
 }
 
 export interface DemandListView {

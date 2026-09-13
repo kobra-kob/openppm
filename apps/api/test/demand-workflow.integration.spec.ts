@@ -17,7 +17,6 @@ describe("Workflow des demandes (intégration)", () => {
   let bobToken: string; // collaborateur (employee) — auteur
   let bobId: string;
   let chloeToken: string; // autre collaboratrice
-  let managerToken: string; // Mona
   let pmoToken: string; // Paul
   let financeToken: string; // Fred
   let execToken: string; // Diane (Direction / comité)
@@ -74,7 +73,6 @@ describe("Workflow des demandes (intégration)", () => {
     bobToken = bob.token;
     bobId = bob.id;
     chloeToken = (await createUser(org.id, "chloe@flux.test", "Chloé", "employee", hash)).token;
-    managerToken = (await createUser(org.id, "mona@flux.test", "Mona", "manager", hash)).token;
     pmoToken = (await createUser(org.id, "paul@flux.test", "Paul", "pmo", hash)).token;
     financeToken = (await createUser(org.id, "fred@flux.test", "Fred", "finance", hash)).token;
     execToken = (await createUser(org.id, "diane@flux.test", "Diane", "executive", hash)).token;
@@ -105,8 +103,8 @@ describe("Workflow des demandes (intégration)", () => {
     expect(created.body.workflow.currentState.key).toBe("draft");
     // Le demandeur (employee) ne peut que soumettre
     expect(created.body.workflow.available.map((t: { key: string }) => t.key)).toEqual(["submit"]);
-    // Les 9 états du circuit sont présents pour l'indicateur d'étapes
-    expect(created.body.workflow.states).toHaveLength(9);
+    // Les 8 états du circuit sont présents pour l'indicateur d'étapes (Manager retiré)
+    expect(created.body.workflow.states).toHaveLength(8);
   });
 
   it("déroule le circuit complet jusqu'à la création du projet (comité)", async () => {
@@ -116,17 +114,16 @@ describe("Workflow des demandes (intégration)", () => {
 
     const afterSubmit = await request(server())
       .get(`/api/v1/demands/${id}`)
-      .set("Authorization", `Bearer ${managerToken}`)
+      .set("Authorization", `Bearer ${pmoToken}`)
       .expect(200);
     expect(afterSubmit.body.state.key).toBe("submitted");
-    // Le manager voit valider / demander des compléments / rejeter
+    // Le PMO voit qualifier / demander des compléments / rejeter (le Manager n'intervient plus)
     expect(afterSubmit.body.workflow.available.map((t: { key: string }) => t.key).sort()).toEqual([
-      "manager_approve",
-      "reject_manager",
+      "pmo_qualify",
+      "reject_submitted",
       "request_changes",
     ]);
 
-    await request(server()).post(tr(id, "manager_approve")).set("Authorization", `Bearer ${managerToken}`).send({}).expect(201);
     await request(server()).post(tr(id, "pmo_qualify")).set("Authorization", `Bearer ${pmoToken}`).send({}).expect(201);
     await request(server()).post(tr(id, "prepare_business_case")).set("Authorization", `Bearer ${pmoToken}`).send({}).expect(201);
     await request(server()).post(tr(id, "finance_validate")).set("Authorization", `Bearer ${financeToken}`).send({}).expect(201);
@@ -140,8 +137,8 @@ describe("Workflow des demandes (intégration)", () => {
     expect(approved.body.state.key).toBe("approved");
     expect(approved.body.state.isFinal).toBe(true);
     expect(approved.body.workflow.available).toHaveLength(0);
-    // Historique : draft + 7 franchissements = 8 entrées
-    expect(approved.body.workflow.history).toHaveLength(8);
+    // Historique : draft + 6 franchissements = 7 entrées
+    expect(approved.body.workflow.history).toHaveLength(7);
 
     // L'approbation du comité a converti la demande en projet (traçabilité)
     expect(approved.body.project).not.toBeNull();
@@ -158,7 +155,6 @@ describe("Workflow des demandes (intégration)", () => {
   it("la validation Finance passe sans Business Case complet (garde retirée)", async () => {
     const id = await newDemand();
     await request(server()).post(tr(id, "submit")).set("Authorization", `Bearer ${bobToken}`).send({}).expect(201);
-    await request(server()).post(tr(id, "manager_approve")).set("Authorization", `Bearer ${managerToken}`).send({}).expect(201);
     await request(server()).post(tr(id, "pmo_qualify")).set("Authorization", `Bearer ${pmoToken}`).send({}).expect(201);
     await request(server()).post(tr(id, "prepare_business_case")).set("Authorization", `Bearer ${pmoToken}`).send({}).expect(201);
 
@@ -174,16 +170,16 @@ describe("Workflow des demandes (intégration)", () => {
     const id = await newDemand();
     await request(server()).post(tr(id, "submit")).set("Authorization", `Bearer ${bobToken}`).send({}).expect(201);
 
-    // Bob (auteur mais employé) ne peut pas valider en tant que manager
+    // Bob (auteur mais employé) ne peut pas qualifier en tant que PMO
     await request(server())
-      .post(tr(id, "manager_approve"))
+      .post(tr(id, "pmo_qualify"))
       .set("Authorization", `Bearer ${bobToken}`)
       .send({})
       .expect(403);
 
-    // La finance ne peut pas valider à l'étape manager
+    // La finance ne peut pas qualifier à l'étape PMO
     await request(server())
-      .post(tr(id, "manager_approve"))
+      .post(tr(id, "pmo_qualify"))
       .set("Authorization", `Bearer ${financeToken}`)
       .send({})
       .expect(403);
@@ -214,14 +210,14 @@ describe("Workflow des demandes (intégration)", () => {
 
     // Sans commentaire → 400
     await request(server())
-      .post(tr(id, "reject_manager"))
-      .set("Authorization", `Bearer ${managerToken}`)
+      .post(tr(id, "reject_submitted"))
+      .set("Authorization", `Bearer ${pmoToken}`)
       .send({})
       .expect(400);
 
     const rejected = await request(server())
-      .post(tr(id, "reject_manager"))
-      .set("Authorization", `Bearer ${managerToken}`)
+      .post(tr(id, "reject_submitted"))
+      .set("Authorization", `Bearer ${pmoToken}`)
       .send({ comment: "Hors périmètre stratégique" })
       .expect(201);
     expect(rejected.body.state.key).toBe("rejected");
@@ -232,7 +228,7 @@ describe("Workflow des demandes (intégration)", () => {
   it("notifie le demandeur quand quelqu'un d'autre fait avancer sa demande", async () => {
     const id = await newDemand();
     await request(server()).post(tr(id, "submit")).set("Authorization", `Bearer ${bobToken}`).send({}).expect(201);
-    await request(server()).post(tr(id, "manager_approve")).set("Authorization", `Bearer ${managerToken}`).send({}).expect(201);
+    await request(server()).post(tr(id, "pmo_qualify")).set("Authorization", `Bearer ${pmoToken}`).send({}).expect(201);
 
     const notifs = await prisma.notification.findMany({
       where: { userId: bobId, type: "demand.transition" },
@@ -245,7 +241,7 @@ describe("Workflow des demandes (intégration)", () => {
     await request(server()).post(tr(id, "submit")).set("Authorization", `Bearer ${bobToken}`).send({}).expect(201);
     const back = await request(server())
       .post(tr(id, "request_changes"))
-      .set("Authorization", `Bearer ${managerToken}`)
+      .set("Authorization", `Bearer ${pmoToken}`)
       .send({ comment: "Merci de préciser le budget" })
       .expect(201);
     expect(back.body.state.key).toBe("draft");
