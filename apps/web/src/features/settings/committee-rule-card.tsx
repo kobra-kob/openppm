@@ -65,14 +65,14 @@ export function CommitteeRuleCard() {
           disabled={data === undefined || toggle.isPending}
           onClick={() => toggle.mutate(!enabled)}
           className={cn(
-            "relative h-6 w-11 shrink-0 rounded-full transition-colors disabled:opacity-50",
+            "inline-flex h-6 w-11 shrink-0 items-center rounded-full p-0.5 transition-colors disabled:opacity-50",
             enabled ? "bg-accent" : "bg-border-strong",
           )}
         >
           <span
             className={cn(
-              "absolute top-0.5 size-5 rounded-full bg-white shadow transition-transform",
-              enabled ? "translate-x-[22px]" : "translate-x-0.5",
+              "size-5 rounded-full bg-white shadow transition-transform duration-200 ease-out",
+              enabled ? "translate-x-5" : "translate-x-0",
             )}
           />
         </button>
