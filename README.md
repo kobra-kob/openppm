@@ -55,7 +55,7 @@ Installation en quelques clics sur un serveur — Docker, secrets, **base de
 données incluse** — via les scripts de `infra/deploy/` :
 
 ```bash
-git clone <votre-repo>.git openppm && cd openppm
+git clone https://github.com/kobra-kob/openppm.git openppm && cd openppm
 sudo ./infra/deploy/install.sh --app-url http://mon-serveur:3000
 ```
 
