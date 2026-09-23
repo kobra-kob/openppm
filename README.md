@@ -51,17 +51,30 @@ docker compose up -d        # Mode 1 : tout-en-un (front + back + MySQL + Redis)
 
 ## Déploiement serveur (Debian / Ubuntu)
 
-Installation en quelques clics sur un serveur — Docker, secrets, **base de
-données incluse** — via les scripts de `infra/deploy/` :
+### On-prem natif (recommandé) — sans Docker, base MariaDB
+
+L'app tourne **directement** sur le serveur (services systemd, Node.js 22) et la
+base sur **MariaDB natif** — locale ou sur un **serveur de base dédié** :
 
 ```bash
 git clone https://github.com/kobra-kob/openppm.git openppm && cd openppm
-sudo ./infra/deploy/install.sh --app-url http://mon-serveur:3000
+
+# Base locale (tout sur un serveur)
+sudo ./infra/onprem/install.sh --app-url http://mon-serveur:3000
+
+# …ou base sur un serveur dédié
+sudo ./infra/onprem/install.sh --app-url http://mon-serveur:3000 \
+     --db-url mysql://openppm:motdepasse@ip-db:3306/openppm
 ```
 
-Mise à jour : `sudo ./infra/deploy/update.sh` · Sauvegarde BDD :
-`sudo ./infra/deploy/backup.sh` · Désinstallation : `sudo ./infra/deploy/uninstall.sh`
-(`--purge` pour tout effacer). Guide complet : [infra/deploy/README.md](infra/deploy/README.md).
+Mise à jour : `sudo ./infra/onprem/update.sh` · Sauvegarde :
+`sudo ./infra/onprem/backup.sh` · Désinstallation : `sudo ./infra/onprem/uninstall.sh`.
+Guide complet : [infra/onprem/README.md](infra/onprem/README.md).
+
+### Docker (alternative)
+
+Pile conteneurisée tout-en-un via `infra/deploy/` :
+`sudo ./infra/deploy/install.sh`. Voir [infra/deploy/README.md](infra/deploy/README.md).
 
 ## Licence
 
