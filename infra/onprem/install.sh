@@ -172,7 +172,7 @@ REFRESH_TTL_DAYS=30
 APP_URL=${APP_URL}
 CORS_ORIGIN=${APP_URL}
 FILES_DIR=${STORAGE_DIR}
-SMTP_FROM=OpenPPM <no-reply@openppm.local>
+SMTP_FROM="OpenPPM <no-reply@openppm.local>"
 # SMTP réel (sinon les emails sont journalisés) :
 # SMTP_URL=smtp://utilisateur:motdepasse@smtp.exemple.fr:587
 EOF
@@ -182,10 +182,13 @@ EOF
 fi
 
 # ── 7. Migrations + seed de la base ────────────────────────────────────
+# On n'exporte que DATABASE_URL (extrait, sans sourcer le fichier : certaines
+# valeurs comme SMTP_FROM contiennent < > et casseraient un `source` bash).
+db_url_val="$(grep '^DATABASE_URL=' "$ENV_FILE" | cut -d= -f2- | sed -e 's/^"//' -e 's/"$//')"
 log "Application des migrations de base de données…"
-run_as bash -lc "cd '$REPO_DIR' && set -a && . '$ENV_FILE' && set +a && '$PNPM_BIN' --filter @openppm/db exec prisma migrate deploy"
+run_as bash -lc "cd '$REPO_DIR' && DATABASE_URL='$db_url_val' '$PNPM_BIN' --filter @openppm/db exec prisma migrate deploy"
 log "Seed des données système (rôles, permissions)…"
-run_as bash -lc "cd '$REPO_DIR' && set -a && . '$ENV_FILE' && set +a && '$PNPM_BIN' --filter @openppm/db run seed"
+run_as bash -lc "cd '$REPO_DIR' && DATABASE_URL='$db_url_val' '$PNPM_BIN' --filter @openppm/db run seed"
 
 # ── 8. Services systemd ─────────────────────────────────────────────────
 db_dep=""

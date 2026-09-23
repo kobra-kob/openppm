@@ -34,12 +34,17 @@ if [ -d "$REPO_DIR/.git" ]; then
   run_as bash -lc "cd '$REPO_DIR' && git pull --ff-only" || die "git pull impossible (modifications locales ?)."
 fi
 
+# Extraction sans sourcer le fichier (valeurs contenant < > : SMTP_FROM…).
+strip() { sed -e 's/^"//' -e 's/"$//'; }
+api_port_val="$(grep '^PORT=' "$ENV_FILE" | cut -d= -f2- | strip)"; api_port_val="${api_port_val:-4000}"
+db_url_val="$(grep '^DATABASE_URL=' "$ENV_FILE" | cut -d= -f2- | strip)"
+
 log "Dépendances + build…"
-# API_PROXY_TARGET figé au build : cible l'API locale (PORT lu dans l'env).
-run_as bash -lc "cd '$REPO_DIR' && set -a && . '$ENV_FILE' && set +a && '$PNPM_BIN' install --frozen-lockfile && API_PROXY_TARGET=\"http://127.0.0.1:\${PORT:-4000}\" '$PNPM_BIN' run build"
+# API_PROXY_TARGET figé au build : cible l'API locale.
+run_as bash -lc "cd '$REPO_DIR' && '$PNPM_BIN' install --frozen-lockfile && API_PROXY_TARGET='http://127.0.0.1:$api_port_val' '$PNPM_BIN' run build"
 
 log "Migrations de base de données…"
-run_as bash -lc "cd '$REPO_DIR' && set -a && . '$ENV_FILE' && set +a && '$PNPM_BIN' --filter @openppm/db exec prisma migrate deploy"
+run_as bash -lc "cd '$REPO_DIR' && DATABASE_URL='$db_url_val' '$PNPM_BIN' --filter @openppm/db exec prisma migrate deploy"
 
 log "Redémarrage des services…"
 systemctl restart openppm-api.service

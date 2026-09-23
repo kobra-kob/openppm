@@ -95,7 +95,7 @@ API_PORT=4000
 MAILPIT_UI_PORT=8025
 
 # Expéditeur des emails (Mailpit capture tout par défaut ; brancher un vrai SMTP en prod)
-SMTP_FROM=OpenPPM <no-reply@openppm.local>
+SMTP_FROM="OpenPPM <no-reply@openppm.local>"
 EOF
   chmod 600 .env
   log "Secrets écrits dans $REPO_DIR/.env (permissions 600)."
