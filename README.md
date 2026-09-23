@@ -49,6 +49,20 @@ docker compose up -d        # Mode 1 : tout-en-un (front + back + MySQL + Redis)
 # → http://localhost:3000
 ```
 
+## Déploiement serveur (Debian / Ubuntu)
+
+Installation en quelques clics sur un serveur — Docker, secrets, **base de
+données incluse** — via les scripts de `infra/deploy/` :
+
+```bash
+git clone <votre-repo>.git openppm && cd openppm
+sudo ./infra/deploy/install.sh --app-url http://mon-serveur:3000
+```
+
+Mise à jour : `sudo ./infra/deploy/update.sh` · Sauvegarde BDD :
+`sudo ./infra/deploy/backup.sh` · Désinstallation : `sudo ./infra/deploy/uninstall.sh`
+(`--purge` pour tout effacer). Guide complet : [infra/deploy/README.md](infra/deploy/README.md).
+
 ## Licence
 
 AGPL-3.0 (cœur) — garantit que les forks SaaS restent ouverts. Modules « enterprise » optionnels possibles sous licence commerciale (modèle open-core), à décider avant v1.0.
