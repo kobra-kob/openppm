@@ -199,6 +199,7 @@
       "membersTitle": "Équipe",
       "addMember": "Ajouter",
       "removeMember": "Retirer",
+      "noCandidates": "Tous les membres de l'organisation font déjà partie du projet. Invitez des collaborateurs depuis Paramètres › Membres.",
       "activityTitle": "Activité",
       "delete": "Mettre à la corbeille",
       "changeStatus": "Changer d'état",

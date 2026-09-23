@@ -199,6 +199,7 @@
       "membersTitle": "Team",
       "addMember": "Add",
       "removeMember": "Remove",
+      "noCandidates": "Everyone in the organization is already on this project. Invite collaborators from Settings › Members.",
       "activityTitle": "Activity",
       "delete": "Move to trash",
       "changeStatus": "Change status",

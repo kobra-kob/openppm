@@ -302,6 +302,16 @@ export class ProjectsService {
     }
 
     const updated = await this.repository.update(project.id, input);
+
+    // Un chef de projet (ré)assigné rejoint l'équipe comme manager, s'il n'en
+    // fait pas déjà partie — cohérent avec la création, et lui donne les droits
+    // de gestion du projet (voir assertCanEdit).
+    let teamChanged = false;
+    if (dto.managerId && !project.members.some((member) => member.userId === dto.managerId)) {
+      await this.repository.addMember(project.id, dto.managerId, ProjectRole.manager);
+      teamChanged = true;
+    }
+
     await this.audit.log({
       action: "project.updated",
       entityType: "project",
@@ -311,7 +321,7 @@ export class ProjectsService {
       after: JSON.parse(JSON.stringify(dto)),
       ...context,
     });
-    return this.toView(updated);
+    return teamChanged ? this.get(payload, id) : this.toView(updated);
   }
 
   async changeStatus(

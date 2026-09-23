@@ -168,6 +168,30 @@ describe("Projects (intégration)", () => {
         .expect(204);
     });
 
+    it("assigner un chef de projet via la fiche l'ajoute à l'équipe (manager)", async () => {
+      // Projet créé sans chef : l'équipe ne contient que le créateur
+      const created = await request(server())
+        .post("/api/v1/projects")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ name: "Projet sans chef" })
+        .expect(201);
+      expect(
+        created.body.members.some((m: { userId: string }) => m.userId === pmId),
+      ).toBe(false);
+
+      // On assigne un chef de projet : il doit rejoindre l'équipe comme manager
+      const assigned = await request(server())
+        .patch(`/api/v1/projects/${created.body.id}`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ managerId: pmId })
+        .expect(200);
+      const pmMember = assigned.body.members.find(
+        (m: { userId: string; role: string }) => m.userId === pmId,
+      );
+      expect(pmMember).toBeDefined();
+      expect(pmMember.role).toBe("manager");
+    });
+
     it("refuse un chef de projet sans le rôle « Chef de projet » (400)", async () => {
       const response = await request(server())
         .post("/api/v1/projects")

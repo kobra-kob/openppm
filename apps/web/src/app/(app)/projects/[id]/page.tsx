@@ -430,6 +430,11 @@ export default function ProjectDetailsPage() {
               </li>
             ))}
           </ul>
+          {availableMembers.length === 0 && (
+            <p className="mt-3 border-t border-border-subtle pt-3 text-xs text-muted">
+              {t("detail.noCandidates")}
+            </p>
+          )}
           {availableMembers.length > 0 && (
             <div className="mt-4 flex items-center gap-2 border-t border-border-subtle pt-3">
               <select
