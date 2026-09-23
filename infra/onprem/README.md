@@ -77,17 +77,32 @@ sudo ./infra/onprem/update.sh
 
 ## Sauvegarde / restauration
 
-```bash
-sudo ./infra/onprem/backup.sh                 # dump SQL compressé horodaté
-# → /var/lib/openppm/backups/openppm-AAAAMMJJ-HHMMSS.sql.gz
+Une **sauvegarde quotidienne** est installée automatiquement (timer systemd
+`openppm-backup.timer`, tous les jours à **02:30**, rétention **14 jours**) dans
+`/var/lib/openppm/backups/`.
 
-# Restauration (adapter hôte/port/utilisateur/base) :
+```bash
+systemctl list-timers openppm-backup       # prochaine exécution
+systemctl start openppm-backup.service     # sauvegarde manuelle immédiate
+journalctl -u openppm-backup -e            # journal des sauvegardes
+sudo ./infra/onprem/backup.sh              # …ou sauvegarde manuelle directe
+# → /var/lib/openppm/backups/openppm-AAAAMMJJ-HHMMSS.sql.gz
+```
+
+Personnalisation : `sudo systemctl edit openppm-backup.timer` (changer
+`OnCalendar=…`) ; rétention via `Environment=OPENPPM_BACKUP_KEEP_DAYS=…` dans
+`openppm-backup.service` (`sudo systemctl edit openppm-backup.service`), puis
+`sudo systemctl daemon-reload`.
+
+Restauration (adapter hôte/port/utilisateur/base) :
+
+```bash
 gunzip -c openppm-AAAAMMJJ-HHMMSS.sql.gz | \
   mysql -h 127.0.0.1 -P 3306 -u openppm -p openppm
 ```
 
 Le script lit `DATABASE_URL` : il sauvegarde aussi bien une base locale qu'une
-base dédiée.
+base dédiée. Pensez à copier `/var/lib/openppm/backups/` hors du serveur.
 
 ## Désinstallation
 

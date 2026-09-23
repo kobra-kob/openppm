@@ -229,6 +229,39 @@ systemctl enable openppm-api.service openppm-web.service >/dev/null 2>&1 || true
 systemctl restart openppm-api.service
 systemctl restart openppm-web.service
 
+# ── 8bis. Sauvegarde quotidienne de la base (timer systemd) ─────────────
+log "Configuration de la sauvegarde quotidienne (timer systemd, rétention 14 jours)…"
+cat > /etc/systemd/system/openppm-backup.service <<EOF
+[Unit]
+Description=OpenPPM — sauvegarde de la base de données
+After=network.target $db_dep
+Wants=$db_dep
+
+[Service]
+Type=oneshot
+User=$SERVICE_USER
+Group=$SERVICE_USER
+Environment=OPENPPM_BACKUP_KEEP_DAYS=14
+ExecStart=/usr/bin/env bash $REPO_DIR/infra/onprem/backup.sh $SERVICE_HOME/backups
+EOF
+
+cat > /etc/systemd/system/openppm-backup.timer <<EOF
+[Unit]
+Description=OpenPPM — sauvegarde quotidienne de la base de données
+
+[Timer]
+OnCalendar=*-*-* 02:30:00
+Persistent=true
+RandomizedDelaySec=300
+
+[Install]
+WantedBy=timers.target
+EOF
+
+install -d -o "$SERVICE_USER" -g "$SERVICE_USER" "$SERVICE_HOME/backups"
+systemctl daemon-reload
+systemctl enable --now openppm-backup.timer >/dev/null 2>&1 || true
+
 # ── 9. Vérification ─────────────────────────────────────────────────────
 log "Attente de la disponibilité de l'API…"
 ok=false
@@ -243,6 +276,7 @@ log "Installation on-prem terminée."
 echo "  • Application : ${APP_URL}"
 echo "  • API (santé) : http://<serveur>:${API_PORT}/health"
 echo "  • Base        : $([ "$LOCAL_DB" = true ] && echo "MariaDB locale ($DB_NAME)" || echo "MariaDB externe/dédiée")"
+echo "  • Sauvegarde  : quotidienne à 02:30 → $SERVICE_HOME/backups (rétention 14 j)"
 echo
 echo "  Premier accès : ouvrez ${APP_URL} et créez votre organisation"
 echo "  (le premier compte inscrit devient administrateur)."

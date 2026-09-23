@@ -40,9 +40,13 @@ done
 [ "$(id -u)" -eq 0 ] || die "À lancer en root : sudo ./infra/onprem/uninstall.sh"
 
 log "Arrêt et désactivation des services…"
+systemctl disable --now openppm-backup.timer >/dev/null 2>&1 || true
 systemctl disable --now openppm-web.service >/dev/null 2>&1 || true
 systemctl disable --now openppm-api.service >/dev/null 2>&1 || true
-rm -f /etc/systemd/system/openppm-api.service /etc/systemd/system/openppm-web.service
+rm -f /etc/systemd/system/openppm-api.service \
+      /etc/systemd/system/openppm-web.service \
+      /etc/systemd/system/openppm-backup.service \
+      /etc/systemd/system/openppm-backup.timer
 systemctl daemon-reload
 
 if ! $PURGE; then

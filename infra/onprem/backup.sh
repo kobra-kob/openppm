@@ -44,3 +44,11 @@ MYSQL_PWD="$DB_PASS" "$DUMP" -h "$DB_HOST" -P "$DB_PORT" -u "$DB_USER" \
   --single-transaction --quick "$DB_NAME" | gzip > "$FILE"
 
 log "Sauvegarde écrite : $FILE ($(du -h "$FILE" | cut -f1))"
+
+# Rotation optionnelle : ne conserver que les N derniers jours.
+# Fixé par le timer systemd via OPENPPM_BACKUP_KEEP_DAYS (0 = aucune purge).
+if [ "${OPENPPM_BACKUP_KEEP_DAYS:-0}" -gt 0 ] 2>/dev/null; then
+  find "$OUT_DIR" -maxdepth 1 -type f -name 'openppm-*.sql.gz' \
+    -mtime +"$OPENPPM_BACKUP_KEEP_DAYS" -delete
+  log "Rotation : sauvegardes de plus de ${OPENPPM_BACKUP_KEEP_DAYS} jours supprimées."
+fi
