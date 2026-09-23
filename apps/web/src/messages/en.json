@@ -650,6 +650,7 @@
     "title": "Tasks",
     "addPlaceholder": "New task…",
     "add": "Add",
+    "rename": "Rename task",
     "subtaskPlaceholder": "New subtask…",
     "empty": "No tasks yet.",
     "startDate": "Start",

@@ -650,6 +650,7 @@
     "title": "Tâches",
     "addPlaceholder": "Nouvelle tâche…",
     "add": "Ajouter",
+    "rename": "Renommer la tâche",
     "subtaskPlaceholder": "Nouvelle sous-tâche…",
     "empty": "Aucune tâche pour l'instant.",
     "startDate": "Début",

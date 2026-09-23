@@ -57,6 +57,14 @@ interface TaskDetailView extends TaskView {
 
 const STATUS_ORDER: TaskStatus[] = ["todo", "in_progress", "done", "cancelled"];
 
+/** Pastille de statut (repère couleur discret en tête de ligne). */
+const STATUS_DOT: Record<TaskStatus, string> = {
+  todo: "bg-border-strong",
+  in_progress: "bg-accent",
+  done: "bg-success",
+  cancelled: "bg-border-subtle",
+};
+
 export function TasksSection({
   projectId,
   members,
@@ -174,7 +182,7 @@ export function TasksSection({
       {roots.length === 0 ? (
         <p className="text-sm text-muted">{t("empty")}</p>
       ) : (
-        <ul>
+        <ul className="space-y-0.5">
           {roots.map((task) => (
             <TaskRow
               key={task.id}
@@ -230,7 +238,7 @@ function TaskRow({
     <li>
       <div
         className={cn(
-          "flex items-center gap-2 border-b border-border-subtle py-2",
+          "group flex items-center gap-2.5 rounded-(--radius-control) px-2 py-2 transition-colors hover:bg-border-subtle/40",
           depth > 0 && "ml-6",
         )}
       >
@@ -241,8 +249,12 @@ function TaskRow({
           onChange={() =>
             onAction(`/${task.id}/status`, "PATCH", { status: isDone ? "todo" : "done" })
           }
-          className="size-4 accent-(--accent)"
+          className="size-4 shrink-0 accent-(--accent)"
           aria-label={task.title}
+        />
+        <span
+          aria-hidden
+          className={cn("size-2 shrink-0 rounded-full", STATUS_DOT[task.status])}
         />
         <button
           type="button"
@@ -266,8 +278,8 @@ function TaskRow({
         </button>
         <span
           className={cn(
-            "text-xs font-semibold",
-            task.priority <= 2 ? "text-danger" : "text-muted",
+            "shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums",
+            task.priority <= 2 ? "bg-danger/12 text-danger" : "bg-border-subtle/70 text-muted",
           )}
         >
           P{task.priority}
@@ -275,8 +287,8 @@ function TaskRow({
         {task.dueDate && (
           <span
             className={cn(
-              "inline-flex items-center gap-1 text-xs",
-              overdue ? "text-danger" : "text-muted",
+              "inline-flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-xs",
+              overdue ? "bg-danger/12 font-medium text-danger" : "bg-border-subtle/60 text-muted",
             )}
           >
             <CalendarDays size={12} />
@@ -284,18 +296,18 @@ function TaskRow({
           </span>
         )}
         {task.checklistTotal > 0 && (
-          <span className="inline-flex items-center gap-1 text-xs text-muted">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-border-subtle/60 px-2 py-0.5 text-xs text-muted">
             <CheckSquare size={12} />
             {task.checklistDone}/{task.checklistTotal}
           </span>
         )}
         {task.timeSpentHours > 0 && (
-          <span className="inline-flex items-center gap-1 text-xs text-muted">
+          <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-border-subtle/60 px-2 py-0.5 text-xs text-muted">
             <Clock3 size={12} />
             {t("totalSpent", { hours: task.timeSpentHours })}
           </span>
         )}
-        <span className="flex -space-x-1.5">
+        <span className="flex shrink-0 -space-x-1.5">
           {task.assignees.slice(0, 3).map((assignee) => (
             <span
               key={assignee.userId}
@@ -324,7 +336,7 @@ function TaskRow({
       )}
 
       {children.length > 0 && (
-        <ul>
+        <ul className="space-y-0.5">
           {children.map((child) => (
             <TaskRow
               key={child.id}
@@ -369,6 +381,23 @@ function TaskPanel({
     hours: "1",
     note: "",
   });
+  // Renommage inline du titre (synchronisé quand on change de tâche).
+  const [titleDraft, setTitleDraft] = useState(detail.title);
+  const [titleFor, setTitleFor] = useState(detail.id);
+  if (detail.id !== titleFor) {
+    setTitleFor(detail.id);
+    setTitleDraft(detail.title);
+  }
+  const saveTitle = () => {
+    const value = titleDraft.trim();
+    if (!value) {
+      setTitleDraft(detail.title); // un titre vide est refusé
+      return;
+    }
+    if (value !== detail.title) {
+      onAction(`/${detail.id}`, "PATCH", { title: value });
+    }
+  };
 
   const availableAssignees = members.filter(
     (member) => !detail.assignees.some((assignee) => assignee.userId === member.userId),
@@ -381,6 +410,26 @@ function TaskPanel({
         depth > 0 && "ml-6",
       )}
     >
+      {/* Titre éditable (renommage) */}
+      <input
+        type="text"
+        value={titleDraft}
+        disabled={!canWork}
+        maxLength={200}
+        aria-label={t("rename")}
+        title={canWork ? t("rename") : undefined}
+        onChange={(event) => setTitleDraft(event.target.value)}
+        onBlur={saveTitle}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") event.currentTarget.blur();
+          if (event.key === "Escape") {
+            setTitleDraft(detail.title);
+            event.currentTarget.blur();
+          }
+        }}
+        className="w-full rounded-(--radius-control) border border-transparent bg-transparent px-2 py-1 text-base font-semibold transition-colors hover:border-border-subtle focus:border-accent focus:bg-surface-solid focus:outline-none disabled:cursor-default disabled:opacity-80"
+      />
+
       <div className="flex flex-wrap items-center gap-2">
         <select
           value={detail.status}
