@@ -20,7 +20,10 @@ die() { printf '\033[1;31m[openppm]\033[0m %s\n' "$*" >&2; exit 1; }
 [ -f "$ENV_FILE" ] || die "$ENV_FILE absent : lancez d'abord install.sh"
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+# Emplacement réel de l'installation : lu depuis le service (robuste, quel que
+# soit l'endroit d'où l'on lance ce script), avec repli sur le dossier courant.
+REPO_DIR="$(systemctl show -p WorkingDirectory --value openppm-api.service 2>/dev/null || true)"
+[ -n "$REPO_DIR" ] && [ -d "$REPO_DIR" ] || REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
 PNPM_BIN="$(command -v pnpm)" || die "pnpm introuvable"
 
 chown -R "$SERVICE_USER:$SERVICE_USER" "$REPO_DIR"

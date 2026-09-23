@@ -26,6 +26,11 @@ sudo ./infra/onprem/install.sh --app-url http://mon-serveur:3000
 MariaDB est installé, la base `openppm` et son utilisateur sont créés, un mot de
 passe et un `JWT_SECRET` aléatoires sont générés.
 
+> **Emplacement.** Quel que soit l'endroit où vous clonez, l'app est installée
+> dans **`/opt/openppm`** (hors `/home`, non traversable par l'utilisateur de
+> service). Personnalisable avec `--dir`. Lancez ensuite `update.sh` /
+> `uninstall.sh` depuis `/opt/openppm`.
+
 ### B. Serveur de base **dédié** (base séparée)
 
 Sur le serveur de base, créez au préalable la base et l'utilisateur :

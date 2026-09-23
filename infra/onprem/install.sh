@@ -30,6 +30,9 @@ APP_URL="${APP_URL:-}"
 DB_URL="${DB_URL:-}"
 WEB_PORT="${WEB_PORT:-3000}"
 API_PORT="${API_PORT:-4000}"
+# Emplacement d'installation : hors /home (les répertoires personnels ne sont
+# pas traversables par l'utilisateur de service). /opt est traversable (755).
+INSTALL_DIR="${INSTALL_DIR:-/opt/openppm}"
 ASSUME_YES=false
 
 SERVICE_USER="openppm"
@@ -50,6 +53,8 @@ while [ $# -gt 0 ]; do
     --db-url=*) DB_URL="${1#*=}"; shift ;;
     --web-port) WEB_PORT="${2:-}"; shift 2 ;;
     --api-port) API_PORT="${2:-}"; shift 2 ;;
+    --dir) INSTALL_DIR="${2:-}"; shift 2 ;;
+    --dir=*) INSTALL_DIR="${1#*=}"; shift ;;
     -y|--yes) ASSUME_YES=true; shift ;;
     -h|--help) sed -n '2,28p' "$0" | sed 's/^# \{0,1\}//'; exit 0 ;;
     *) die "Option inconnue : $1 (voir --help)" ;;
@@ -60,8 +65,9 @@ done
 command -v apt-get >/dev/null 2>&1 || die "Distribution non Debian/Ubuntu (apt-get requis)."
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
-[ -f "$REPO_DIR/pnpm-workspace.yaml" ] || die "Monorepo introuvable dans $REPO_DIR"
+SRC_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+[ -f "$SRC_DIR/pnpm-workspace.yaml" ] || die "Monorepo introuvable dans $SRC_DIR"
+REPO_DIR="$INSTALL_DIR"
 
 LOCAL_DB=true
 [ -n "$DB_URL" ] && LOCAL_DB=false
@@ -71,7 +77,16 @@ export DEBIAN_FRONTEND=noninteractive
 # ── 1. Paquets système ─────────────────────────────────────────────────
 log "Installation des paquets système…"
 apt-get update -qq
-apt-get install -y -qq curl git ca-certificates openssl build-essential python3 pkg-config >/dev/null
+apt-get install -y -qq curl git ca-certificates openssl build-essential python3 pkg-config rsync >/dev/null
+
+# ── 1bis. Emplacement d'installation (hors /home, traversable par le service) ──
+if [ "$SRC_DIR" != "$REPO_DIR" ]; then
+  log "Installation dans $REPO_DIR (copie depuis $SRC_DIR)…"
+  mkdir -p "$REPO_DIR"
+  rsync -a --exclude node_modules --exclude .next --exclude .git/hooks "$SRC_DIR"/ "$REPO_DIR"/
+fi
+cd "$REPO_DIR"
+[ -f "$REPO_DIR/pnpm-workspace.yaml" ] || die "Copie incomplète dans $REPO_DIR"
 
 # ── 2. Node.js 22 + pnpm ────────────────────────────────────────────────
 need_node=true
@@ -285,5 +300,7 @@ echo "  Services :"
 echo "    systemctl status openppm-api openppm-web"
 echo "    journalctl -u openppm-api -f      # journaux API"
 echo "    journalctl -u openppm-web -f      # journaux Web"
-echo "    sudo ./infra/onprem/update.sh     # mise à jour"
-echo "    sudo ./infra/onprem/uninstall.sh  # désinstallation"
+echo "    sudo $REPO_DIR/infra/onprem/update.sh     # mise à jour"
+echo "    sudo $REPO_DIR/infra/onprem/uninstall.sh  # désinstallation"
+echo
+echo "  L'application est installée dans $REPO_DIR."
