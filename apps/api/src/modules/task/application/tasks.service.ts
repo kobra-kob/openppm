@@ -117,6 +117,60 @@ export class TasksService {
     return tasks.map((task) => this.toView(task, subtaskCounts.get(task.id) ?? 0));
   }
 
+  /**
+   * Réordonne un groupe de tâches sœurs (même parent). `orderedIds` doit couvrir
+   * exactement toutes les tâches de ce niveau. Le nouvel ordre (position) est
+   * partagé par la liste ET le diagramme de Gantt.
+   */
+  async reorder(
+    payload: JwtPayload,
+    projectId: string,
+    orderedIds: string[],
+    context: RequestContext,
+  ): Promise<TaskView[]> {
+    const project = await this.requireProject(payload, projectId);
+    this.assertCanWork(payload, project);
+
+    if (new Set(orderedIds).size !== orderedIds.length) {
+      throw new BadRequestException({
+        code: "TASK_REORDER_INVALID",
+        message: "Identifiants en double dans le réordonnancement",
+      });
+    }
+    const tasks = await this.repository.listByProject(projectId);
+    const byId = new Map(tasks.map((task) => [task.id, task]));
+    const targets = orderedIds.map((id) => byId.get(id));
+    if (targets.some((task) => !task)) {
+      throw this.taskNotFound();
+    }
+    const parentId = targets[0]!.parentId;
+    if (targets.some((task) => task!.parentId !== parentId)) {
+      throw new BadRequestException({
+        code: "TASK_REORDER_MIXED_PARENT",
+        message: "Le réordonnancement est limité aux tâches d'un même niveau",
+      });
+    }
+    const siblings = tasks.filter((task) => task.parentId === parentId);
+    if (siblings.length !== orderedIds.length) {
+      throw new BadRequestException({
+        code: "TASK_REORDER_INCOMPLETE",
+        message: "La liste doit couvrir toutes les tâches de ce niveau",
+      });
+    }
+
+    await this.repository.reorder(projectId, orderedIds);
+    await this.audit.log({
+      action: "task.reordered",
+      entityType: "task",
+      entityId: projectId,
+      organizationId: payload.org,
+      userId: payload.sub,
+      after: { parentId, orderedIds },
+      ...context,
+    });
+    return this.list(payload, projectId);
+  }
+
   async detail(
     payload: JwtPayload,
     projectId: string,

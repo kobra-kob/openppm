@@ -437,4 +437,61 @@ describe("Tasks (intégration)", () => {
       expect(audit).not.toBeNull();
     });
   });
+
+  describe("réordonnancement (liste + Gantt)", () => {
+    let rp = "";
+    const rid: string[] = [];
+
+    it("prépare un projet avec 3 tâches (positions 1..3)", async () => {
+      const project = await request(server())
+        .post("/api/v1/projects")
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ name: "Réordonnancement" })
+        .expect(201);
+      rp = project.body.id;
+      for (const title of ["Tâche A", "Tâche B", "Tâche C"]) {
+        const created = await request(server())
+          .post(`/api/v1/projects/${rp}/tasks`)
+          .set("Authorization", `Bearer ${adminToken}`)
+          .send({ title })
+          .expect(201);
+        rid.push(created.body.id);
+      }
+      const list = await request(server())
+        .get(`/api/v1/projects/${rp}/tasks`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .expect(200);
+      expect(list.body.map((task: { id: string }) => task.id)).toEqual(rid);
+    });
+
+    it("réordonne (C, A, B) et la liste suit", async () => {
+      const newOrder = [rid[2], rid[0], rid[1]];
+      const res = await request(server())
+        .patch(`/api/v1/projects/${rp}/tasks/reorder`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ orderedIds: newOrder })
+        .expect(200);
+      expect(res.body.map((task: { id: string }) => task.id)).toEqual(newOrder);
+    });
+
+    it("le Gantt reflète le même ordre", async () => {
+      const gantt = await request(server())
+        .get(`/api/v1/projects/${rp}/tasks/gantt`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .expect(200);
+      expect(gantt.body.tasks.map((task: { id: string }) => task.id)).toEqual([
+        rid[2],
+        rid[0],
+        rid[1],
+      ]);
+    });
+
+    it("refuse une liste incomplète (400)", async () => {
+      await request(server())
+        .patch(`/api/v1/projects/${rp}/tasks/reorder`)
+        .set("Authorization", `Bearer ${adminToken}`)
+        .send({ orderedIds: [rid[0]] })
+        .expect(400);
+    });
+  });
 });

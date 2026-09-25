@@ -9,6 +9,7 @@ import {
   Clock3,
   CornerDownRight,
   Download,
+  GripVertical,
   ListChecks,
   Plus,
   Trash2,
@@ -81,6 +82,7 @@ export function TasksSection({
   const [newTitle, setNewTitle] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dragId, setDragId] = useState<string | null>(null);
 
   const { data: tasks } = useQuery({
     queryKey: ["tasks", projectId],
@@ -130,6 +132,25 @@ export function TasksSection({
 
   const roots = (tasks ?? []).filter((task) => task.parentId === null);
   const childrenOf = (id: string) => (tasks ?? []).filter((task) => task.parentId === id);
+
+  // Réordonnancement par glisser-déposer : on ne réordonne qu'entre tâches d'un
+  // même niveau (même parent). Le nouvel ordre (position) est repris par le Gantt.
+  const onDropOn = (target: TaskView) => {
+    const source = dragId;
+    setDragId(null);
+    if (!source || source === target.id) return;
+    const dragged = (tasks ?? []).find((task) => task.id === source);
+    if (!dragged || dragged.parentId !== target.parentId) return;
+    const ids = (tasks ?? [])
+      .filter((task) => task.parentId === target.parentId)
+      .map((task) => task.id);
+    const from = ids.indexOf(source);
+    const to = ids.indexOf(target.id);
+    if (from < 0 || to < 0) return;
+    ids.splice(from, 1);
+    ids.splice(to, 0, source);
+    mutate.mutate({ path: "/reorder", method: "PATCH", body: { orderedIds: ids } });
+  };
 
   return (
     <Card>
@@ -195,6 +216,9 @@ export function TasksSection({
               members={members}
               canWork={canWork}
               locale={locale}
+              dragId={dragId}
+              setDragId={setDragId}
+              onDropOn={onDropOn}
               onAction={(path, method, body) => mutate.mutate({ path, method, body })}
             />
           ))}
@@ -214,6 +238,9 @@ function TaskRow({
   members,
   canWork,
   locale,
+  dragId,
+  setDragId,
+  onDropOn,
   onAction,
 }: {
   task: TaskView;
@@ -225,6 +252,9 @@ function TaskRow({
   members: ProjectMemberView[];
   canWork: boolean;
   locale: string;
+  dragId: string | null;
+  setDragId: (id: string | null) => void;
+  onDropOn: (target: TaskView) => void;
   onAction: (path: string, method: string, body?: unknown) => void;
 }) {
   const t = useTranslations("tasks");
@@ -233,15 +263,46 @@ function TaskRow({
   const isDone = task.status === "done";
   const overdue =
     task.dueDate && !isDone && new Date(task.dueDate) < new Date() ? true : false;
+  const [isOver, setIsOver] = useState(false);
 
   return (
     <li>
       <div
+        draggable={canWork}
+        onDragStart={(event) => {
+          setDragId(task.id);
+          event.dataTransfer.effectAllowed = "move";
+        }}
+        onDragEnd={() => {
+          setDragId(null);
+          setIsOver(false);
+        }}
+        onDragOver={(event) => {
+          if (!canWork || !dragId || dragId === task.id) return;
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+          setIsOver(true);
+        }}
+        onDragLeave={() => setIsOver(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsOver(false);
+          onDropOn(task);
+        }}
         className={cn(
-          "group flex items-center gap-2.5 rounded-(--radius-control) px-2 py-2 transition-colors hover:bg-border-subtle/40",
+          "group flex items-center gap-2 rounded-(--radius-control) px-2 py-2 transition-colors hover:bg-border-subtle/40",
           depth > 0 && "ml-6",
+          dragId === task.id && "opacity-40",
+          isOver && "ring-2 ring-inset ring-accent/60",
         )}
       >
+        {canWork && (
+          <GripVertical
+            size={14}
+            aria-hidden
+            className="shrink-0 cursor-grab text-muted opacity-0 transition-opacity group-hover:opacity-100"
+          />
+        )}
         <input
           type="checkbox"
           checked={isDone}
@@ -349,6 +410,9 @@ function TaskRow({
               members={members}
               canWork={canWork}
               locale={locale}
+              dragId={dragId}
+              setDragId={setDragId}
+              onDropOn={onDropOn}
               onAction={onAction}
             />
           ))}

@@ -87,6 +87,16 @@ export class TaskAssigneeDto {
   userId!: string;
 }
 
+export class ReorderTasksDto {
+  @ApiProperty({
+    type: [String],
+    description: "Identifiants des tâches d'un même niveau, dans le nouvel ordre",
+  })
+  @IsArray()
+  @IsUUID(undefined, { each: true })
+  orderedIds!: string[];
+}
+
 export class CreateChecklistItemDto {
   @ApiProperty({ maxLength: 300 })
   @IsString()

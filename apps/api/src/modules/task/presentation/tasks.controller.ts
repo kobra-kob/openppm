@@ -21,6 +21,7 @@ import { CurrentUser } from "../../auth/infrastructure/decorators/current-user.d
 import {
   AddDependencyDto,
   ChangeTaskStatusDto,
+  ReorderTasksDto,
   CreateChecklistItemDto,
   CreateTaskDto,
   LogTimeDto,
@@ -89,6 +90,17 @@ export class TasksController {
     @Param("taskId", ParseUUIDPipe) taskId: string,
   ): Promise<TaskDetailView> {
     return this.tasks.detail(user, projectId, taskId);
+  }
+
+  @Patch("reorder")
+  @ApiOperation({ summary: "Réordonner les tâches d'un même niveau (liste + Gantt)" })
+  reorder(
+    @CurrentUser() user: JwtPayload,
+    @Param("projectId", ParseUUIDPipe) projectId: string,
+    @Body() dto: ReorderTasksDto,
+    @Req() request: Request,
+  ): Promise<TaskView[]> {
+    return this.tasks.reorder(user, projectId, dto.orderedIds, this.context(request));
   }
 
   @Patch(":taskId")

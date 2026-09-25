@@ -80,6 +80,8 @@ export interface TaskRepository {
   findById(projectId: string, taskId: string): Promise<TaskWithAggregates | null>;
   findDetail(projectId: string, taskId: string): Promise<TaskDetail | null>;
   nextPosition(projectId: string, parentId: string | null): Promise<number>;
+  /** Réordonne un groupe de tâches sœurs : position = rang dans orderedIds. */
+  reorder(projectId: string, orderedIds: string[]): Promise<void>;
   create(input: CreateTaskInput): Promise<TaskWithAggregates>;
   update(taskId: string, input: UpdateTaskInput): Promise<TaskWithAggregates>;
   setStatus(

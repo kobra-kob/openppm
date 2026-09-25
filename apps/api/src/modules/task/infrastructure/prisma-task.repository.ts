@@ -101,6 +101,18 @@ export class PrismaTaskRepository implements TaskRepository {
     return (max._max.position ?? 0) + 1;
   }
 
+  async reorder(projectId: string, orderedIds: string[]): Promise<void> {
+    // Position = rang (1..n). Scopé au projet : ne touche jamais une autre tâche.
+    await this.prisma.$transaction(
+      orderedIds.map((id, index) =>
+        this.prisma.task.updateMany({
+          where: { id, projectId, deletedAt: null },
+          data: { position: index + 1 },
+        }),
+      ),
+    );
+  }
+
   create(input: CreateTaskInput): Promise<TaskWithAggregates> {
     return this.prisma.task.create({
       data: {
