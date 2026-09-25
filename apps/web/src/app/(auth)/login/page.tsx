@@ -43,7 +43,7 @@ export default function LoginPage() {
         return;
       }
       setSession(response);
-      router.replace("/");
+      router.replace("/dashboard");
     } catch (caught) {
       fail(caught);
     }
@@ -59,7 +59,7 @@ export default function LoginPage() {
         body: JSON.stringify({ mfaToken, code: mfaCode.trim() }),
       });
       setSession(session);
-      router.replace("/");
+      router.replace("/dashboard");
     } catch (caught) {
       fail(caught);
       if (caught instanceof ApiError && caught.code === "MFA_CHALLENGE_EXPIRED") {

@@ -33,7 +33,7 @@ function AcceptInvitationForm() {
         body: JSON.stringify({ token, ...form, locale }),
       });
       setSession(session);
-      router.replace("/");
+      router.replace("/dashboard");
     } catch (caught) {
       const code = caught instanceof ApiError ? caught.code : "UNKNOWN";
       setError(tErrors.has(code) ? tErrors(code) : tErrors("UNKNOWN"));

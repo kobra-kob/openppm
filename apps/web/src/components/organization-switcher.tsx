@@ -46,7 +46,7 @@ export function OrganizationSwitcher() {
       setOpen(false);
       queryClient.clear();
       // Rechargement complet : tout le contenu se recharge dans le nouveau tenant.
-      window.location.href = "/";
+      window.location.href = "/dashboard";
     },
   });
 
