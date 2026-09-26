@@ -314,6 +314,17 @@
     "all": "All",
     "searchPlaceholder": "Search (reference, title)…",
     "empty": "No demands yet. Create the first one!",
+    "filter": {
+      "button": "Filter",
+      "title": "Show",
+      "active": "In progress",
+      "done": "Completed",
+      "archived": "Archived"
+    },
+    "lifecycle": {
+      "done": "Completed",
+      "archived": "Archived"
+    },
     "back": "Back to demands",
     "byRequester": "Requested by {name}",
     "edit": "Edit",

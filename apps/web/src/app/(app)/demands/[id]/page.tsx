@@ -174,14 +174,24 @@ export default function DemandDetailPage() {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-mono text-xs text-muted">{demand.reference}</span>
-              <span
-                className={cn(
-                  "rounded-full px-2.5 py-0.5 text-xs font-medium",
-                  stateBadgeClass(wf.currentState.kind),
-                )}
-              >
-                {wf.currentState.label}
-              </span>
+              {demand.project?.status === "completed" ? (
+                <span className="rounded-full bg-success/15 px-2.5 py-0.5 text-xs font-medium text-success">
+                  {t("lifecycle.done")}
+                </span>
+              ) : demand.project?.status === "archived" ? (
+                <span className="rounded-full bg-border-subtle px-2.5 py-0.5 text-xs font-medium text-muted">
+                  {t("lifecycle.archived")}
+                </span>
+              ) : (
+                <span
+                  className={cn(
+                    "rounded-full px-2.5 py-0.5 text-xs font-medium",
+                    stateBadgeClass(wf.currentState.kind),
+                  )}
+                >
+                  {wf.currentState.label}
+                </span>
+              )}
               <span
                 className={cn(
                   "rounded-full px-2 py-0.5 text-xs font-medium",

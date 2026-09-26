@@ -314,6 +314,17 @@
     "all": "Toutes",
     "searchPlaceholder": "Rechercher (référence, titre)…",
     "empty": "Aucune demande. Créez la première !",
+    "filter": {
+      "button": "Filtrer",
+      "title": "Afficher",
+      "active": "En cours",
+      "done": "Terminées",
+      "archived": "Archivées"
+    },
+    "lifecycle": {
+      "done": "Terminée",
+      "archived": "Archivée"
+    },
     "back": "Retour aux demandes",
     "byRequester": "Demandé par {name}",
     "edit": "Modifier",

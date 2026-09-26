@@ -223,6 +223,30 @@ describe("Conversion demande → projet (intégration)", () => {
     // Idempotence : un seul projet rattaché à la demande
     const linked = await prisma.project.count({ where: { demandId: id } });
     expect(linked).toBe(1);
+
+    // Cycle de vie : le statut de la demande suit le projet issu
+    const auth = { Authorization: `Bearer ${adminToken}` };
+    const active = await request(server()).get(`/api/v1/demands/${id}`).set(auth).expect(200);
+    expect(active.body.project.status).toBe("active");
+    expect(active.body.lifecycle).toBe("active");
+
+    // Projet terminé → demande « terminée »
+    await request(server())
+      .patch(`/api/v1/projects/${projectId}/status`)
+      .set(auth)
+      .send({ status: "completed" })
+      .expect(200);
+    const done = await request(server()).get(`/api/v1/demands/${id}`).set(auth).expect(200);
+    expect(done.body.lifecycle).toBe("done");
+
+    // Projet archivé → demande « archivée »
+    await request(server())
+      .patch(`/api/v1/projects/${projectId}/status`)
+      .set(auth)
+      .send({ status: "archived" })
+      .expect(200);
+    const archived = await request(server()).get(`/api/v1/demands/${id}`).set(auth).expect(200);
+    expect(archived.body.lifecycle).toBe("archived");
   });
 
   it("convertit une demande sans budget ni portefeuille : projet en brouillon, sans demande de budget", async () => {

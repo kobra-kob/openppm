@@ -1,4 +1,4 @@
-import type { DemandUrgency } from "@openppm/db";
+import type { DemandUrgency, ProjectStatus } from "@openppm/db";
 
 export const DEMAND_REPOSITORY = Symbol("DEMAND_REPOSITORY");
 
@@ -19,7 +19,7 @@ export interface DemandRecord {
   targetPortfolio: { id: string; name: string } | null;
   tags: string[];
   /** Projet issu de la conversion (traçabilité), sinon null. */
-  project: { id: string; code: string } | null;
+  project: { id: string; code: string; status: ProjectStatus } | null;
   createdAt: Date;
   updatedAt: Date;
   deletedAt: Date | null;

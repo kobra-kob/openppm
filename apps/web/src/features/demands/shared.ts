@@ -94,7 +94,9 @@ export interface DemandView {
   tags: string[];
   state: DemandState | null;
   /** Projet issu de la conversion (traçabilité), sinon null. */
-  project: { id: string; code: string } | null;
+  project: { id: string; code: string; status: string } | null;
+  /** Cycle de vie effectif (suit le projet issu) : active | done | archived. */
+  lifecycle: "active" | "done" | "archived";
   canEdit: boolean;
   createdAt: string;
   updatedAt: string;

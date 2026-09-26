@@ -6,7 +6,7 @@ import {
   Injectable,
   NotFoundException,
 } from "@nestjs/common";
-import { DemandUrgency, RoleKey } from "@openppm/db";
+import { DemandUrgency, ProjectStatus, RoleKey } from "@openppm/db";
 import { AuditService } from "../../../core/audit/audit.service";
 import { NotificationsService } from "../../../core/notifications/notifications.service";
 import { PrismaService } from "../../../core/prisma/prisma.service";
@@ -39,6 +39,20 @@ const DEMAND_WORKFLOW_ROLES: string[] = [
   RoleKey.executive,
 ];
 
+/**
+ * Cycle de vie effectif d'une demande : suit le projet issu une fois converti
+ * (terminé → done, archivé → archived), sinon l'état du workflow (rejetée → close).
+ */
+function demandLifecycle(
+  projectStatus: ProjectStatus | null,
+  stateKind: string | null,
+): "active" | "done" | "archived" {
+  if (projectStatus === ProjectStatus.completed) return "done";
+  if (projectStatus === ProjectStatus.archived) return "archived";
+  if (stateKind === "final_ko") return "archived";
+  return "active";
+}
+
 export interface DemandStateView {
   key: string;
   label: string;
@@ -62,7 +76,14 @@ export interface DemandView {
   tags: string[];
   state: DemandStateView | null;
   /** Projet issu de la conversion (traçabilité), sinon null. */
-  project: { id: string; code: string } | null;
+  project: { id: string; code: string; status: ProjectStatus } | null;
+  /**
+   * Cycle de vie effectif (filtrage & affichage) dérivé du workflow et du projet :
+   * - "done"     : projet issu terminé,
+   * - "archived" : projet issu archivé, ou demande rejetée (close),
+   * - "active"   : en cours (workflow ouvert ou projet actif).
+   */
+  lifecycle: "active" | "done" | "archived";
   canEdit: boolean;
   createdAt: Date;
   updatedAt: Date;
@@ -384,6 +405,7 @@ export class DemandsService {
           }
         : null,
       project: demand.project,
+      lifecycle: demandLifecycle(demand.project?.status ?? null, state?.kind ?? null),
       canEdit: this.canEdit(payload, demand),
       createdAt: demand.createdAt,
       updatedAt: demand.updatedAt,

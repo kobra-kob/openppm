@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Inbox, Plus } from "lucide-react";
+import { Filter, Inbox, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -34,6 +34,8 @@ export default function DemandsPage() {
 
   const [tab, setTab] = useState<"mine" | "all">("all");
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState({ active: true, done: true, archived: false });
+  const [filterOpen, setFilterOpen] = useState(false);
   const [creating, setCreating] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [form, setForm] = useState({
@@ -111,7 +113,14 @@ export default function DemandsPage() {
     createMutation.mutate();
   };
 
-  const items = data?.items ?? [];
+  // Filtre par cycle de vie (suit le projet issu) : par défaut on affiche les
+  // demandes en cours et terminées, pas celles dont le projet est archivé.
+  const items = (data?.items ?? []).filter(
+    (demand) =>
+      (statusFilter.active && demand.lifecycle === "active") ||
+      (statusFilter.done && demand.lifecycle === "done") ||
+      (statusFilter.archived && demand.lifecycle === "archived"),
+  );
 
   return (
     <div className="w-full space-y-5 px-4 py-5 sm:px-6 lg:px-8">
@@ -276,6 +285,58 @@ export default function DemandsPage() {
           value={search}
           onChange={(e) => setSearch(e.target.value)}
         />
+        <div className="relative">
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={() => setFilterOpen((value) => !value)}
+            aria-expanded={filterOpen}
+            className="gap-1.5"
+          >
+            <Filter size={16} /> {t("filter.button")}
+            <span className="rounded-full bg-accent/15 px-1.5 text-xs font-medium text-accent tabular-nums">
+              {[statusFilter.active, statusFilter.done, statusFilter.archived].filter(Boolean).length}
+            </span>
+          </Button>
+          {filterOpen && (
+            <>
+              <button
+                type="button"
+                aria-hidden
+                tabIndex={-1}
+                onClick={() => setFilterOpen(false)}
+                className="fixed inset-0 z-20 cursor-default"
+              />
+              <div className="glass-strong animate-pop absolute right-0 z-30 mt-2 w-56 rounded-(--radius-card) p-2 shadow-[var(--shadow-pop)]">
+                <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted">
+                  {t("filter.title")}
+                </p>
+                {(
+                  [
+                    ["active", t("filter.active")],
+                    ["done", t("filter.done")],
+                    ["archived", t("filter.archived")],
+                  ] as const
+                ).map(([key, label]) => (
+                  <label
+                    key={key}
+                    className="flex cursor-pointer items-center gap-2.5 rounded-(--radius-control) px-2 py-2 text-sm transition-colors hover:bg-border-subtle"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={statusFilter[key]}
+                      onChange={(event) =>
+                        setStatusFilter((current) => ({ ...current, [key]: event.target.checked }))
+                      }
+                      className="size-4 accent-(--accent)"
+                    />
+                    {label}
+                  </label>
+                ))}
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       {items.length === 0 ? (
@@ -292,23 +353,33 @@ export default function DemandsPage() {
               <Card className="card-hover h-full">
                 <div className="mb-2 flex items-center gap-2">
                   <span className="font-mono text-xs text-muted">{demand.reference}</span>
-                  {demand.state && (
-                    <span
-                      className={cn(
-                        "ml-auto rounded-full px-2 py-0.5 text-xs font-medium",
-                        stateBadgeClass(
-                          demand.state.isFinal
-                            ? demand.state.key === "rejected"
-                              ? "final_ko"
-                              : "final_ok"
-                            : demand.state.key === "draft"
-                              ? "initial"
-                              : "intermediate",
-                        ),
-                      )}
-                    >
-                      {demand.state.label}
+                  {demand.project?.status === "completed" ? (
+                    <span className="ml-auto rounded-full bg-success/15 px-2 py-0.5 text-xs font-medium text-success">
+                      {t("lifecycle.done")}
                     </span>
+                  ) : demand.project?.status === "archived" ? (
+                    <span className="ml-auto rounded-full bg-border-subtle px-2 py-0.5 text-xs font-medium text-muted">
+                      {t("lifecycle.archived")}
+                    </span>
+                  ) : (
+                    demand.state && (
+                      <span
+                        className={cn(
+                          "ml-auto rounded-full px-2 py-0.5 text-xs font-medium",
+                          stateBadgeClass(
+                            demand.state.isFinal
+                              ? demand.state.key === "rejected"
+                                ? "final_ko"
+                                : "final_ok"
+                              : demand.state.key === "draft"
+                                ? "initial"
+                                : "intermediate",
+                          ),
+                        )}
+                      >
+                        {demand.state.label}
+                      </span>
+                    )
                   )}
                 </div>
                 <p className="font-medium leading-snug">{demand.title}</p>
