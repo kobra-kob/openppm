@@ -195,7 +195,14 @@ export default function ProjectDetailsPage() {
           <select
             value=""
             onChange={(event) => {
-              if (event.target.value) statusMutation.mutate(event.target.value);
+              const next = event.target.value;
+              if (!next) return;
+              // L'archivage sort le projet des vues courantes : on demande confirmation.
+              if (next === "archived" && !window.confirm(t("detail.archiveConfirm"))) {
+                event.target.value = "";
+                return;
+              }
+              statusMutation.mutate(next);
             }}
             className="rounded-(--radius-control) border border-border-subtle bg-surface-solid px-3 py-2 text-sm focus:border-accent focus:outline-none"
           >

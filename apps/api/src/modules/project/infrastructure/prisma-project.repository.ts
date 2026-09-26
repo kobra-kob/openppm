@@ -39,7 +39,11 @@ export class PrismaProjectRepository implements ProjectRepository {
     const where: Prisma.ProjectWhereInput = {
       organizationId,
       deletedAt: null,
-      ...(filters.status ? { status: filters.status } : { status: { not: ProjectStatus.archived } }),
+      ...(filters.statuses && filters.statuses.length > 0
+        ? { status: { in: filters.statuses } }
+        : filters.status
+          ? { status: filters.status }
+          : { status: { not: ProjectStatus.archived } }),
       ...(filters.categoryId ? { categoryId: filters.categoryId } : {}),
       // AND explicite : plusieurs blocs OR (portée + recherche) doivent se cumuler
       AND: [

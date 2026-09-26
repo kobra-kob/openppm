@@ -2,6 +2,7 @@ import { ApiProperty, ApiPropertyOptional, PartialType, PickType } from "@nestjs
 import { ProjectHealth, ProjectRole, ProjectStatus } from "@openppm/db";
 import { Transform } from "class-transformer";
 import {
+  IsArray,
   IsBoolean,
   IsDateString,
   IsIn,
@@ -140,6 +141,17 @@ export class ListProjectsQuery {
   @IsOptional()
   @IsIn(Object.values(ProjectStatus))
   status?: ProjectStatus;
+
+  @ApiPropertyOptional({
+    description: "Statuts à inclure, séparés par des virgules (ex. active,completed)",
+  })
+  @IsOptional()
+  @Transform(({ value }) =>
+    typeof value === "string" ? value.split(",").map((part) => part.trim()).filter(Boolean) : value,
+  )
+  @IsArray()
+  @IsIn(Object.values(ProjectStatus), { each: true })
+  statuses?: ProjectStatus[];
 
   @ApiPropertyOptional({ description: "Recherche sur le nom et le code" })
   @IsOptional()

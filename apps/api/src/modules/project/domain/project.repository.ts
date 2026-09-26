@@ -28,6 +28,8 @@ export type ProjectWithRelations = Project & {
 export interface ProjectListFilters {
   search?: string;
   status?: ProjectStatus;
+  /** Statuts à inclure (filtre multi-statuts). Prioritaire sur `status`. */
+  statuses?: ProjectStatus[];
   categoryId?: string;
   /** Restreint aux projets dont cet utilisateur est membre, chef ou créateur. */
   memberUserId?: string;

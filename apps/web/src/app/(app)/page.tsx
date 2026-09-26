@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ArchiveRestore, FolderKanban, Plus, Trash2 } from "lucide-react";
+import { ArchiveRestore, Filter, FolderKanban, Plus, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -53,6 +53,13 @@ const HEALTH_PILL: Record<ProjectHealth, string> = {
   red: "bg-danger/15 text-danger",
 };
 
+/** Regroupement des statuts projet pour le filtre d'affichage. */
+const STATUS_GROUPS = {
+  active: ["draft", "active", "on_hold"],
+  done: ["completed"],
+  archived: ["archived"],
+} as const;
+
 export default function WorkspacePage() {
   const t = useTranslations("workspace");
   const tProjects = useTranslations("projects");
@@ -69,6 +76,14 @@ export default function WorkspacePage() {
   const [tab, setTab] = useState<"mine" | "all">("mine");
   const [search, setSearch] = useState("");
   const [sort, setSort] = useState<"recent" | "priority">("recent");
+  // Filtre par statut : par défaut on affiche les projets en cours et terminés
+  // (les brouillons/en pause comptent comme « en cours »), pas les archivés.
+  const [statusFilter, setStatusFilter] = useState({
+    active: true,
+    done: true,
+    archived: false,
+  });
+  const [filterOpen, setFilterOpen] = useState(false);
   const [showTrash, setShowTrash] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({
@@ -83,13 +98,21 @@ export default function WorkspacePage() {
   });
   const [error, setError] = useState<string | null>(null);
 
+  const selectedStatuses = [
+    ...(statusFilter.active ? STATUS_GROUPS.active : []),
+    ...(statusFilter.done ? STATUS_GROUPS.done : []),
+    ...(statusFilter.archived ? STATUS_GROUPS.archived : []),
+  ];
+  const statusesParam = selectedStatuses.join(",");
+
   const { data: list } = useQuery({
-    queryKey: ["projects", { tab, search, sort }],
+    queryKey: ["projects", { tab, search, sort, statuses: statusesParam }],
     queryFn: () => {
       const params = new URLSearchParams();
       params.set("scope", tab);
       params.set("sort", sort);
       if (search) params.set("search", search);
+      if (statusesParam) params.set("statuses", statusesParam);
       params.set("pageSize", "50");
       return api<ProjectListView>(`/projects?${params.toString()}`);
     },
@@ -412,6 +435,58 @@ export default function WorkspacePage() {
             onChange={(event) => setSearch(event.target.value)}
             className="max-w-xs"
           />
+          <div className="relative">
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setFilterOpen((value) => !value)}
+              aria-expanded={filterOpen}
+              className="gap-1.5"
+            >
+              <Filter size={16} /> {tProjects("filter.button")}
+              <span className="rounded-full bg-accent/15 px-1.5 text-xs font-medium text-accent tabular-nums">
+                {[statusFilter.active, statusFilter.done, statusFilter.archived].filter(Boolean).length}
+              </span>
+            </Button>
+            {filterOpen && (
+              <>
+                <button
+                  type="button"
+                  aria-hidden
+                  tabIndex={-1}
+                  onClick={() => setFilterOpen(false)}
+                  className="fixed inset-0 z-20 cursor-default"
+                />
+                <div className="glass-strong animate-pop absolute left-0 z-30 mt-2 w-56 rounded-(--radius-card) p-2 shadow-[var(--shadow-pop)]">
+                  <p className="px-2 py-1 text-xs font-semibold uppercase tracking-wider text-muted">
+                    {tProjects("filter.title")}
+                  </p>
+                  {(
+                    [
+                      ["active", tProjects("filter.active")],
+                      ["done", tProjects("filter.done")],
+                      ["archived", tProjects("filter.archived")],
+                    ] as const
+                  ).map(([key, label]) => (
+                    <label
+                      key={key}
+                      className="flex cursor-pointer items-center gap-2.5 rounded-(--radius-control) px-2 py-2 text-sm transition-colors hover:bg-border-subtle"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={statusFilter[key]}
+                        onChange={(event) =>
+                          setStatusFilter((current) => ({ ...current, [key]: event.target.checked }))
+                        }
+                        className="size-4 accent-(--accent)"
+                      />
+                      {label}
+                    </label>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
           <select
             value={sort}
             onChange={(event) => setSort(event.target.value as "recent" | "priority")}

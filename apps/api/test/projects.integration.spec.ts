@@ -523,4 +523,76 @@ describe("Projects (intégration)", () => {
       expect(audits).toHaveLength(1);
     });
   });
+
+  describe("filtre par statut (statuses)", () => {
+    const auth = () => ({ Authorization: `Bearer ${adminToken}` });
+
+    it("filtre la liste sur un ou plusieurs statuts", async () => {
+      const p1 = await request(server())
+        .post("/api/v1/projects")
+        .set(auth())
+        .send({ name: "Filtre Un" })
+        .expect(201);
+      const p2 = await request(server())
+        .post("/api/v1/projects")
+        .set(auth())
+        .send({ name: "Filtre Deux" })
+        .expect(201);
+      // draft → active → completed (draft ne va pas directement à completed)
+      for (const status of ["active", "completed"]) {
+        await request(server())
+          .patch(`/api/v1/projects/${p2.body.id}/status`)
+          .set(auth())
+          .send({ status })
+          .expect(200);
+      }
+
+      const ids = async (query: string) => {
+        const res = await request(server())
+          .get(`/api/v1/projects?scope=all&pageSize=100&${query}`)
+          .set(auth())
+          .expect(200);
+        return res.body.items.map((p: { id: string }) => p.id) as string[];
+      };
+
+      const drafts = await ids("statuses=draft");
+      expect(drafts).toContain(p1.body.id);
+      expect(drafts).not.toContain(p2.body.id);
+
+      const done = await ids("statuses=completed");
+      expect(done).toContain(p2.body.id);
+      expect(done).not.toContain(p1.body.id);
+
+      const both = await ids("statuses=draft,completed");
+      expect(both).toContain(p1.body.id);
+      expect(both).toContain(p2.body.id);
+    });
+
+    it("les projets archivés sont exclus par défaut mais visibles via statuses=archived", async () => {
+      const created = await request(server())
+        .post("/api/v1/projects")
+        .set(auth())
+        .send({ name: "À archiver" })
+        .expect(201);
+      await request(server())
+        .patch(`/api/v1/projects/${created.body.id}/status`)
+        .set(auth())
+        .send({ status: "archived" })
+        .expect(200);
+
+      const defaultList = await request(server())
+        .get("/api/v1/projects?scope=all&pageSize=100")
+        .set(auth())
+        .expect(200);
+      expect(defaultList.body.items.map((p: { id: string }) => p.id)).not.toContain(
+        created.body.id,
+      );
+
+      const archived = await request(server())
+        .get("/api/v1/projects?scope=all&pageSize=100&statuses=archived")
+        .set(auth())
+        .expect(200);
+      expect(archived.body.items.map((p: { id: string }) => p.id)).toContain(created.body.id);
+    });
+  });
 });

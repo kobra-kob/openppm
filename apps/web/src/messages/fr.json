@@ -150,6 +150,13 @@
     "membersCount": "{count} membre(s)",
     "trash": "Corbeille",
     "backToList": "Retour aux projets",
+    "filter": {
+      "button": "Filtrer",
+      "title": "Afficher",
+      "active": "En cours",
+      "done": "Terminés",
+      "archived": "Archivés"
+    },
     "trashEmpty": "La corbeille est vide.",
     "restore": "Restaurer",
     "deletedOn": "Supprimé le {date}",
@@ -203,6 +210,7 @@
       "activityTitle": "Activité",
       "delete": "Mettre à la corbeille",
       "changeStatus": "Changer d'état",
+      "archiveConfirm": "Archiver ce projet ? Il sortira des vues courantes (visible via le filtre « Archivés »).",
       "saveAsTemplate": "Enregistrer comme template",
       "templateSaved": "Template créé à partir de ce projet.",
       "favoriteAdd": "Ajouter aux favoris",

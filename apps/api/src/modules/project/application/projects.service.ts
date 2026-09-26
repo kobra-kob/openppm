@@ -124,6 +124,7 @@ export class ProjectsService {
       this.repository.list(payload.org, {
         search: query.search,
         status: query.status,
+        statuses: query.statuses,
         categoryId: query.categoryId,
         memberUserId: query.scope === "mine" ? payload.sub : undefined,
         sort: query.sort,
