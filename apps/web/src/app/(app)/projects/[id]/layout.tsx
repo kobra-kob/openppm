@@ -12,6 +12,7 @@ import {
   ListChecks,
   PiggyBank,
   SquareKanban,
+  Users,
   Wallet,
 } from "lucide-react";
 import Link from "next/link";
@@ -55,6 +56,7 @@ export default function ProjectWorkspaceLayout({
     { href: `/projects/${id}/gantt`, key: "gantt", icon: CalendarRange, exact: false },
     { href: `/projects/${id}/budget`, key: "budget", icon: Wallet, exact: false },
     { href: `/projects/${id}/finance`, key: "finance", icon: PiggyBank, exact: false },
+    { href: `/projects/${id}/resources`, key: "resources", icon: Users, exact: false },
     { href: `/projects/${id}/quotes`, key: "quotes", icon: FileText, exact: false },
     { href: `/projects/${id}/documents`, key: "documents", icon: FolderOpen, exact: false },
   ] as const;

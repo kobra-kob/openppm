@@ -5,6 +5,7 @@ import { useParams } from "next/navigation";
 import { api } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
 import { ORG_WIDE_ROLES, ProjectView } from "@/features/projects/shared";
+import { canManageResources } from "@/features/resources/shared";
 import { TasksSection } from "@/features/projects/tasks-section";
 
 export default function ProjectTasksPage() {
@@ -27,5 +28,12 @@ export default function ProjectTasksPage() {
       (member) => member.userId === currentUser?.id && member.role !== "observer",
     );
 
-  return <TasksSection projectId={project.id} members={project.members} canWork={canWork} />;
+  return (
+    <TasksSection
+      projectId={project.id}
+      members={project.members}
+      canWork={canWork}
+      canManageResources={canManageResources(currentUser?.roles)}
+    />
+  );
 }

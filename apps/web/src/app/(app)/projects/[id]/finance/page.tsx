@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Clock3, FileText, Landmark, PiggyBank, Plus, Trash2, TrendingDown, Wallet } from "lucide-react";
+import { Clock3, FileText, Landmark, PiggyBank, Plus, Trash2, TrendingDown, Users, Wallet } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useLocale, useTranslations } from "next-intl";
@@ -9,6 +9,7 @@ import { FormEvent, useState } from "react";
 import { Alert, Button, Card, Input, Label, cn } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 import { formatEuro } from "@/features/portfolios/shared";
+import type { ProjectResourceCostView } from "@/features/resources/shared";
 
 type Category = "capex" | "opex";
 
@@ -23,6 +24,7 @@ interface FinanceView {
     manualTotal: number;
     laborHours: number;
     laborCost: number;
+    resourceCost: number;
     total: number;
   };
   remaining: number | null;
@@ -76,6 +78,11 @@ export default function FinancePage() {
   const { data } = useQuery({
     queryKey: ["finance", id],
     queryFn: () => api<FinanceView>(`/projects/${id}/finance`),
+  });
+
+  const { data: resourceCost } = useQuery({
+    queryKey: ["project-resources", id],
+    queryFn: () => api<ProjectResourceCostView>(`/projects/${id}/resources`),
   });
 
   const onError = (err: unknown) => {
@@ -242,6 +249,38 @@ export default function FinancePage() {
               </Button>
             </form>
           )}
+        </div>
+      </Card>
+
+      {/* Coût des ressources (module Ressources) */}
+      <Card>
+        <div className="mb-3 flex items-center justify-between">
+          <div className="flex items-center gap-2 text-muted">
+            <Users size={16} />
+            <h2 className="text-sm font-semibold uppercase tracking-wider">{t("resources.title")}</h2>
+          </div>
+          <Link
+            href={`/projects/${id}/resources`}
+            className="text-xs text-accent transition-colors hover:underline"
+          >
+            {t("resources.link")}
+          </Link>
+        </div>
+        <div className="flex flex-wrap items-end gap-6">
+          <div className="text-sm">
+            <p className="text-muted">{t("resources.cost")}</p>
+            <p className="text-lg font-semibold tabular-nums text-accent">{money(data.actual.resourceCost)}</p>
+          </div>
+          <div className="text-sm">
+            <p className="text-muted">{t("resources.days")}</p>
+            <p className="text-lg font-semibold tabular-nums">
+              {(resourceCost?.totalAllocatedDays ?? 0).toLocaleString(locale)}
+            </p>
+          </div>
+          <div className="text-sm">
+            <p className="text-muted">{t("resources.count")}</p>
+            <p className="text-lg font-semibold tabular-nums">{resourceCost?.resourceCount ?? 0}</p>
+          </div>
         </div>
       </Card>
 

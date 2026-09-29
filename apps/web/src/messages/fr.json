@@ -232,7 +232,8 @@
     "projects": "Projets",
     "demands": "Demandes",
     "portfolios": "Portefeuilles",
-    "validations": "Mes validations"
+    "validations": "Mes validations",
+    "resources": "Ressources"
   },
   "validations": {
     "title": "Mes validations",
@@ -425,7 +426,8 @@
     "budget": "Gouvernance",
     "finance": "Finances",
     "quotes": "Devis",
-    "documents": "Documents"
+    "documents": "Documents",
+    "resources": "Ressources"
   },
   "quotes": {
     "subtitle": "Devis rattachés au projet, avec validation à deux niveaux.",
@@ -531,6 +533,16 @@
       "approvedTTC": "Devis approuvés (TTC)",
       "counts": "Approuvés / en attente",
       "countsValue": "{approved} / {pending}"
+    },
+    "resources": {
+      "title": "Coût des ressources",
+      "cost": "Coût des ressources",
+      "days": "Jours-personnes",
+      "count": "Ressources affectées",
+      "empty": "Aucune ressource affectée aux tâches de ce projet.",
+      "link": "Gérer les ressources →",
+      "resource": "Ressource",
+      "allocation": "Charge (j)"
     }
   },
   "budget": {
@@ -693,7 +705,10 @@
     "totalSpent": "{hours} h",
     "delete": "Supprimer la tâche",
     "deleteEntry": "Supprimer la saisie",
-    "exportCsv": "Exporter CSV"
+    "exportCsv": "Exporter CSV",
+    "duration": "Durée",
+    "durationDays": "{days} j",
+    "durationFromDates": "Calculée à partir des dates"
   },
   "members": {
     "title": "Membres",
@@ -924,5 +939,74 @@
       "close": "Clôturer",
       "manage": "Administrer"
     }
+  },
+  "resources": {
+    "title": "Ressources",
+    "subtitle": "Personnes et prestations, leurs tarifs et leur charge",
+    "new": "Nouvelle ressource",
+    "search": "Rechercher une ressource…",
+    "empty": "Aucune ressource. Créez-en une pour l'affecter aux tâches.",
+    "filterActive": "Actives",
+    "filterInactive": "Archivées",
+    "filterAll": "Toutes",
+    "archive": "Archiver",
+    "archived": "Archivée",
+    "confirmArchive": "Archiver cette ressource ? Elle restera visible sur les tâches passées mais ne pourra plus être affectée.",
+    "type": "Type",
+    "types": {
+      "EMPLOYEE": "Salarié",
+      "CONTRACTOR": "Prestataire",
+      "FREELANCER": "Freelance",
+      "VENDOR": "Fournisseur",
+      "OTHER": "Autre"
+    },
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "company": "Société",
+    "email": "E-mail",
+    "phone": "Téléphone",
+    "jobTitle": "Fonction",
+    "notes": "Notes",
+    "rate": "Tarif",
+    "rateAmount": "Montant",
+    "rateUnit": "Unité",
+    "unit": {
+      "HOUR": "h",
+      "DAY": "j"
+    },
+    "unitLong": {
+      "HOUR": "Heure",
+      "DAY": "Jour"
+    },
+    "currency": "Devise",
+    "create": "Créer la ressource",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "setRate": "Modifier le tarif",
+    "noRate": "Sans tarif",
+    "cost": "Coût",
+    "allocation": "Charge",
+    "allocationDays": "{days} j",
+    "totalCost": "Coût total",
+    "totalDays": "Charge totale",
+    "resourceCount": "Ressources",
+    "workload": "Charge par projet",
+    "assignments": "Affectations",
+    "task": "Tâche",
+    "project": "Projet",
+    "period": "Période",
+    "duration": "Durée",
+    "overallocation": "Surcharge détectée",
+    "overallocationHint": "Ces tâches se chevauchent pour cette ressource :",
+    "noAssignments": "Aucune affectation pour l'instant.",
+    "backToList": "← Ressources",
+    "assign": "Affecter une ressource",
+    "assignPlaceholder": "Choisir une ressource…",
+    "remove": "Retirer",
+    "none": "Aucune ressource affectée.",
+    "autoCostHint": "Le coût se calcule automatiquement à partir de la durée (dates) de la tâche.",
+    "projectCostTitle": "Coût des ressources du projet",
+    "projectCostSubtitle": "Agrégé par ressource, calculé à partir de la durée des tâches.",
+    "resource": "Ressource"
   }
 }

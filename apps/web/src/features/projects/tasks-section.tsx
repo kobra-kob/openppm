@@ -6,13 +6,14 @@ import {
   CheckSquare,
   ChevronDown,
   ChevronRight,
-  Clock3,
   CornerDownRight,
   Download,
   GripVertical,
   ListChecks,
   Plus,
+  Timer,
   Trash2,
+  Users,
   X,
 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -20,7 +21,26 @@ import { FormEvent, useState } from "react";
 import { Alert, Button, Card, Input, cn } from "@/components/ui";
 import { api, ApiError } from "@/lib/api-client";
 import { useAuthStore } from "@/lib/auth-store";
+import { formatEuro } from "@/features/portfolios/shared";
+import {
+  formatRate,
+  type ResourceView,
+  type TaskResourcesView,
+} from "@/features/resources/shared";
 import type { ProjectMemberView } from "./shared";
+
+/**
+ * Durée d'une tâche en jours ouvrés inclusifs, dérivée des dates.
+ * Miroir de taskDurationDays côté API (source de vérité = début/échéance).
+ */
+function durationDays(startDate: string | null, dueDate: string | null): number | null {
+  if (!startDate || !dueDate) {
+    return null;
+  }
+  const DAY = 86_400_000;
+  const days = Math.round((new Date(dueDate).getTime() - new Date(startDate).getTime()) / DAY) + 1;
+  return Math.max(1, days);
+}
 
 // Vide par défaut → appels relatifs (même origine, proxifiés vers l'API par Next).
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "";
@@ -70,10 +90,12 @@ export function TasksSection({
   projectId,
   members,
   canWork,
+  canManageResources,
 }: {
   projectId: string;
   members: ProjectMemberView[];
   canWork: boolean;
+  canManageResources: boolean;
 }) {
   const t = useTranslations("tasks");
   const tErrors = useTranslations("errors");
@@ -215,6 +237,8 @@ export function TasksSection({
               detail={detail ?? null}
               members={members}
               canWork={canWork}
+              canManageResources={canManageResources}
+              projectId={projectId}
               locale={locale}
               dragId={dragId}
               setDragId={setDragId}
@@ -237,6 +261,8 @@ function TaskRow({
   detail,
   members,
   canWork,
+  canManageResources,
+  projectId,
   locale,
   dragId,
   setDragId,
@@ -251,6 +277,8 @@ function TaskRow({
   detail: TaskDetailView | null;
   members: ProjectMemberView[];
   canWork: boolean;
+  canManageResources: boolean;
+  projectId: string;
   locale: string;
   dragId: string | null;
   setDragId: (id: string | null) => void;
@@ -263,6 +291,7 @@ function TaskRow({
   const isDone = task.status === "done";
   const overdue =
     task.dueDate && !isDone && new Date(task.dueDate) < new Date() ? true : false;
+  const duration = durationDays(task.startDate, task.dueDate);
   const [isOver, setIsOver] = useState(false);
 
   return (
@@ -362,10 +391,10 @@ function TaskRow({
             {task.checklistDone}/{task.checklistTotal}
           </span>
         )}
-        {task.timeSpentHours > 0 && (
+        {duration !== null && (
           <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-border-subtle/60 px-2 py-0.5 text-xs text-muted">
-            <Clock3 size={12} />
-            {t("totalSpent", { hours: task.timeSpentHours })}
+            <Timer size={12} />
+            {t("durationDays", { days: duration })}
           </span>
         )}
         <span className="flex shrink-0 -space-x-1.5">
@@ -390,6 +419,8 @@ function TaskRow({
           projectTaskDetail={detail}
           members={members}
           canWork={canWork}
+          canManageResources={canManageResources}
+          projectId={projectId}
           depth={depth}
           locale={locale}
           onAction={onAction}
@@ -409,6 +440,8 @@ function TaskRow({
               detail={detail}
               members={members}
               canWork={canWork}
+              canManageResources={canManageResources}
+              projectId={projectId}
               locale={locale}
               dragId={dragId}
               setDragId={setDragId}
@@ -426,6 +459,8 @@ function TaskPanel({
   projectTaskDetail: detail,
   members,
   canWork,
+  canManageResources,
+  projectId,
   depth,
   locale,
   onAction,
@@ -433,6 +468,8 @@ function TaskPanel({
   projectTaskDetail: TaskDetailView;
   members: ProjectMemberView[];
   canWork: boolean;
+  canManageResources: boolean;
+  projectId: string;
   depth: number;
   locale: string;
   onAction: (path: string, method: string, body?: unknown) => void;
@@ -440,11 +477,6 @@ function TaskPanel({
   const t = useTranslations("tasks");
   const [subtaskTitle, setSubtaskTitle] = useState("");
   const [checklistLabel, setChecklistLabel] = useState("");
-  const [timeForm, setTimeForm] = useState({
-    spentOn: new Date().toISOString().slice(0, 10),
-    hours: "1",
-    note: "",
-  });
   // Renommage inline du titre (synchronisé quand on change de tâche).
   const [titleDraft, setTitleDraft] = useState(detail.title);
   const [titleFor, setTitleFor] = useState(detail.id);
@@ -701,83 +733,13 @@ function TaskPanel({
         </div>
       </div>
 
-      {/* Temps passé */}
-      <div>
-        <h4 className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted">
-          {t("time")} — {t("totalSpent", { hours: detail.timeSpentHours })}
-        </h4>
-        <ul className="space-y-1">
-          {detail.timeEntries.map((entry) => (
-            <li key={entry.id} className="flex items-center gap-2 text-sm">
-              <span className="text-xs text-muted">
-                {new Date(entry.spentOn).toLocaleDateString(locale)}
-              </span>
-              <span className="font-medium">{entry.hours} h</span>
-              <span className="text-muted">{entry.userName}</span>
-              <span className="flex-1 truncate text-xs text-muted">{entry.note}</span>
-              {canWork && (
-                <button
-                  type="button"
-                  onClick={() => onAction(`/${detail.id}/time/${entry.id}`, "DELETE")}
-                  className="text-muted hover:text-danger"
-                  aria-label={t("deleteEntry")}
-                >
-                  <X size={12} />
-                </button>
-              )}
-            </li>
-          ))}
-        </ul>
-        {canWork && (
-          <form
-            className="mt-2 flex flex-wrap items-center gap-2"
-            onSubmit={(event) => {
-              event.preventDefault();
-              onAction(`/${detail.id}/time`, "POST", {
-                spentOn: timeForm.spentOn,
-                hours: Number(timeForm.hours),
-                ...(timeForm.note ? { note: timeForm.note } : {}),
-              });
-              setTimeForm((current) => ({ ...current, note: "" }));
-            }}
-          >
-            <Input
-              type="date"
-              required
-              value={timeForm.spentOn}
-              onChange={(event) =>
-                setTimeForm((current) => ({ ...current, spentOn: event.target.value }))
-              }
-              className="w-36 py-1 text-xs"
-            />
-            <Input
-              type="number"
-              min={0.25}
-              max={24}
-              step={0.25}
-              required
-              aria-label={t("hours")}
-              value={timeForm.hours}
-              onChange={(event) =>
-                setTimeForm((current) => ({ ...current, hours: event.target.value }))
-              }
-              className="w-20 py-1 text-xs"
-            />
-            <Input
-              placeholder={t("notePlaceholder")}
-              maxLength={500}
-              value={timeForm.note}
-              onChange={(event) =>
-                setTimeForm((current) => ({ ...current, note: event.target.value }))
-              }
-              className="min-w-32 flex-1 py-1 text-xs"
-            />
-            <Button type="submit" variant="ghost" className="px-2 py-1 text-xs">
-              {t("log")}
-            </Button>
-          </form>
-        )}
-      </div>
+      {/* Ressources & coût (durée dérivée des dates, coût calculé côté backend) */}
+      <TaskResourcesPanel
+        projectId={projectId}
+        taskId={detail.id}
+        canManage={canManageResources}
+        locale={locale}
+      />
 
       {/* Sous-tâche */}
       {canWork && (
@@ -811,6 +773,138 @@ function TaskPanel({
         canWork={canWork}
         locale={locale}
       />
+    </div>
+  );
+}
+
+/**
+ * Ressources d'une tâche : durée (dérivée des dates, lecture seule), ressources
+ * affectées avec leur coût calculé côté backend, et affectation/retrait.
+ * Remplace la saisie manuelle du temps passé.
+ */
+function TaskResourcesPanel({
+  projectId,
+  taskId,
+  canManage,
+  locale,
+}: {
+  projectId: string;
+  taskId: string;
+  canManage: boolean;
+  locale: string;
+}) {
+  const t = useTranslations("resources");
+  const tTasks = useTranslations("tasks");
+  const queryClient = useQueryClient();
+  const [pending, setPending] = useState("");
+
+  const { data } = useQuery({
+    queryKey: ["task-resources", projectId, taskId],
+    queryFn: () =>
+      api<TaskResourcesView>(`/projects/${projectId}/tasks/${taskId}/resources`),
+  });
+
+  const { data: catalog } = useQuery({
+    queryKey: ["resources", "active"],
+    queryFn: () => api<ResourceView[]>(`/resources?active=true`),
+    enabled: canManage,
+  });
+
+  const invalidate = () => {
+    void queryClient.invalidateQueries({ queryKey: ["task-resources", projectId, taskId] });
+    void queryClient.invalidateQueries({ queryKey: ["finance", projectId] });
+    void queryClient.invalidateQueries({ queryKey: ["project-resources", projectId] });
+  };
+
+  const assign = useMutation({
+    mutationFn: (resourceId: string) =>
+      api<TaskResourcesView>(`/projects/${projectId}/tasks/${taskId}/resources`, {
+        method: "POST",
+        body: JSON.stringify({ resourceId }),
+      }),
+    onSuccess: invalidate,
+  });
+
+  const remove = useMutation({
+    mutationFn: (resourceId: string) =>
+      api<TaskResourcesView>(
+        `/projects/${projectId}/tasks/${taskId}/resources/${resourceId}`,
+        { method: "DELETE" },
+      ),
+    onSuccess: invalidate,
+  });
+
+  const money = (value: number) => formatEuro(value, locale);
+  const assigned = new Set((data?.resources ?? []).map((r) => r.resourceId));
+  const available = (catalog ?? []).filter((r) => !assigned.has(r.id));
+
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center gap-2">
+        <Users size={13} className="text-muted" />
+        <h4 className="text-xs font-semibold uppercase tracking-wider text-muted">{t("title")}</h4>
+        {data && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-border-subtle/60 px-2 py-0.5 text-[11px] text-muted">
+            <Timer size={11} />
+            {tTasks("duration")} : {tTasks("durationDays", { days: data.durationDays })}
+          </span>
+        )}
+        {data && data.resources.length > 0 && (
+          <span className="ml-auto text-xs font-medium tabular-nums text-accent">
+            {money(data.totalCost)}
+          </span>
+        )}
+      </div>
+
+      {data && data.resources.length === 0 ? (
+        <p className="text-xs text-muted">{t("none")}</p>
+      ) : (
+        <ul className="space-y-1">
+          {(data?.resources ?? []).map((line) => (
+            <li key={line.resourceId} className="flex items-center gap-2 text-sm">
+              <span className="min-w-0 flex-1 truncate">{line.name}</span>
+              <span className="shrink-0 text-xs text-muted">
+                {t("allocationDays", { days: line.allocationDays })}
+              </span>
+              <span className="shrink-0 tabular-nums">{money(line.cost)}</span>
+              {canManage && (
+                <button
+                  type="button"
+                  onClick={() => remove.mutate(line.resourceId)}
+                  className="text-muted hover:text-danger"
+                  aria-label={t("remove")}
+                >
+                  <X size={12} />
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {canManage && available.length > 0 && (
+        <select
+          value={pending}
+          onChange={(event) => {
+            const value = event.target.value;
+            setPending("");
+            if (value) assign.mutate(value);
+          }}
+          disabled={assign.isPending}
+          className="mt-2 w-full rounded-(--radius-control) border border-border-subtle bg-surface-solid px-2 py-1 text-xs focus:border-accent focus:outline-none"
+        >
+          <option value="">{t("assignPlaceholder")}</option>
+          {available.map((resource) => (
+            <option key={resource.id} value={resource.id}>
+              {resource.name}
+              {resource.rate ? ` — ${formatRate(resource.rate, locale, { HOUR: t("unit.HOUR"), DAY: t("unit.DAY") })}` : ""}
+            </option>
+          ))}
+        </select>
+      )}
+      {canManage && (
+        <p className="mt-1.5 text-[11px] text-muted">{t("autoCostHint")}</p>
+      )}
     </div>
   );
 }

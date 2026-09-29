@@ -232,7 +232,8 @@
     "projects": "Projects",
     "demands": "Demands",
     "portfolios": "Portfolios",
-    "validations": "My approvals"
+    "validations": "My approvals",
+    "resources": "Resources"
   },
   "validations": {
     "title": "My approvals",
@@ -425,7 +426,8 @@
     "budget": "Governance",
     "finance": "Finances",
     "quotes": "Quotes",
-    "documents": "Documents"
+    "documents": "Documents",
+    "resources": "Resources"
   },
   "quotes": {
     "subtitle": "Quotes attached to the project, with two-level validation.",
@@ -531,6 +533,16 @@
       "approvedTTC": "Approved quotes (incl. tax)",
       "counts": "Approved / pending",
       "countsValue": "{approved} / {pending}"
+    },
+    "resources": {
+      "title": "Resource cost",
+      "cost": "Resource cost",
+      "days": "Person-days",
+      "count": "Assigned resources",
+      "empty": "No resources assigned to this project's tasks.",
+      "link": "Manage resources →",
+      "resource": "Resource",
+      "allocation": "Workload (d)"
     }
   },
   "budget": {
@@ -693,7 +705,10 @@
     "totalSpent": "{hours} h",
     "delete": "Delete task",
     "deleteEntry": "Delete entry",
-    "exportCsv": "Export CSV"
+    "exportCsv": "Export CSV",
+    "duration": "Duration",
+    "durationDays": "{days}d",
+    "durationFromDates": "Computed from dates"
   },
   "members": {
     "title": "Members",
@@ -924,5 +939,74 @@
       "close": "Close",
       "manage": "Manage"
     }
+  },
+  "resources": {
+    "title": "Resources",
+    "subtitle": "People and services, their rates and workload",
+    "new": "New resource",
+    "search": "Search a resource…",
+    "empty": "No resources yet. Create one to assign it to tasks.",
+    "filterActive": "Active",
+    "filterInactive": "Archived",
+    "filterAll": "All",
+    "archive": "Archive",
+    "archived": "Archived",
+    "confirmArchive": "Archive this resource? It stays visible on past tasks but can no longer be assigned.",
+    "type": "Type",
+    "types": {
+      "EMPLOYEE": "Employee",
+      "CONTRACTOR": "Contractor",
+      "FREELANCER": "Freelancer",
+      "VENDOR": "Vendor",
+      "OTHER": "Other"
+    },
+    "firstName": "First name",
+    "lastName": "Last name",
+    "company": "Company",
+    "email": "Email",
+    "phone": "Phone",
+    "jobTitle": "Job title",
+    "notes": "Notes",
+    "rate": "Rate",
+    "rateAmount": "Amount",
+    "rateUnit": "Unit",
+    "unit": {
+      "HOUR": "h",
+      "DAY": "d"
+    },
+    "unitLong": {
+      "HOUR": "Hour",
+      "DAY": "Day"
+    },
+    "currency": "Currency",
+    "create": "Create resource",
+    "save": "Save",
+    "cancel": "Cancel",
+    "setRate": "Update rate",
+    "noRate": "No rate",
+    "cost": "Cost",
+    "allocation": "Workload",
+    "allocationDays": "{days}d",
+    "totalCost": "Total cost",
+    "totalDays": "Total workload",
+    "resourceCount": "Resources",
+    "workload": "Workload by project",
+    "assignments": "Assignments",
+    "task": "Task",
+    "project": "Project",
+    "period": "Period",
+    "duration": "Duration",
+    "overallocation": "Overallocation detected",
+    "overallocationHint": "These tasks overlap for this resource:",
+    "noAssignments": "No assignments yet.",
+    "backToList": "← Resources",
+    "assign": "Assign a resource",
+    "assignPlaceholder": "Choose a resource…",
+    "remove": "Remove",
+    "none": "No resource assigned.",
+    "autoCostHint": "Cost is computed automatically from the task duration (dates).",
+    "projectCostTitle": "Project resource cost",
+    "projectCostSubtitle": "Aggregated per resource, computed from task durations.",
+    "resource": "Resource"
   }
 }
