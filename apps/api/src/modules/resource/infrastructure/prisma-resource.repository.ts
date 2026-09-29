@@ -24,6 +24,42 @@ const ASSIGNMENT_INCLUDE = {
 
 type AssignmentRow = Prisma.TaskResourceGetPayload<{ include: typeof ASSIGNMENT_INCLUDE }>;
 
+/** Affectation jointe au projet (nom + heures/jour) : charge multi-projets. */
+const ASSIGNMENT_WITH_PROJECT_INCLUDE = {
+  task: {
+    select: {
+      id: true,
+      title: true,
+      startDate: true,
+      dueDate: true,
+      projectId: true,
+      project: { select: { name: true, hoursPerDay: true } },
+    },
+  },
+  resource: { include: RESOURCE_INCLUDE },
+} as const;
+
+type AssignmentWithProjectRow = Prisma.TaskResourceGetPayload<{
+  include: typeof ASSIGNMENT_WITH_PROJECT_INCLUDE;
+}>;
+
+function toAssignmentWithProject(row: AssignmentWithProjectRow): AssignmentRecord {
+  const rate = row.resource.rates[0];
+  return {
+    taskResourceId: row.id,
+    resourceId: row.resourceId,
+    resourceName: `${row.resource.firstName} ${row.resource.lastName}`.trim(),
+    taskId: row.taskId,
+    taskTitle: row.task.title,
+    projectId: row.task.projectId,
+    projectName: row.task.project.name,
+    hoursPerDay: row.task.project.hoursPerDay,
+    startDate: row.task.startDate,
+    dueDate: row.task.dueDate,
+    rate: rate ? { amount: Number(rate.amount), unit: rate.unit, currency: rate.currency } : null,
+  };
+}
+
 function toResource(row: ResourceRow): ResourceRecord {
   const rate = row.rates[0];
   return {
@@ -202,42 +238,27 @@ export class PrismaResourceRepository implements ResourceRepository {
     return rows.map((row) => this.mapAssignment(row, project?.hoursPerDay ?? 8, project?.name ?? ""));
   }
 
+  async listAssignmentsForProjects(projectIds: string[]): Promise<AssignmentRecord[]> {
+    if (projectIds.length === 0) {
+      return [];
+    }
+    const rows = await this.prisma.taskResource.findMany({
+      where: { task: { projectId: { in: projectIds }, deletedAt: null } },
+      include: ASSIGNMENT_WITH_PROJECT_INCLUDE,
+      orderBy: { createdAt: "asc" },
+    });
+    return rows.map(toAssignmentWithProject);
+  }
+
   async listAssignmentsForResource(
     organizationId: string,
     resourceId: string,
   ): Promise<AssignmentRecord[]> {
     const rows = await this.prisma.taskResource.findMany({
       where: { resourceId, task: { organizationId, deletedAt: null } },
-      include: {
-        ...ASSIGNMENT_INCLUDE,
-        task: {
-          select: {
-            id: true,
-            title: true,
-            startDate: true,
-            dueDate: true,
-            projectId: true,
-            project: { select: { name: true, hoursPerDay: true } },
-          },
-        },
-      },
+      include: ASSIGNMENT_WITH_PROJECT_INCLUDE,
       orderBy: { createdAt: "asc" },
     });
-    return rows.map((row) => {
-      const rate = row.resource.rates[0];
-      return {
-        taskResourceId: row.id,
-        resourceId: row.resourceId,
-        resourceName: `${row.resource.firstName} ${row.resource.lastName}`.trim(),
-        taskId: row.taskId,
-        taskTitle: row.task.title,
-        projectId: row.task.projectId,
-        projectName: row.task.project.name,
-        hoursPerDay: row.task.project.hoursPerDay,
-        startDate: row.task.startDate,
-        dueDate: row.task.dueDate,
-        rate: rate ? { amount: Number(rate.amount), unit: rate.unit, currency: rate.currency } : null,
-      };
-    });
+    return rows.map(toAssignmentWithProject);
   }
 }

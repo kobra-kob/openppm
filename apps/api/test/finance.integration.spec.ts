@@ -213,4 +213,37 @@ describe("Finances détaillées (intégration)", () => {
       .expect(200);
     expect(after.body.budgetLines.some((l: { id: string }) => l.id === capexLineId)).toBe(false);
   });
+
+  it("intègre le coût des ressources affectées dans le réel du projet", async () => {
+    const admin = `Bearer ${adminToken}`;
+    const before = await request(server()).get(financeUrl()).set("Authorization", admin).expect(200);
+    const baseTotal = before.body.actual.total;
+    expect(before.body.actual.resourceCost).toBe(0);
+
+    // Tâche datée (durée = 5 jours dérivée des dates) + ressource au forfait jour
+    const task = await request(server())
+      .post(`/api/v1/projects/${projectId}/tasks`)
+      .set("Authorization", admin)
+      .send({ title: "Cadrage", startDate: "2026-08-01", dueDate: "2026-08-05" })
+      .expect(201);
+    const resource = await request(server())
+      .post("/api/v1/resources")
+      .set("Authorization", admin)
+      .send({
+        firstName: "Nadia",
+        lastName: "R",
+        resourceType: "CONTRACTOR",
+        rate: { amount: 600, unit: "DAY", currency: "EUR" },
+      })
+      .expect(201);
+    await request(server())
+      .post(`/api/v1/projects/${projectId}/tasks/${task.body.id}/resources`)
+      .set("Authorization", admin)
+      .send({ resourceId: resource.body.id })
+      .expect(201);
+
+    const after = await request(server()).get(financeUrl()).set("Authorization", admin).expect(200);
+    expect(after.body.actual.resourceCost).toBe(3000); // 5 j × 600 €
+    expect(after.body.actual.total).toBe(Math.round((baseTotal + 3000) * 100) / 100);
+  });
 });

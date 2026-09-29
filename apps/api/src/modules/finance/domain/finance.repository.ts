@@ -70,6 +70,11 @@ export interface ProjectFinanceBundle {
   budgetLines: BudgetLineRecord[];
   costEntries: CostEntryRecord[];
   laborHours: number;
+  /**
+   * Coût des ressources affectées aux tâches du projet (module Ressources).
+   * Enrichi par FinanceService via ResourceService ; absent = 0.
+   */
+  resourceCost?: number;
   quotes: QuoteTotalsRecord[];
 }
 

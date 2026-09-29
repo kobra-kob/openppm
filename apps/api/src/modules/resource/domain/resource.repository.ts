@@ -88,6 +88,8 @@ export interface ResourceRepository {
   listAssignmentsForTask(projectId: string, taskId: string): Promise<AssignmentRecord[]>;
   /** Toutes les affectations d'un projet (coût ressources projet). */
   listAssignmentsForProject(projectId: string): Promise<AssignmentRecord[]>;
+  /** Affectations de plusieurs projets d'un bloc (intégration finance/portefeuille). */
+  listAssignmentsForProjects(projectIds: string[]): Promise<AssignmentRecord[]>;
   /** Toutes les affectations d'une ressource (charge/coût multi-projets). */
   listAssignmentsForResource(organizationId: string, resourceId: string): Promise<AssignmentRecord[]>;
 }

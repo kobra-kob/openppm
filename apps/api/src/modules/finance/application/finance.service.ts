@@ -9,6 +9,7 @@ import { BudgetCategory, ProjectRole, ProjectStatus, QuoteStatus, RoleKey } from
 import { AuditService } from "../../../core/audit/audit.service";
 import type { JwtPayload } from "../../auth/application/jwt-payload";
 import type { RequestContext } from "../../auth/application/token.service";
+import { ResourceService } from "../../resource/application/resource.service";
 import { FINANCE_REPOSITORY } from "../domain/finance.repository";
 import type {
   FinanceRepository,
@@ -52,6 +53,8 @@ export interface FinanceSummary {
     manualTotal: number;
     laborHours: number;
     laborCost: number;
+    /** Coût des ressources affectées aux tâches (module Ressources). */
+    resourceCost: number;
     total: number;
   };
   /** Budget approuvé − coûts réels (null si pas de budget approuvé). */
@@ -123,6 +126,7 @@ export class FinanceService {
     @Inject(FINANCE_REPOSITORY)
     private readonly repository: FinanceRepository,
     private readonly audit: AuditService,
+    private readonly resources: ResourceService,
   ) {}
 
   async getFinance(payload: JwtPayload, projectId: string): Promise<FinanceView> {
@@ -131,6 +135,7 @@ export class FinanceService {
     if (!bundle) {
       throw new NotFoundException({ code: "PROJECT_NOT_FOUND", message: "Projet introuvable" });
     }
+    bundle.resourceCost = (await this.resources.resourceCostByProject([projectId])).get(projectId) ?? 0;
     return this.buildView(payload, context, bundle);
   }
 
@@ -140,6 +145,7 @@ export class FinanceService {
       this.repository.loadOrgPortfolioBundles(payload.org),
       this.repository.orgPortfolioPipelines(payload.org),
     ]);
+    await this.enrichResourceCosts(bundles.flatMap((b) => b.projects));
     return bundles.map((bundle) => {
       const summary = aggregateSummaries(bundle.projects.map((p) => computeSummary(p)));
       const envelope =
@@ -173,6 +179,7 @@ export class FinanceService {
         message: "Portefeuille introuvable",
       });
     }
+    await this.enrichResourceCosts(bundle.projects);
     const perProject = bundle.projects.map((project) => ({
       bundle: project,
       summary: computeSummary(project),
@@ -374,6 +381,17 @@ export class FinanceService {
 
   // ── Aides privées ────────────────────────────────────────────────────
 
+  /**
+   * Renseigne le coût des ressources sur chaque bundle projet (module Ressources)
+   * en une seule requête, pour que computeSummary l'intègre aux coûts réels.
+   */
+  private async enrichResourceCosts(bundles: ProjectFinanceBundle[]): Promise<void> {
+    const costs = await this.resources.resourceCostByProject(bundles.map((b) => b.project.id));
+    for (const bundle of bundles) {
+      bundle.resourceCost = costs.get(bundle.project.id) ?? 0;
+    }
+  }
+
   private buildView(
     payload: JwtPayload,
     context: ProjectFinanceContext,
@@ -467,7 +485,8 @@ export function computeSummary(bundle: ProjectFinanceBundle): FinanceSummary {
   const manualTotal = round(manualCapex + manualOpex);
 
   const laborCost = laborRate !== null ? round(bundle.laborHours * laborRate) : 0;
-  const actualTotal = round(manualTotal + laborCost);
+  const resourceCost = round(bundle.resourceCost ?? 0);
+  const actualTotal = round(manualTotal + laborCost + resourceCost);
 
   const approvedQuotes = bundle.quotes.filter((q) => q.status === QuoteStatus.approved);
   const quotes: QuotesSummary = {
@@ -487,6 +506,7 @@ export function computeSummary(bundle: ProjectFinanceBundle): FinanceSummary {
       manualTotal,
       laborHours: round(bundle.laborHours),
       laborCost,
+      resourceCost,
       total: actualTotal,
     },
     remaining: approvedBudget !== null ? round(approvedBudget - actualTotal) : null,
@@ -509,11 +529,12 @@ export function aggregateSummaries(summaries: FinanceSummary[]): FinanceSummary 
   const manualTotal = round(manualCapex + manualOpex);
   const laborHours = round(summaries.reduce((acc, s) => acc + s.actual.laborHours, 0));
   const laborCost = round(summaries.reduce((acc, s) => acc + s.actual.laborCost, 0));
-  const actualTotal = round(manualTotal + laborCost);
+  const resourceCost = round(summaries.reduce((acc, s) => acc + s.actual.resourceCost, 0));
+  const actualTotal = round(manualTotal + laborCost + resourceCost);
   return {
     approvedBudget,
     planned: { capex: plannedCapex, opex: plannedOpex, total: plannedTotal },
-    actual: { manualCapex, manualOpex, manualTotal, laborHours, laborCost, total: actualTotal },
+    actual: { manualCapex, manualOpex, manualTotal, laborHours, laborCost, resourceCost, total: actualTotal },
     remaining: approvedBudget !== null ? round(approvedBudget - actualTotal) : null,
     unallocated: approvedBudget !== null ? round(approvedBudget - plannedTotal) : null,
     quotes: {

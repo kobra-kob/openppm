@@ -291,6 +291,26 @@ export class ResourceService {
     };
   }
 
+  /**
+   * Coût des ressources agrégé par projet — point d'intégration finance.
+   * Réutilise la durée dérivée des dates et la politique de coût du module.
+   * Isolation : le service finance ne transmet que des projets déjà vérifiés
+   * comme appartenant à l'organisation.
+   */
+  async resourceCostByProject(projectIds: string[]): Promise<Map<string, number>> {
+    const totals = new Map<string, number>();
+    if (projectIds.length === 0) {
+      return totals;
+    }
+    const assignments = await this.repository.listAssignmentsForProjects(projectIds);
+    for (const a of assignments) {
+      const duration = taskDurationDays({ id: a.taskId, startDate: a.startDate, dueDate: a.dueDate });
+      const cost = a.rate ? calculateResourceCost(duration, a.rate.amount, a.rate.unit, a.hoursPerDay) : 0;
+      totals.set(a.projectId, round((totals.get(a.projectId) ?? 0) + cost));
+    }
+    return totals;
+  }
+
   /** Détail d'une ressource : affectations multi-projets, charge, coût, surcharge. */
   async detail(payload: JwtPayload, id: string) {
     const resource = await this.require(payload.org, id);
