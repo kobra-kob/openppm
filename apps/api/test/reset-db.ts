@@ -47,6 +47,10 @@ export async function resetDatabase(prisma: PrismaService): Promise<void> {
   await prisma.portfolio.deleteMany();
   await prisma.projectTemplate.deleteMany();
   await prisma.projectCategory.deleteMany();
+  // Ressources (module) : avant les organisations (FK organization_id)
+  await prisma.taskResource.deleteMany();
+  await prisma.resourceRate.deleteMany();
+  await prisma.resource.deleteMany();
   // Identité & accès
   await prisma.refreshToken.deleteMany();
   await prisma.passwordReset.deleteMany();

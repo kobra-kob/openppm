@@ -55,6 +55,10 @@ export const P = {
   SUBSCRIPTION_VIEW: "SUBSCRIPTION_VIEW",
   SUBSCRIPTION_MANAGE: "SUBSCRIPTION_MANAGE",
   INVOICE_VIEW: "INVOICE_VIEW",
+
+  RESOURCE_VIEW: "RESOURCE_VIEW",
+  // Couvre créer / modifier / archiver / affecter / gérer le tarif (voir MVP Ressources).
+  RESOURCE_MANAGE: "RESOURCE_MANAGE",
 } as const;
 
 export type PermissionKey = (typeof P)[keyof typeof P];

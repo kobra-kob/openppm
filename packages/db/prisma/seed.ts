@@ -75,13 +75,17 @@ const PERMISSIONS: Array<{ subject: string; action: string }> = [
   { subject: "subscription", action: "view" },
   { subject: "subscription", action: "manage" },
   { subject: "invoice", action: "view" },
+
+  // Module Ressources (charge & coûts projet)
+  { subject: "resource", action: "view" },
+  { subject: "resource", action: "manage" },
 ];
 
 const permKey = (subject: string, action: string): string =>
   `${subject}_${action}`.toUpperCase();
 
 /** Raccourcis de listes de permissions par sujet. */
-const READS = ["DEMAND_READ", "BUSINESS_CASE_READ", "BUDGET_READ", "PROJECT_READ", "PORTFOLIO_READ", "RISK_READ"];
+const READS = ["DEMAND_READ", "BUSINESS_CASE_READ", "BUDGET_READ", "PROJECT_READ", "PORTFOLIO_READ", "RISK_READ", "RESOURCE_VIEW"];
 
 /**
  * Matrice rôle → permissions (droits par défaut). Reflète la matrice des
@@ -95,6 +99,7 @@ const ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
   ],
   [RoleKey.manager]: [
     "DEMAND_CREATE", "DEMAND_UPDATE", "DEMAND_SUBMIT", "DEMAND_APPROVE", "DEMAND_REJECT",
+    "RESOURCE_MANAGE",
     ...READS,
   ],
   [RoleKey.pmo]: [
@@ -103,6 +108,7 @@ const ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     "PROJECT_PLAN", "PROJECT_CLOSE",
     "PORTFOLIO_UPDATE",
     "RISK_CREATE", "RISK_UPDATE", "RISK_APPROVE",
+    "RESOURCE_MANAGE",
     ...READS,
   ],
   [RoleKey.business_analyst]: [
@@ -120,6 +126,7 @@ const ROLE_PERMISSIONS: Record<RoleKey, string[]> = {
     "BUSINESS_CASE_UPDATE",
     "PROJECT_PLAN", "PROJECT_EXECUTE", "PROJECT_CLOSE",
     "RISK_CREATE", "RISK_UPDATE",
+    "RESOURCE_MANAGE",
     ...READS,
   ],
   [RoleKey.executive]: [

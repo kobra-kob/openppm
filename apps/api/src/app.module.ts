@@ -21,6 +21,7 @@ import { DemandModule } from "./modules/demand/demand.module";
 import { FinanceModule } from "./modules/finance/finance.module";
 import { MembersModule } from "./modules/members/members.module";
 import { OrganizationModule } from "./modules/organization/organization.module";
+import { ResourceModule } from "./modules/resource/resource.module";
 import { PortfolioModule } from "./modules/portfolio/portfolio.module";
 import { ProjectModule } from "./modules/project/project.module";
 import { QuoteModule } from "./modules/quote/quote.module";
@@ -83,6 +84,7 @@ import { RolesGuard } from "./modules/auth/infrastructure/guards/roles.guard";
     DemandModule,
     MembersModule,
     OrganizationModule,
+    ResourceModule,
     RolesModule,
     PortfolioModule,
     ProjectModule,
